@@ -1,0 +1,63 @@
+
+script
+    Rocket.PageValues = {
+        getPageId: function(){
+            return "#{page.pageId}";
+        },
+        getPageFriendlyURL : function(){
+            return "#{page.friendlyURL}";
+        },
+        getUserName : function(){
+            return "#{user.userName}";
+        },
+        getUserFullName : function(){
+            return "#{user.FirstName + '' + user.lastName }";
+        },
+        isSignedIn : function(){
+            return #{req.session.loggedIn};
+        }
+    };
+    Rocket.Props = {
+        getAppUrl: function(){
+            return "#{props.appURL}"
+        }
+    };
+
+- if(req.params.plugin)
+    script
+        ;(function(){
+            var currentPlugin = {
+                pluginId : '#{req.params.plugin}'
+            }
+            if('#{req.params.iId}'){
+                currentPlugin.iId = '#{req.params.iId}';
+            }
+            currentPlugin.namespace = '#{req.params.namespace}';
+            Rocket.Plugin.currentPlugin = currentPlugin;
+        })();
+
+
+//-script(type="text/javascript", src="/js/history.js")
+
+-if(req.session.loggedIn &&  (req.query && req.query.mode != "maximized"))
+    .modal.hide.fade#addPluginsModal
+        .modal-header
+            button(class="close", data-dismiss="modal") x
+            h3 Add Plugins
+        .modal-body
+            form.form-horizontal
+        .modal-footer
+            a(href="#", class="btn", data-dismiss="modal") Close
+
+    .modal.hide.fade#editPluginModal
+        .modal-header
+            button(class="close", data-dismiss="modal") x
+            h3 Edit Plugin
+        .modal-body
+
+        .modal-footer
+            a(href="#", class="btn", data-dismiss="modal") Close
+    -if(req.session.roles[0] == "Administrator")
+        script(type="text/javascript", src="/js/layout.js")
+    script(type="text/javascript", src="/js/handlePlugins.js")
+

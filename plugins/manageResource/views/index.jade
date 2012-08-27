@@ -1,0 +1,111 @@
+style(type="text/css")
+    .manage-resource-container{
+        height: 100%;
+        border: 1px solid #ddd;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+
+    }
+    .manage-resource-container ul{
+        margin-top: 15px;
+        list-style: none;
+    }
+    .manage-resource-container .resource-view{
+        border-left: 1px solid #ddd;
+        min-height: 300px;
+    }
+    .manage-resource-container .resource-tree ul li{
+        margin-bottom: 5px;
+    }
+    .manage-resource-container .resource-tree li a.tree-node-up {
+        cursor: pointer;
+    }
+    .manage-resource-container .resource-tree li.disabled a:hover {
+        text-decoration: none;
+    }
+    .manage-resource-container .resource-tree li.disabled a {
+        color: #808080;
+        cursor: default;
+    }
+    .manage-resource-container .resource-tree a.add-folder{
+        margin-left: 25px;
+    }
+    .manage-resource-container .resource-view #detail{
+        margin-left: 15px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+    .manage-resource-container .resource-view #detail .meta{
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .manage-resource-container .resource-view .no-resource{
+        margin-top: 15px;
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+
+
+
+ul#itemMenu.contextMenu
+    li.download: a(href='#download') Download
+    //li.edit: a(href='#edit') Edit
+    li.rename: a(href='#rename') Rename
+    li.delete: a(href='#delete') Delete
+
+ul#folderMenu.contextMenu
+    //li.edit: a(href='#edit') Edit
+    li.add-subfolder: a(href='#add-subfolder') Subfolder
+    li.rename: a(href='#rename') Rename
+    li.delete: a(href='#delete') Delete
+
+
+.manage-resource
+    ul#breadcrumbs.breadcrumb
+    .top-bar
+        #uploader
+            noscript |Please enable JavaScript to use file uploader.
+        //a(href='javascript:;', id='addFolder', class='') Add Folder
+    #upload_error.ui-helper-hidden.alert.alert-error
+        button(class="close", data-dismiss="alert") x
+        span#error_message
+
+    #successMsg.ui-helper-hidden.alert.alert-success
+        button(class="close", data-dismiss="alert") x
+        span
+
+.manage-resource-container.row-fluid
+    .resource-tree.span2
+        ul
+        a(href='javascript:;', id='addFolder', class='add-folder')
+            i.icon-plus-sign
+            |  Add Folder
+    .resource-view.span10
+        #list
+        #detail.ui-helper-hidden
+            img(class="thumbnail")
+            .meta
+                .name
+                .size
+                .type
+                .pixels.ui-helper-hidden
+                .url
+            .toolbar
+                button(id='download', class='btn')
+                    i.icon-download-alt
+                    |  Download
+                &nbsp;
+                button(id='rename', class='btn')
+                    i.icon-edit
+                    |  Rename
+                &nbsp;
+                button(id='delete', class='btn')
+                    i.icon-trash
+                    |  Delete
+                &nbsp;
+                button(id='go-up', class='btn')
+                    i.icon-arrow-up
+                    |  Go Up
+
+

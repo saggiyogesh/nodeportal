@@ -1,0 +1,121 @@
+[
+    {
+        "id":"login",
+        "name":{
+            "en_US":"Login"
+        },
+        "description":"Login",
+        "group":"Plugin",
+        "config":{
+
+        },
+        "controller":"LoginController"
+    },
+
+    {
+        "id":"error",
+        "name":{
+            "en_US":"Error"
+        },
+        "description":"Error",
+        "group":"Shell",
+        "config":{
+
+        },
+        "controller":"ErrorController"
+    },
+    {
+        "id":"userManage",
+        "name":{
+            "en_US":"My Profile"
+        },
+        "description":"Manage User Profile",
+        "group":"Plugin",
+        "config":{
+            "settings":true
+        },
+        "controller":"UserManageController"
+    },
+    {
+        "id":"managePage",
+        "name":{
+            "en_US":"Site Pages"
+        },
+        "description":"Manage Pages",
+        "group":"Plugin",
+        "config":{
+            "settings":true
+        },
+        "controller":"PageManageController"
+    },
+    {
+        "id":"manageResource",
+        "name":{
+            "en_US":"Site Resources"
+        },
+        "description":"Manage Resources",
+        "group":"Plugin",
+        "config":{
+            "settings":true
+        },
+        "controller":"ResourceManageController"
+    },
+    {
+        "id":"manageArticles",
+        "name":{
+            "en_US":"Articles"
+        },
+        "description":"Manage Articles",
+        "group":"Plugin",
+        "config":{
+            "settings":true
+        },
+        "controller":"ArticlesManageController"
+    },
+    {
+        "id":"managePermissions",
+        "name":{
+            "en_US":"Permissions"
+        },
+        "description":"Manage Permissions",
+        "group":"Plugin",
+        "config":{
+        },
+        "controller":"PermissionController"
+    },
+    {
+        "id":"managePlugin",
+        "name":{
+            "en_US":"Manage Plugin"
+        },
+        "description":"Manage Plugin",
+        "group":"Plugin",
+        "config":{
+        },
+        "controller":"ManagePluginController"
+    },
+    {
+        "id":"displayArticle",
+        "name":{
+            "en_US":"Display Article"
+        },
+        "description":"Display Article",
+        "group":"Plugin",
+        "config":{
+            "many":true
+        },
+        "controller":"DisplayArticleController"
+    },
+    {
+        "id":"asyncDemo",
+        "name":{
+            "en_US":"Async Demo"
+        },
+        "description":"Async Demo",
+        "group":"Plugin",
+        "config":{
+            "async":true
+        },
+        "controller":"AsyncDemoController"
+    }
+]

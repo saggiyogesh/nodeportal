@@ -1,0 +1,296 @@
+style(type="text/css")
+    ul.dynatree-container{
+        border:none;
+    }
+
+    .page-layout{
+        border: 1px solid #ddd;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+    }
+
+    .page-layout .page-edit-view{
+        border-left: 1px solid #ddd;
+        min-height: 300px;
+    }
+
+    .page-layout .page-edit-view #pages_Tabs{
+        margin-left: 15px;
+        margin-top: 15px;
+    }
+
+    .page-layout .page-edit-view #pages_Tabs form legend{
+        border:none;
+    }
+
+    .page-layout .pagesTree{
+        margin-top: 15px;
+    }
+
+    .page-layout .add-page{
+        margin-left: 8px;
+    }
+
+
+ul#myMenu.contextMenu
+    li.add-child-page: a(href='#add-child') Add child
+    li.edit-page: a(href='#edit') Edit
+    li.permission-page: a(href='#permission') Permission
+    li.delete-page: a(href='#delete') Delete
+.flash-msg
+    !{viewLib.Messages(req , namespace)}
+.page-layout.row-fluid
+    .span2
+        .pagesTree
+        .add-page
+            - var params = {route: 'add'};
+            a(href="#{viewLib.createURL(req , params)}", id="next")
+                i.icon-plus-sign
+                |  Add Page
+
+    .page-edit-view.span9
+        #pages_Tabs
+            ul
+                li: a(href='#tabs-1') Page
+                li: a(href='#tabs-2') Children
+            #tabs-1
+            #tabs-2
+                .control-group
+                    label(class="control-label", for="childSelect")
+                        |Move
+                        b
+                            |  Up
+                        |  and
+                        b
+                            |  Down
+                        | for page ordering.
+                    .controls
+                        select(size="5", id="childSelect", style="width: 400px; height: 200px;")
+                .control-group
+                    .controls
+                        button(href='javascript:;', id='btn-up', class='btn')
+                            i.icon-arrow-up
+                            |  Up
+                        &nbsp;
+                        button(href='javascript:;', id='btn-down', class='btn')
+                            i.icon-arrow-down
+                            |  Down
+                !{updatePageOrderForm}
+
+    - var pagesParams = {route: 'getPagesListJSON'};
+    - var editPageParams = {route: 'edit/'};
+    - var deleteURLParams = {route: 'delete/'};
+
+script
+    $(function () {
+        var pagesTab = $("#pages_Tabs").tabs();
+        pagesTab.tabs("disable", 1);
+        function disableChildrenTab() {
+            pagesTab.tabs("option", "disabled", [1]);
+        }
+
+        function selectPageTab() {
+            pagesTab.tabs("enable", 0);
+
+            pagesTab.tabs("select", 0);
+        }
+
+        function activateChildrenTab(currentNode) {
+            pagesTab.tabs("option", "disabled", []);
+            var children = currentNode.data.children;
+            var html = [];
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                html.push("<option value='" + child.key + "'>" + child.title + "</option>");
+            }
+            $(".page-edit-view #tabs-2 select").html(html.join(""));
+        }
+
+        function addPage(ppId, contentBox) {
+            selectPageTab();
+            disableChildrenTab();
+            ppId = ppId || 0;
+            var addURL = "#{viewLib.createURL(req , params)}" + "/" + ppId
+            var options = {
+                url:addURL,
+                data:{mode:"exclusive"},
+                success:function (data) {
+                    Rocket.Util.handleResponseError(data);
+                    pageEditView.html(data);
+                    var forms = contentBox.find('form');
+                    if (forms) {
+                        forms.each(function (i) {
+                            var form = this, action = form.action;
+                            form.action = action.replace("mode=exclusive", "");
+                        });
+                    }
+                }
+            }
+            Rocket.ajax(options);
+        }
+
+        function editPage(node, contentBox) {
+            var editURL = "#{viewLib.createURL(req , editPageParams)}" + node.data.key;
+
+            var options = {
+                url:editURL,
+                data:{mode:"exclusive"},
+                success:function (data) {
+                    Rocket.Util.handleResponseError(data);
+                    pageEditView.html(data);
+                    var forms = contentBox.find('form');
+                    if (forms) {
+                        forms.each(function (i) {
+                            var form = this, action = form.action;
+                            form.action = action.replace("mode=exclusive", "");
+                        });
+                    }
+                }
+            }
+
+            Rocket.ajax(options);
+        }
+
+        function permissionPage(node, contentBox){
+            var pageId = node.data.key;
+            var permissionURL =  Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/model/"
+                + pageId + "/" + "Page?redirect=" + encodeURIComponent(Rocket.PluginURL({action:""}));
+
+            location.href = permissionURL;
+        }
+
+        function deletePage(node, contentBox) {
+            var str = "Are you sure to delete page: " + node.data.title, ids = [];
+
+            var getChildIds = function (node) {
+                ids.push(node.data.key);
+                for (var i = 0; i < node.data.children.length; i++) {
+                    var nodeChild = node.childList[i];
+                    //ids.push(nodeChild.key);
+                    getChildIds(nodeChild);
+                }
+
+            }
+
+            //getChildIds(node);
+            //console.log(id);
+            var url = "#{viewLib.createURL(req , deleteURLParams)}" + node.data.key;
+            var c = confirm('Are you sure to delete this ?');
+            if (c == true) {
+                Rocket.Util.invokePost(url);
+            }
+
+        }
+
+        var pageEditView = $(".page-edit-view #tabs-1");
+
+        function bindContextMenu(node, span) {
+            //skip binding to Site Root node
+            if (node.data.key == 0) {
+                return;
+            }
+
+            // Add context menu to this node:
+            $(span).contextMenu({menu:"myMenu"}, function (action, el, pos) {
+                switch (action) {
+                    case "add-child":
+                        addPage(node.data.key, pageEditView);
+                        break;
+                    case "edit":
+                        editPage(node, pageEditView);
+                        break;
+                    case "permission":
+                        permissionPage(node, pageEditView);
+                        break;
+                    case "delete":
+                        deletePage(node, pageEditView);
+                        break;
+                    default:
+                        alert("Todo: apply action '" + action + "' to node " + node);
+                }
+            });
+        }
+
+        var pagesTree = $(".pagesTree").dynatree({
+            initAjax:{
+                url:"#{viewLib.createURL(req , pagesParams)}"
+            },
+            onClick:function (node, event) {
+                if ($(".contextMenu:visible").length > 0) {
+                    $(".contextMenu").hide();
+                }
+            },
+            onActivate:function (node) {
+                var updateOrderPPId = $("#tabs-2 form #managePage_parentPageId");
+                updateOrderPPId.val(node.data.key)
+                if (node.data.key === "0") { // case for site root
+                    console.log(node)
+                    pagesTab.tabs("enable", 1);
+                    pagesTab.tabs("select", 1);
+                    setTimeout(function () {
+                        pagesTab.tabs("disable", 0);
+                    }, 100)
+                    //pagesTab.tabs("option","disabled",[0]);
+                    //pagesTab.tabs( "disable" , 0 );
+
+                }
+                else {
+                    selectPageTab();
+                    disableChildrenTab();
+                    editPage(node, pageEditView);
+
+                }
+                if (node.data.children.length > 0) {
+                    activateChildrenTab(node);
+                }
+            },
+            onCreate:function (node, span) {
+                bindContextMenu(node, span);
+            }
+        });
+
+        $(".add-page a").click(function (e) {
+            e.preventDefault();
+            var tgt = e.currentTarget;
+            var node = $(".pagesTree").dynatree("getActiveNode");
+            addPage(node && node.data.key, pageEditView);
+        });
+
+        //code for page ordering
+        var childSelect = $("#childSelect");
+        $('#btn-up').bind('click', function () {
+            childSelect.find("option:selected").each(function () {
+                var options = childSelect.find('option');
+                var newPos = options.index(this) - 1;
+                if (newPos > -1) {
+                    options.eq(newPos).before("<option value='" + $(this).val() + "' selected='selected'>" + $(this).text() + "</option>");
+                    $(this).remove();
+                }
+            });
+        });
+        $('#btn-down').bind('click', function () {
+            var options = childSelect.find('option');
+            var countOptions = options.size();
+            childSelect.find("option:selected").each(function () {
+                var newPos = options.index(this) + 1;
+                if (newPos < countOptions) {
+                    options.eq(newPos).after("<option value='" + $(this).val() + "' selected='selected'>" + $(this).text() + "</option>");
+                    $(this).remove();
+                }
+            });
+        });
+        var orderForm = $("form#managePage_update_order_fm");
+        orderForm.submit(function (e) {
+            var options = childSelect.find('option');
+            console.log(options);
+            var val = [];
+            options.each(function (i, opt) {
+                console.log($(opt).attr("value"));
+                val.push($(opt).attr("value"));
+            });
+            orderForm.find('#managePage_pageOrder').val(val.join(","));
+            e.preventDefault;
+
+        });
+    });

@@ -1,0 +1,5 @@
+h3 Enter Id of an Article
+form(action="#{settingsURL}", id="settingsForm")
+    input(type="text", name="id", value="#{settings.id || ''}")
+    br
+    input(type="submit", name="submit")

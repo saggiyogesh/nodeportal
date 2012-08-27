@@ -1,0 +1,14 @@
+//- Definition of variables
+    customPluginClass : custom plugin class name
+    pluginTitle : title of plugin
+    toolsHTMLTMPL : template jade file for tools to be displayed (like minimize, maximize, conf, close)
+    contentHTMLTMPL: template jade file to render content as per specific plugin
+
+include ../../app/themeHelper/plugin_tools_mixin
+
+div(class='#{"plugin "+customPluginClass}', id='#{namespace}')
+    .navbar-inner.title.plugin-head
+        .header #{pluginTitle}
+        mixin tools(req, namespace)
+    .plugin-body
+        .content !{contentHTMLTMPL}

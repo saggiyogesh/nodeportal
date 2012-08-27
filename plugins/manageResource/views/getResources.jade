@@ -1,0 +1,19 @@
+- var fileIconsUrl = "/images/fileicons/";
+- var viewParams = {route: 'thumb'}, dims = req.attrs.thumbDimension;
+-if(req.attrs.resourceModel.length > 0)
+    ul.thumbnails
+        for resource in req.attrs.resourceModel
+            li.item.span3
+                a(href = "javascript:;" , class="thumbnail #{resource.type == 'folder' ? 'resource-item folder' : 'resource-item' }", id="#{resource.resourceId}")
+                    - var type = ResourceManageUtil.getIconImage(req, resource);
+                    img(src="#{type == "image" ? viewLib.createURL(req , viewParams) + '/' + resource.resourceId  : fileIconsUrl + type+'.png'}" )
+                    h5.name.caption#{decodeURI(resource.name)}
+
+-else
+    .no-resource.alert.alert-info
+        button(class="close", data-dismiss="alert") x
+        H4 No files or folders found.
+
+script
+    Rocket.trigger({type:"manageResource:resourceViewList:change", target: this, data: !{JSON.stringify(req.attrs.resourceModel)}});
+

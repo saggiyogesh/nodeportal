@@ -1,0 +1,28 @@
+!{viewLib.Messages(req , namespace)}
+
+style
+    .show-all-articles{
+        margin-top:30px;
+    }
+
+ul#listTableMenu.contextMenu
+    li.edit-article: a(href='#edit-article') Edit
+    li.preview-article: a(href='#preview-article') Preview
+    li.permission: a(href='#permission') Permission
+    li.delete-article: a(href='#delete-article') Delete
+
+.article-toolbar
+    button(id='add', class='btn')
+        i.icon-plus-sign
+        |  Add Article
+    &nbsp;
+    button(id='delete', class='btn disabled', disabled="disabled")
+        i.icon-trash
+        |  Delete
+
+.show-all-articles
+    #listTableContentBox
+    script
+        window.onload = function(){
+            Rocket.trigger({type:"manageArticle:index:load", target:this});
+        };

@@ -1,0 +1,43 @@
+!{viewLib.Messages(req , namespace)}
+- var roles = req.attrs.roles, actions = req.attrs.actions, actionsValue = req.attrs.actionsValue;
+- var permissions = req.attrs.permissions, formAction = {route: 'updatePermissions'};
+- if(req.attrs.hasAuth)
+
+    form.form-horizontal(method="POST", action="#{viewLib.createURL(req , formAction)}", id='#{namespace +"_fm"}')
+        input(name='#{namespace +"[redirect]"}', type="hidden", value="#{req.query.redirect}")
+        input(name='#{namespace +"[modelId]"}', type="hidden", value="#{req.params.modelId}")
+        input(name='#{namespace +"[modelName]"}', type="hidden", value="#{req.params.name}")
+        table.table.table-bordered
+            thead
+                tr
+                    each role, i in roles
+                        th= role
+            tbody
+                each action, i in actions
+                    tr
+                        th=action
+                        each role, j in roles
+                            if role
+                                td
+                                    - var chkStr = permissions[role].join(',').indexOf(actionsValue[action]) > -1 ? 'checked' : '';
+                                        //-only VIEW action is enabled for Guest to give permission
+                                        disableStr = (role == "Guest" && action != "VIEW") ? "disabled" : "";
+                                    !{'<input type="checkbox" name="'+ namespace+'[' + role + '_' + action +']"' + chkStr + ' ' + disableStr +'/>'}
+
+        .form-actions
+            button.btn.btn-primary(type="submit") Save
+
+            -if(req.query.redirect)
+                |&nbsp;
+                button.btn(id='#{namespace +"_cancel"}') Cancel
+
+                script
+                    window.onload = function(){
+                        var ns = "#{namespace}";
+                        Rocket.Util.onFormCancel("#{namespace + '_cancel'}");
+                    }
+
+
+
+
+

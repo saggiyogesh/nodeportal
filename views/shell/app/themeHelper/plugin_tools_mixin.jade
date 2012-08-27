@@ -1,0 +1,9 @@
+mixin tools(req, id)
+    -if(showTools)
+        .tools.pull-right
+            -if(showSettingIcon)
+                a.edit(data-id= "#{id}", href="#editPluginModal",data-toggle="modal")
+                    i.icon-edit.icon-white
+            -if(showCloseIcon)
+            a.remove(data-id= "#{id}")
+                i.icon-remove.icon-white

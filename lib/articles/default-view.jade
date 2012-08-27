@@ -1,0 +1,16 @@
+//- Default template to render html from article object
+//- objects available: req, article
+.article
+    .title
+        h3 #{article.localizedTitle["en_US"]}
+    .meta
+        dl.dl-horizontal
+            dt
+                i.icon-pencil
+            dd #{article.userName}
+            dt
+                i.icon-calendar
+            dd #{article.displayDate.toLocaleDateString()}
+    .content !{article.localizedContent["en_US"]}
+
+

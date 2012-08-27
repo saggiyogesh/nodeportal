@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+
+/**
+ * Command line module to run DB commands to insert default data
+ */
+
+var program = require('commander');
+
+program
+	.version('0.0.1')
+	.option('-n, --database <path>', 'Name of database')
+	.parse(process.argv);
+
+console.log('Options: ');
+console.log('\tDatabase Name: %s', program.database);
+
+if(program.database){
+	require('../lib/DefaultDataHandler').initDB(program.database);
+}else{
+	console.error();
+	console.error("\tError: missing options \n\t-n  Name of database");
+	console.error();
+	process.exit(1);
+}

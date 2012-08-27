@@ -1,0 +1,28 @@
+.plugin-body {
+    margin-top: 15px;
+    margin-left: 15px;
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+
+.plugin-head .tools {
+    top: -15px;
+    position: relative;
+    cursor: pointer;
+}
+
+.container .column {
+    min-height: 250px;
+}
+
+.container .column .plugin {
+    min-height: 100px;
+}
+
+.plugin-placeholder {
+    border: 2px dashed #999;
+}
+
+.tools a {
+    padding-left: 10px;
+}

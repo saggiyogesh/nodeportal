@@ -1,0 +1,7 @@
+- if(req.session && req.session.loggedIn )
+    | Welcome #{req.session.user.name}
+- else
+    !{viewLib.Messages(req , namespace)}
+    !{loginForm}
+    - var params = {route: 'register',  mode :  'maximized' };
+    a(href="#{viewLib.createURL(req , params)}") Register

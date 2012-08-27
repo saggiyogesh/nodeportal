@@ -1,0 +1,17 @@
+include ../../app/themeHelper/dockbar_mixin
+doctype html
+html(lang=locale)
+    head
+        include pre-head
+        include head.html
+    body
+        include header
+        .container
+            .row-fluid
+                !{layoutHTMLTMPL}
+            include footer
+
+        include scripts.html
+        !{bottomIncludes}
+
+   

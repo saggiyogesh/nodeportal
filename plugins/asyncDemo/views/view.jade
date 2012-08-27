@@ -1,0 +1,13 @@
+| Manage page Controller
+
+h1 SAMPLe using ajax AsyncDemo
+    div
+        - var params = {route: 'view1', mode : 'maximized'};
+        a(href="#{viewLib.createURL(req , params)}", id="next") next page 1
+
+    div
+        - var params = {route: 'view2'};
+        a(href="#{viewLib.createURL(req , params)}", id="next") next page 2
+
+    div
+        a(href="http://www.google.com") google
