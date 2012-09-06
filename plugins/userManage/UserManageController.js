@@ -3,7 +3,7 @@
  */
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
 
-var forms = require("./forms.js");
+var forms = require("./forms.js"), USER_SCHEMA = "User";
 var UserManageController = module.exports = function (id, app) {
     BasePluginController.call(this, id, app);
     var that = this;
@@ -30,11 +30,19 @@ function updateUserProfileAction(req, res, next) {
             return;
         }
         if (!result.hasErrors) {
-            var redirect = that.getPluginHelper().getPostParam(req, "redirect");
-            that.getDBActionsLib().authorizedPopulateModelAndUpdate(req, "User", {}, {emailId:"email"}, function (err, user) {
-                that.setRedirect(req, redirect);
-                req.session.user = user;
-                next(err, req, res);
+            var redirect = that.getPluginHelper().getPostParam(req, "redirect"),
+                dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
+            that.getDBActionsLib().authorizedPopulateModelAndUpdate(req, USER_SCHEMA, {}, {emailId:"email"}, function (err, result) {
+                if(err){
+                    return next(err, req, res);
+                }
+                dbAction.authorizedGet("findByEmailId", req.session.user.emailId, function(err, user){
+                    if(user){
+                        req.session.user = user;
+                    }
+                    that.setRedirect(req, redirect);
+                    next(err, req, res);
+                });
             });
         }
         else {

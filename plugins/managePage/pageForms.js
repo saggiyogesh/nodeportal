@@ -17,6 +17,19 @@ function checkFriendlyURL(req, model, val, next) {
     });
 }
 
+function checkAppUrl(req, model, val, next) {
+    var appURL = require(req.app.set("appPath") + "/lib/AppProperties").get("APP_URL");
+    if (val.indexOf("/") == -1) {
+        val = "/" + val;
+    }
+
+    if (val === appURL) {
+        next(null, false);
+    }
+    else
+        next(null, true);
+}
+
 var name = {
     label:"Name",
     type:"text",
@@ -28,7 +41,7 @@ var friendlyURL = {
     label:"Friendly URL",
     type:"text",
     name:"friendlyURL",
-    rules:[ "required", "checkFriendlyURL"]
+    rules:[ "required", "checkFriendlyURL", "checkAppUrl"]
 };
 
 var isHidden = {
@@ -142,5 +155,7 @@ exports.updatePageOrderForm = {
 }
 
 exports.customValidations = {
-    checkFriendlyURL:{ruleFunction:checkFriendlyURL, msgs:{en_US:"Friendly url already exists."}}
+    checkFriendlyURL:{ruleFunction:checkFriendlyURL, msgs:{en_US:"Friendly url already exists."}},
+    checkAppUrl:{ruleFunction:checkAppUrl, msgs:{en_US:"Friendly url can't be same as app url."}}
+
 };

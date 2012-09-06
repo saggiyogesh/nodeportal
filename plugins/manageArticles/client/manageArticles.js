@@ -2,7 +2,8 @@ $(function () {
 
     var EDIT_ARTICLE_COMMAND = "edit-article", PREVIEW_ARTICLE_COMMAND = "preview-article",
         DELETE_ARTICLE_COMMAND = "delete-article", PERMISSION_COMMAND = "permission",
-        ARTICLES_TABLE_ID = "articlesTable";
+        ARTICLES_TABLE_ID = "articlesTable",
+        LIST_TABLE_CB = "listTableContentBox";
 
     var toolbar = $('.article-toolbar'), addButton = toolbar.find("button#add"),
         deleteButton = toolbar.find("button#delete"), checkVals;
@@ -16,7 +17,7 @@ $(function () {
         return Rocket.PluginURL({action:action});
     }
 
-    function removeArticles(ids){
+    function removeArticles(ids) {
         var c = confirm('Are you sure to delete this ?');
         if (c == true) {
             goTo(getURL("remove") + "/" + ids);
@@ -78,7 +79,7 @@ $(function () {
             ]
         };
         new Rocket.Table({
-            contentBox:"listTableContentBox",
+            contentBox:LIST_TABLE_CB,
             id:ARTICLES_TABLE_ID,
             checkBoxAll:true,
             contextMenu:{
@@ -93,11 +94,11 @@ $(function () {
     //Bind table checkbox click event
     Rocket.bind(ARTICLES_TABLE_ID + ":checkBox:click", function (e) {
         var data = e.data;
-        if(data.length > 0){
+        if (data.length > 0) {
             deleteButton.removeClass("disabled");
             deleteButton.attr("disabled", false);
         }
-        else{
+        else {
             deleteButton.addClass("disabled");
             deleteButton.attr("disabled", true)
         }
@@ -109,7 +110,12 @@ $(function () {
         goTo(getURL("add"));
     });
     deleteButton.click(function (e) {
-        removeArticles(checkVals.join("~"));
+        var listTable = $("#" + ARTICLES_TABLE_ID), checkedIdTDs = listTable.find(":checked.cb-data").parent().next(),
+            ids = [];
+        checkedIdTDs.each(function (index) {
+            ids.push($(this).text());
+        });
+        removeArticles(ids.join("~"));
     });
 
     Rocket.bind("manageArticle:listTableMenu:" + EDIT_ARTICLE_COMMAND, function (e) {

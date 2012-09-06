@@ -18,7 +18,9 @@ global.utils = require("./lib/utils");
 global.Debug = global.utils.Debug;
 global._ = require("underscore");
 
-var assetManager = require('connect-assetmanager'), manager = require("./lib/AssetManager").AssetManager();
+var assetManager = require('connect-assetmanager'),
+    manager = require("./lib/AssetManager").AssetManager(),
+    getProp = require("./lib/AppProperties").get;
 
 app.configure(function () {
     //app.use(express.logger());
@@ -55,9 +57,10 @@ app.configure('development', function () {
 });
 
 app.configure('production', function () {
+    var maxAge = getProp("STATIC_MAX_AGE");
     app.use(assetManager(manager.assetManagerGroupsProd));
-    app.use(require("./lib/ServeClientFiles/Middleware")({ maxAge: 1000 }));
-    app.use(express.static(__dirname + '/public'));
+    app.use(require("./lib/ServeClientFiles/Middleware")({ maxAge: maxAge }));
+    app.use(express.static(__dirname + '/public', { maxAge: maxAge }));
     app.use(app.router);
     app.use(express.errorHandler({
         dumpExceptions:true,

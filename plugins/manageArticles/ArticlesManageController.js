@@ -139,8 +139,8 @@ function removeArticleAction(req, res, next) {
                 // remove versions
                 //no need to check permissions as latest article already removed
                 dbActionVersion.removeByQuery(dbActionVersion.getQuery().where('id', ids[i]), function (err, result) {
-		    if(err) 
-			Debug._l(err);
+                    if (err)
+                        Debug._l(err);
                     //Debug._l("Versions removed: " + result);
                 });
                 asycI.iterate();
@@ -167,7 +167,7 @@ function getArticlesAction(req, res, next) {
             };
 
             articles.forEach(function (article) {
-                var arr = [article.id, article.id, article.localizedTitle["en_US"],
+                var arr = [article.articleId, article.id, article.localizedTitle["en_US"],
                     article.createDate.toDateString(), article.displayDate.toDateString()];
                 aaData.push(arr);
             });
@@ -196,7 +196,7 @@ function updateArticleAction(req, res, next) {
                     else {
                         var redirect = PluginHelper.getPostParam(req, "redirect");
                         that.setRedirect(req, redirect);
-                        var msg = "Article " + (post.articleId ? "updated" : "added" ) + " successfully.";
+                        var msg = "Article " + (post.id ? "updated" : "added" ) + " successfully.";
                         that.setSuccessMessage(req, msg);
                         next(err, req, res);
                     }

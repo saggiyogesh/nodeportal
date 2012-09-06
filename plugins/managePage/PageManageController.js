@@ -69,8 +69,10 @@ function deletePage(req, res, next) {
             next(err, req, res);
         } else {
             dbAction.authorizedRemove(pageId, function (err, result) {
-                that.setRedirect(req, redirect);
-                that.setSuccessMessage(req, "Page deleted successfully.");
+                if (result) {
+                    that.setRedirect(req, redirect);
+                    that.setSuccessMessage(req, "Page deleted successfully.");
+                }
                 next(err, req, res);
             });
         }
