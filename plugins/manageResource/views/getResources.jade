@@ -7,7 +7,7 @@
                 a(href = "javascript:;" , class="thumbnail #{resource.type == 'folder' ? 'resource-item folder' : 'resource-item' }", id="#{resource.resourceId}")
                     - var type = ResourceManageUtil.getIconImage(req, resource);
                     img(src="#{type == "image" ? viewLib.createURL(req , viewParams) + '/' + resource.resourceId  : fileIconsUrl + type+'.png'}" )
-                    h5.name.caption#{decodeURI(resource.name)}
+                    h5.name.caption #{decodeURI(resource.name)}
 
 -else
     .no-resource.alert.alert-info

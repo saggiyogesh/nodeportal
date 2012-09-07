@@ -28,4 +28,4 @@ function handleRequest(req, res) {
         }
         PageRenderer.render(req, res);
     });
-};
+}
