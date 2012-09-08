@@ -33,6 +33,9 @@ Run the server:
     1. One column layout
     2. 70 - 30 layout
 
+##Configuration:
+`np.properties` in `/lib` folder contains all needed configuration information like DB connection information etc of portal.
+
 ##More Information.
 
 * <a href="http://groups.google.com/group/nodeportal">Google group</a> for discussion.
