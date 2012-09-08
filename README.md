@@ -23,7 +23,7 @@ and install dependencies:
 * imagemagick
 
 ##Default data.
-* Admin email and password: `admin@nodeportal.com`:`admin`
+* Admin email and password: `admin@nodeportal.com`/`admin`
 * Default theme based on twitter bootstrap
 * Layouts:
     1. One column layout
