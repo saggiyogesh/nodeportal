@@ -3,7 +3,7 @@
 
 nodeportal (or simply NP) is a portal platform built on Node.js and mongodb making it amazingly fast.
 
-##Install and create a new site.
+##Install, create and run a new site.
 Execute following commands to install nodeportal globally and create a new site:
 
     npm install nodeportal -g
@@ -16,6 +16,10 @@ or simply clone the repo:
 and install dependencies:
     
      npm install
+     
+Run the server:
+
+    node index
 
 ##External dependencies.
 * node.js, version 0.6 or 0.8
