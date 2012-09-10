@@ -40,7 +40,7 @@ $(function () {
         //bind to version tab click
         $('.manage-articles a[data-toggle="tab"]').on('shown', function (e) {
             if ($(e.currentTarget).data("id") == "version" && $("#versionTableContentBox").children().length == 0) {
-                console.log(e);
+                //console.log(e);
                 var options = {
                     url:Rocket.PluginURL({action:"getArticleVersions"}) + "/" + id,
                     success:function (response) {
@@ -119,26 +119,26 @@ $(function () {
     });
 
     Rocket.bind("manageArticle:listTableMenu:" + EDIT_ARTICLE_COMMAND, function (e) {
-        console.log(e);
+        //console.log(e);
         var id = $('td:eq(1)', e.data.el).text();
         goTo(getURL("edit") + "/" + id);
 
     });
 
     Rocket.bind("manageArticle:listTableMenu:" + DELETE_ARTICLE_COMMAND, function (e) {
-        console.log(e);
+        //console.log(e);
         var id = $('td:eq(1)', e.data.el).text();
         removeArticles(id);
     });
 
     Rocket.bind("manageArticle:listTableMenu:" + PREVIEW_ARTICLE_COMMAND, function (e) {
-        console.log(e);
+        //console.log(e);
         var id = $('td:eq(1)', e.data.el).text();
         window.open(getURL("preview") + "/" + id, '_blank');
     });
 
     Rocket.bind("manageArticle:listTableMenu:" + PERMISSION_COMMAND, function (e) {
-        console.log(e);
+        //console.log(e);
         var articleId = $('td:eq(0)', e.data.el).find("input").val(),
             origin = Rocket.Util.getOrigin(),
             redirect = encodeURIComponent(getURL("")),

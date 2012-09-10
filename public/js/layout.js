@@ -56,7 +56,7 @@ $(function () {
                     obj[i].push($(n).attr("id"))
                 });
             });
-            console.log(obj);
+            //console.log(obj);
             var options = {
                 url:"/app/updatePageData",
                 method:"POST",

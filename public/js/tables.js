@@ -22,7 +22,7 @@
         if (options.contextMenu) {
             var that = this;
             opts["fnRowCallback"] = function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-                console.log(nRow);
+                //console.log(nRow);
                 var obj = {
                     hasCheckbox:options.checkBoxAll ? true : false,
                     contextMenu:options.contextMenu,

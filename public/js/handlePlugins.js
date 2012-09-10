@@ -86,7 +86,7 @@ $(function () {
                 }
             };
         Rocket.ajax(options);
-        console.log(id);
+        //console.log(id);
 
 
     });

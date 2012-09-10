@@ -18,7 +18,7 @@
             var namespace = options.namespace;
             list[namespace] = options.props;
             Rocket.trigger("plugin:" + namespace + ":ready");
-            console.log(list);
+            //console.log(list);
         },
         getThisPluginId:function () {
             //get this from URL

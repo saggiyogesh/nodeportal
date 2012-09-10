@@ -242,7 +242,7 @@ $(function () {
 
 
     function handleItemClick(e) {
-        console.log(e);
+        //console.log(e);
         resetAllMsgs();
         var tgt = e.currentTarget, id = tgt.children[0].id;
         //open item in resouce view in edit mode
@@ -254,8 +254,7 @@ $(function () {
                 updateBreadcrumb();
 
                 //continue on this code
-                //TODO has to think of functionality of UI
-                console.log(model);
+                //console.log(model);
                 //resourceView.html();
                 if (model.type == FOLDER_TYPE) {
                     renderItemsByFolderId(model.resourceId);
@@ -355,7 +354,7 @@ $(function () {
 
     //bind manageResource:resourceView:change event
     Rocket.bind("manageResource:resourceViewList:change", function (e) {
-        console.log("manageResource:resourceView");
+        //console.log("manageResource:resourceView");
         resourceModels = e.data;
         resourceTreeList.html("");
 
