@@ -23,4 +23,8 @@ layoutSchema.statics.findByName = function (name, callback) {
     return this.findOne({ "name": name }, callback);
 };
 
+layoutSchema.statics.getAllExceptDefaults = function(callback){
+    return this.find({$and:[{ name : { $ne : "2-col-70-30" } }, { name : { $ne : "1-col" } }]}, callback);
+};
+
 module.exports = mongoose.model('Layout', layoutSchema);

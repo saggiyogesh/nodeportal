@@ -38,6 +38,31 @@
 
             });
         },
+        /**
+         * Handles ajax responses for flash notifications.
+         * callback fn is passed with 3 params,
+         *  1. {Boolean} true if success
+         *  2. {String} message either success or error
+         *  3. {Object} json given by server
+         * @param {Function} fn
+         */
+        ajaxResponse:function (fn) {
+            return function (response) {
+                fn(response.status === "success" ? true : false, response.message, response.data);
+            };
+        },
+        /**
+         * Ajax io transport utility method
+         * @param options
+         */
+        io:function (options) {
+            if (!options) {
+                throw Error("Ajax options missing");
+            }
+            var that = this, util = Rocket.Util;
+            options.success = util.ajaxResponse(options.callback);
+            util.ajax(options);
+        },
         handleResponseError:function (obj) {
             if (obj.error) {
                 window.location.reload();
@@ -157,8 +182,95 @@
                     window.history.back();
                 }
             });
+        },
+        /**
+         * Method to toggle show of a flash messages
+         *
+         * Jade template should be as
+         * for error flash
+         *
+         * #<nodeId>.ui-helper-hidden.alert.alert-error
+         *      button(class="close", data-dismiss="alert") x
+         *          span.message
+         *
+         * for success flash
+         *
+         * #<nodeId>.ui-helper-hidden.alert.alert-success
+         *      button(class="close", data-dismiss="alert") x
+         *          span.message
+         *
+         *
+         *
+         * @param msg - Message to be displayed
+         * @param nodeId - Id for flash message container
+         * @param ns -  Namespace of current plugin
+         * @param isShow - flag to show or hide
+         */
+        flashMessage:function (msg, nodeId, ns, isShow) {
+            ns = ns || Rocket.Plugin.currentPlugin.namespace;
+            var node = $("#" + ns + "_" + nodeId),
+                msgSpan = node.find("span.message");
+            isShow ? node.removeClass("ui-helper-hidden") : node.addClass("ui-helper-hidden");
+            if(node.data("autohide") == true && !node.hasClass("ui-helper-hidden")){
+                node.delay(4000).fadeOut(1000, function(){
+                    $(this).addClass("ui-helper-hidden")
+                });
+            }
+            if (msg) msgSpan.html(msg);
+        },
+        /**
+         * Id for error flash is default "errorFlash", without namespace
+         * @param msg
+         * @param nodeId
+         * @param ns
+         */
+        showErrorFlash:function (msg, nodeId, ns) {
+            nodeId = nodeId || "errorFlash";
+            this.flashMessage(msg, nodeId, ns, true);
+        },
+
+        hideErrorFlash:function (nodeId, ns) {
+            nodeId = nodeId || "errorFlash";
+            this.flashMessage(null, nodeId, ns, false);
+        },
+        /**
+         * Id for success flash is default "successFlash"
+         *
+         * @param msg
+         * @param nodeId
+         * @param ns
+         */
+        showSuccessFlash:function (msg, nodeId, ns) {
+            nodeId = nodeId || "successFlash";
+            this.flashMessage(msg, nodeId, ns, true);
+        },
+        hideSuccessFlash:function (nodeId, ns) {
+            nodeId = nodeId || "successFlash";
+            this.flashMessage(null, nodeId, ns, false);
+        },
+        enableButton:function (buttonObj) {
+            buttonObj.removeClass("disabled");
+            buttonObj.attr("disabled", false);
+        },
+        disableButton:function (buttonObj) {
+            buttonObj.addClass("disabled");
+            buttonObj.attr("disabled", true);
+        },
+        /**
+         * Utility for toggling button disable
+         * @param {Jquery Object} buttonObj
+         */
+        toggleButtonDisable:function (buttonObj) {
+            if (buttonObj.hasClass("disabled")) {
+                this.enableButton(buttonObj)
+            }
+            else {
+                this.disableButton(buttonObj)
+            }
+
         }
     };
 
     Rocket.ajax = Rocket.Util.ajax;
+    Rocket.io = Rocket.Util.io;
 })(jQuery, Rocket);

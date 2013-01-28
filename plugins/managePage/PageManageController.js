@@ -3,7 +3,7 @@
  */
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
 var PageManager = require("./PageManager.js"), pageForm = require("./pageForms.js"),
-    PAGE_SCHEMA = "Page";
+    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout";
 //var forms = require("./forms");
 
 var PageManageController = module.exports = function (id, app) {
@@ -35,7 +35,50 @@ var PageManageController = module.exports = function (id, app) {
             action:deletePage
         });
 
-        that.addCustomValidations(pageForm.customValidations)
+        that.addCustomValidations(pageForm.customValidations);
+
+        //Listen layout update event and update page data field
+        that.getModelEvent(LAYOUT_SCHEMA).handleUpdate(function (event) {
+            var schemaName = event.schemaName, modelId = event.modelId;
+            if (schemaName === LAYOUT_SCHEMA) {
+                var DBActions = that.getDBActionsLib();
+                var dbAction = DBActions.getSimpleInstance(app, PAGE_SCHEMA);
+                dbAction.get("findByLayoutId", modelId, function (err, pages) {
+                    if (err) {
+                        Debug._l(err);
+                        return;
+                    }
+                    if (pages) {
+                        DBActions.getSimpleInstance(app, LAYOUT_SCHEMA).get("findByLayoutId", modelId, function (err, layout) {
+                            if (err) {
+                                return Debug._l(err);
+                            }
+                            if (layout) {
+                                pages.forEach(function (page) {
+                                    var data = shufflePageData(page, layout);
+
+                                    var model = {
+                                        pageId : page.pageId,
+                                        data:data
+                                    };
+
+                                    dbAction.update(model, function(err, result){
+                                        if(err){
+                                            Debug._l(err);
+                                        }
+                                        if(result){
+                                            Debug._l("Page updated by model event, " + page.pageId);
+                                        }
+                                    })
+
+                                });
+                            }
+                        });
+
+                    }
+                });
+            }
+        });
     });
 };
 
@@ -195,6 +238,22 @@ function getPagesListJSON(req, res, next) {
     });
 }
 
+function shufflePageData(page, layout) {
+    var plugins = [];
+    _.each(page.data, function (arr, placeHolder) {
+        plugins = _.flatten([plugins, arr]);
+    });
+
+    Debug._l(plugins);
+
+    var placeHolders = layout.placeHolderNames;
+    var data = {};
+    placeHolders.forEach(function (name) {
+        data[name] = [];
+    });
+    data[placeHolders[0]] = plugins;
+    return data;
+}
 function updatePageAction(req, res, next) {
     var that = this, db = that.getDB(),
         DBActions = that.getDBActionsLib(), dbAction = DBActions.getInstance(req, PAGE_SCHEMA);
@@ -217,27 +276,48 @@ function updatePageAction(req, res, next) {
                     }
                     next(err, req, res);
                 };
-                if (!post.pageId) { //save a new model called
-                    //initiate the page data as per layout
-                    that.getDBActionsLib().getInstance(req, "Layout").get("findByLayoutId", post.layout, function (err, layout) {
+
+                that.getDBActionsLib().getInstance(req, "Layout").get("findByLayoutId", post.layout,
+                    function (err, layout) {
                         if (err) {
                             return next(err, req, res);
                         }
-                        var placeHolders = layout.placeHolderNames;
-                        var data = {};
-                        placeHolders.forEach(function (name) {
-                            data[name] = [];
-                        });
-                        DBActions.authorizedPopulateModelAndSave(req, PAGE_SCHEMA,
-                            {localizedName:{en_US:req.body[that.getPluginId()].name}, data:data}, {layoutId:"layout", themeId:"theme"},
-                            updateOrSave);
+                        if (!post.pageId) { //save a new model called
+                            //initiate the page data as per layout
+
+                            var placeHolders = layout.placeHolderNames;
+                            var data = {};
+                            placeHolders.forEach(function (name) {
+                                data[name] = [];
+                            });
+                            DBActions.authorizedPopulateModelAndSave(req, PAGE_SCHEMA,
+                                {localizedName:{en_US:req.body[that.getPluginId()].name}, data:data}, {layoutId:"layout", themeId:"theme"},
+                                updateOrSave);
+
+                        } else {
+                            post.isHidden = post.isHidden || false;
+                            var friendlyURL = post.friendlyURL;
+                            if (friendlyURL.charAt(0) != '/') {
+                                post.friendlyURL = "/" + friendlyURL;
+                            }
+
+
+                            that.getDBActionsLib().getInstance(req, PAGE_SCHEMA).get("findByPageId", post.pageId,
+                                function (err, page) {
+                                    var updateObj = {localizedName:{en_US:req.body[that.getPluginId()].name}};
+                                    //update plugins from old layout to new layout
+                                    if (page.layoutId != post.layout) {
+                                        var data = shufflePageData(page, layout);
+                                        Debug._li("data ", data, true);
+                                        updateObj["data"] = data;
+                                    }
+
+                                    DBActions.authorizedPopulateModelAndUpdate(req, PAGE_SCHEMA,
+                                        updateObj, {layoutId:"layout", themeId:"theme"}, updateOrSave);
+
+                                });
+                        }
                     });
-                } else {
-                    post.isHidden = post.isHidden || false;
-                    DBActions.authorizedPopulateModelAndUpdate(req, PAGE_SCHEMA,
-                        {localizedName:{en_US:req.body[that.getPluginId()].name}}, {layoutId:"layout", themeId:"theme"},
-                        updateOrSave);
-                }
             }
             else {
                 that.setErrorMessage(req, "entered-invalid-data");

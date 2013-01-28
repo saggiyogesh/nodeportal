@@ -61,6 +61,10 @@ pageSchema.statics.findByFriendlyURL = function (friendlyURL, callback) {
     }, callback);
 };
 
+pageSchema.statics.findByLayoutId = function (layoutId, callback) {
+    return this.find({"layoutId":layoutId }, callback);
+};
+
 // function plugin(schema, options) {
 // var i = require("util").inspect;
 // console.log(i("plugin>>"));

@@ -1,0 +1,78 @@
+script(src="/code/ace/ace.js", type="text/javascript", charset="utf-8")
+
+style(type="text/css")
+    .theme-builder-container{
+        height: 100%;
+        border: 1px solid #ddd;
+        -webkit-border-radius: 3px;
+        -moz-border-radius: 3px;
+        border-radius: 3px;
+    }
+    .theme-builder-container .workspace{
+        border-left: 1px solid #ddd;
+        min-height:500px;
+    }
+    #{"#" + namespace +"_code"} {
+        position:relative;
+        width:100%;
+        height:500px;
+    }
+    ul.dynatree-container{
+        border: none;
+    }
+    .actions{
+        margin: 10px;
+    }
+
+    .actions .dropdown-menu{
+        min-width: 100%;
+    }
+
+mixin addToDropdown(themes)
+    each theme in themes
+        li
+            a(href="javascript:;", class=namespace+"-themeItem", data-id=theme.themeId)=theme.name
+
+//- Flash messages
+.ui-helper-hidden.alert.alert-error(id=namespace+"_errorFlash", data-autohide="true")
+    button(class="close", data-dismiss="alert") x
+    span.message
+
+.ui-helper-hidden.alert.alert-success(id=namespace+"_successFlash", data-autohide="true")
+    button(class="close", data-dismiss="alert") x
+    span.message
+
+//- Plugin container
+.toolbar.btn-toolbar
+    button(class="btn btn-primary", type="button", id=namespace+"_create", style="margin-bottom: 22px;") Create
+    &nbsp;
+    .btn-group
+        button(class="btn btn-primary dropdown-toggle",data-toggle="dropdown", id=namespace+"_open", disabled=isDisabled) Open
+            span.caret
+        ul.dropdown-menu
+            mixin addToDropdown(themes)
+    &nbsp;
+    button(class="btn btn-primary disabled", type="button", id=namespace+"_close", disabled="disabled" ,style="margin-bottom: 22px;") Close
+
+.theme-builder-container.row-fluid
+    .sidebar.span2
+        .actions
+            .btn-group
+                button(class="btn btn-primary dropdown-toggle disabled",data-toggle="dropdown", id=namespace+"_actions", disabled="disabled") Actions
+                    span.caret
+                ul.dropdown-menu
+                    li
+                        a(href="javascript:;", id=namespace+"_newAction") New
+                    li
+                        a(href="javascript:;", id=namespace+"_uploadAction") Upload
+                    li
+                        a(href="javascript:;", id=namespace+"_deleteAction") Delete
+        div.tree(id=namespace+"_themeTree")
+
+
+    .workspace.span10
+        .editor.span12
+            div(id=namespace+"_code", style="display:none;")
+            img(id=namespace+"_image", style="display:none;margin: 50px;")
+
+

@@ -22,5 +22,12 @@ themeSchema.statics.findByName = function (name, callback) {
     return this.findOne({ "name": name }, callback);
 };
 
+themeSchema.statics.getAll = function(callback){
+    return this.find({}, callback);
+};
+
+themeSchema.statics.getAllExceptDefault = function(callback){
+    return this.find({ name : { $ne : "Default" } }, callback);
+};
 
 module.exports = mongoose.model('Theme', themeSchema);

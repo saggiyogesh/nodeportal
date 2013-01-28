@@ -117,5 +117,29 @@
             "async":true
         },
         "controller":"AsyncDemoController"
+    },
+    {
+        "id":"themeBuilder",
+        "name":{
+            "en_US":"Theme Builder"
+        },
+        "description":"Theme Builder Plugin",
+        "group":"Plugin",
+        "config":{
+            "settings":true
+        },
+        "controller":"ThemeBuilderPluginController"
+    },
+    {
+        "id":"layoutBuilder",
+        "name":{
+            "en_US":"Layout Builder"
+        },
+        "description":"Layout Builder Plugin",
+        "group":"Plugin",
+        "config":{
+            "settings":true
+        },
+        "controller":"LayoutBuilderPluginController"
     }
 ]

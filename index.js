@@ -29,7 +29,6 @@ app.configure(function () {
     app.use(express.bodyParser());
     app.use(express.cookieParser());
     app.use(express.session({secret:"90ndsj9dfdsf"}));
-    app.use(require("./lib/middleware")());
 //    app.use(app.router);
     app.set('view engine', 'jade');
     app.set('view options', {
@@ -46,8 +45,10 @@ app.error(function (err, req, res, next) {
 
 app.configure('development', function () {
     app.use(assetManager(manager.assetManagerGroups));
-    app.use(require("./lib/ServeClientFiles/Middleware")({ maxAge: 1000 }));
     app.use(express.static(__dirname + '/public', { maxAge: 1000 }));
+    app.use(require("./lib/ServeClientFiles/Middleware")({ maxAge: 1000 }));
+    app.use(require("./lib/middleware")());
+    //app.use(require("./lib/middleware/PagePermission")());
     app.use(app.router);
     app.use(express.errorHandler({
         dumpExceptions:true,
@@ -59,8 +60,10 @@ app.configure('development', function () {
 app.configure('production', function () {
     var maxAge = getProp("STATIC_MAX_AGE");
     app.use(assetManager(manager.assetManagerGroupsProd));
-    app.use(require("./lib/ServeClientFiles/Middleware")({ maxAge: maxAge }));
     app.use(express.static(__dirname + '/public', { maxAge: maxAge }));
+    app.use(require("./lib/ServeClientFiles/Middleware")({ maxAge: maxAge }));
+    app.use(require("./lib/middleware")());
+
     app.use(app.router);
     app.use(express.errorHandler({
         dumpExceptions:true,
@@ -69,7 +72,6 @@ app.configure('production', function () {
 });
 
 require(libPath + 'plugins').init(app);
-//require(libPath + 'ServiceHandler')(app);
 require(libPath + 'AppRoutes')(app);
 
 

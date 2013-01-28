@@ -2,7 +2,7 @@
     "author":"Yogesh <saggiyogesh@gmail.com>",
     "name":"nodeportal",
     "description":"Portal based cms written in node.js",
-    "version":"0.0.4",
+    "version":"0.0.1",
     "homepage":"nodeportal.com",
     "keywords":["cms", "node", "nodejs", "portal", "mongodb", "express", "mongoose", "twitter-bootstrap", "ckeditor", "easy", "fast"],
     "repository":{
@@ -21,11 +21,15 @@
     "easyimage":"0.1.3",
     "bcrypt":"0.7.1",
     "mongoose":"2.5.1",
-    "validator":"0.3.9"
-    }, "engines":{
-      "node":">= 0.6.0"
-    },
-    "bin": {
-      "nodeportal": "bin/nodeportal"
+    "validator":"0.3.9",
+    "mkdirp":"0.3.0",
+    "mime":">= 0.0.1",
+    "fs-watch-tree":"0.2.2",
+    "fs.extra":"1.2.0"
+}, "engines":{
+    "node":">= 0.6.0"
+},
+    "bin":{
+        "nodeportal":"bin/nodeportal"
     }
 }

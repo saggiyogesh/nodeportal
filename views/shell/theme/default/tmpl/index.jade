@@ -1,0 +1,15 @@
+doctype html
+html(lang=locale)
+    head
+        include head
+    body
+        include header
+        .container
+            .row-fluid
+                !=layoutHTMLTMPL
+            include footer
+
+        include scripts
+        !=bottomIncludes
+
+   

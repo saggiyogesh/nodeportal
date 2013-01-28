@@ -1,0 +1,14 @@
+//- Definition of variables
+    id: {String} plugin namespace
+    showTools: {Boolean} to show the tools
+    showSettingIcon: {Boolean} to show the settings
+    showCloseIcon:  {Boolean} to show the remove icon
+
+-if(showTools)
+    .tools.pull-right
+        -if(showSettingIcon)
+            a.edit(data-id=id, href="#editPluginModal",data-toggle="modal")
+                i.icon-edit.icon-white
+        -if(showCloseIcon)
+        a.remove(data-id=id)
+            i.icon-remove.icon-white
