@@ -36,6 +36,10 @@ Run the server:
 ##Configuration:
 `np.properties` in `/lib` folder contains all needed configuration information like DB connection information etc of portal.
 
+##New in version 1.0.0
+* Themebuilder and Layoutbuilder plugin - to create new themes and layouts. Newly created themes and layouts can be edited and changes are reflected on runtime without any server restart.
+
+
 ##More Information.
 
 * <a href="http://groups.google.com/group/nodeportal">Google group</a> for discussion.
