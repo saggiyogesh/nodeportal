@@ -2,7 +2,7 @@
     "author":"Yogesh <saggiyogesh@gmail.com>",
     "name":"nodeportal",
     "description":"Portal based cms written in node.js",
-    "version":"1.0.0",
+    "version":"0.1",
     "homepage":"nodeportal.com",
     "keywords":["cms", "node", "nodejs", "portal", "mongodb", "express", "mongoose", "twitter-bootstrap", "ckeditor", "easy", "fast"],
     "repository":{
