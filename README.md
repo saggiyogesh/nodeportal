@@ -44,6 +44,7 @@ Run the server:
 
 * <a href="http://groups.google.com/group/nodeportal">Google group</a> for discussion.
 * [Home Page](http://www.nodeportal.com/ "nodeportal")
+* [Report bugs](https://github.com/saggiyogesh/nodeportal/issues)
 
 ##License.
 The MIT License (MIT)
