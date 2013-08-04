@@ -36,8 +36,9 @@ Run the server:
 ##Configuration:
 `np.properties` in `/lib` folder contains all needed configuration information like DB connection information etc of portal.
 
-##New in version 0.1
-* Themebuilder and Layoutbuilder plugin - to create new themes and layouts. Newly created themes and layouts can be edited and changes are reflected on runtime without any server restart.
+##New in version 0.2
+* Stability on windows. various fixes are implemented to use all api on windows.
+* Require.js is used for loading async public and client's scripts of plugins.
 
 
 ##More Information.
