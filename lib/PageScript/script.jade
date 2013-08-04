@@ -1,0 +1,7 @@
+//- {modules} are required plugins
+    {code} to execute the client js code, modules available are defined by above modules variable
+
+script
+    require('#{modules}'.split(','), function () {
+        !{code}
+    });
