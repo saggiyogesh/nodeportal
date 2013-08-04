@@ -1,5 +1,5 @@
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController"),
-    defaultView = require(process.cwd() + "/lib/articles/DefaultView")(),
+    defaultView = require(process.cwd() + "/lib/articles/DefaultView"),
     articleForms = require("./articleForms"),
     ARTICLE_SCHEMA = "Article", ARTICLE_VERSION_SCHEMA = "ArticleVersion",
     ArticleManager = require("./ArticleManager"),
@@ -97,7 +97,7 @@ function previewArticleAction(req, res, next) {
             if (err) {
                 return next(err, req, res);
             }
-            var html = defaultView({article:latestArticle, req:req});
+            var html = defaultView(req.app, {article:latestArticle, req:req});
             params.action = "preview";
             req.attrs.preview = html;
             return next(null, req, res);

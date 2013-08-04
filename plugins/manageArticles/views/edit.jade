@@ -16,10 +16,11 @@ ul#versionTableMenu.contextMenu
         .tab-pane.fade#version
             .span8
                 #versionTableContentBox
-        script
-            window.onload = function(){
-                Rocket.trigger({type:"manageArticle:edit:load", target:this, data:{id:'#{req.params.id}'}});
-            }
+        :script
+            require(["manageArticles"], function(){
+               Rocket.trigger({type:"manageArticle:edit:load", target:this, data:{id:'#{req.params.id}'}});
+            });
+
 
 
 

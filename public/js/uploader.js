@@ -1,13 +1,12 @@
 /**
  * Lib for ajax uploading of file to server.
- * Extended jQuery-File-Upload (https://github.com/blueimp/jQuery-File-Upload)
  */
-(function ($, Rocket) {
+define(["util", "_", "dynaTree", "fileUpload"], function () {
     var MODEL_TMPL = '<div id="<%=modelId%>" class="modal hide fade" tabindex="-1" role="dialog" ' +
-        'aria-labelledby="<%=modelId%>_Label" aria-hidden="true" style="display: none;"><div class="modal-header">' +
-        '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>' +
-        '<h3 id="myModalLabel"><%=modelHeading%></h3></div><div class="modal-body"><%=modelBody %></div>' +
-        '<div class="modal-footer"><button class="btn" data-dismiss="modal">Close</button></div></div>',
+            'aria-labelledby="<%=modelId%>_Label" aria-hidden="true" style="display: none;"><div class="modal-header">' +
+            '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>' +
+            '<h3 id="myModalLabel"><%=modelHeading%></h3></div><div class="modal-body"><%=modelBody %></div>' +
+            '<div class="modal-footer"><button class="btn" data-dismiss="modal">Close</button></div></div>',
 
         UPLOADER_TMPL = '<form id="<%=uploaderId%>" action="" method="POST" enctype="multipart/form-data">' +
             '<div class="row fileupload-buttonbar"><div class="span4"><span class="btn btn-success fileinput-button">' +
@@ -15,6 +14,7 @@
             '</span> <button type="submit" class="btn btn-primary start"><i class="icon-upload icon-white"></i>' +
             '<span>Start all</span></button> <button type="reset" class="btn btn-warning cancel">' +
             '<i class="icon-ban-circle icon-white"></i><span>Cancel all</span></button></div>' +
+            '<div class="span4 drop-alert hide" ><div class="alert alert-success"><strong>Drop files !!</strong></div></div>' +
             '<div class="span5 fileupload-progress fade"><div class="progress progress-success progress-striped ' +
             'active" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="bar" style="width:0%;"></div>' +
             '</div><div class="progress-extended"></div></div></div><div class="fileupload-loading"></div>' +
@@ -50,10 +50,10 @@
         var uploaderCompiled = _.template(UPLOADER_TMPL),
             modelCompiled = _.template(MODEL_TMPL);
         var modelHTML = modelCompiled({
-            modelId:that.modelId,
-            modelHeading:"Upload files to server",
-            modelBody:uploaderCompiled({
-                uploaderId:that.uploaderId
+            modelId: that.modelId,
+            modelHeading: "Upload files to server",
+            modelBody: uploaderCompiled({
+                uploaderId: that.uploaderId
             })
         });
         var body = $("body");
@@ -72,9 +72,9 @@
 
         //default options which can't be overridden
         var defaultOpts = {
-            uploadTemplateId:null,
-            downloadTemplateId:null,
-            uploadTemplate:function (o) {
+            uploadTemplateId: null,
+            downloadTemplateId: null,
+            uploadTemplate: function (o) {
                 var rows = $();
                 $.each(o.files, function (index, file) {
                     var row = $('<tr class="template-upload fade">' +
@@ -93,7 +93,7 @@
                 });
                 return rows;
             },
-            downloadTemplate:function (o) {
+            downloadTemplate: function (o) {
                 var rows = $();
                 $.each(o.files, function (index, file) {
                     var row = $('<tr class="template-download fade">' +
@@ -115,12 +115,35 @@
         _.extend(options, defaultOpts);
         options.always = that._handleAlways();
 
+        //setting up model as drop zone
+        options.dropZone = $("#" + that.uploaderId);
+
         $('#' + that.uploaderId).fileupload(options);
 
         that.form = $('#' + that.uploaderId);
 
         //handle model close
         that._onModelClose();
+
+        that.bindEvents();
+    };
+
+    /**
+     * Files drag drop events are attached with the uploader.
+     */
+    uploader.prototype.bindEvents = function () {
+        var that = this;
+        var dropAlert = $("#" + that.modelId + " .drop-alert");
+        $("#" + that.uploaderId)
+            .on("dragover", function (e) {
+                dropAlert.show();
+            })
+            .on('dragleave', function (e) {
+                dropAlert.hide();
+            })
+            .on('drop', function (e) {
+                dropAlert.hide();
+            });
     };
 
     /**
@@ -129,13 +152,13 @@
     uploader.prototype.open = function () {
         var that = this;
         $('#' + that.modelId).modal({
-            backdrop:true,
-            keyboard:true
+            backdrop: true,
+            keyboard: true
         }).css({
-                'width':function () {
+                'width': function () {
                     return ($(document).width() * .7) + 'px';
                 },
-                'margin-left':function () {
+                'margin-left': function () {
                     return -($(this).width() / 2);
                 }
             });
@@ -154,7 +177,7 @@
             // if plugin namespace is there then post form data for that plugin
             if (pluginNS)
                 name = pluginNS + "[" + name + "]";
-            form.append(com({name:name, value:value}));
+            form.append(com({name: name, value: value}));
         });
     };
 
@@ -174,7 +197,7 @@
             if (that._always) {
                 that._always(e, data);
             }
-            if(that._onSuccess && data.textStatus === "success"){
+            if (that._onSuccess && data.textStatus === "success") {
                 that._onSuccess(data.result);
             }
 
@@ -208,4 +231,4 @@
     };
 
     Rocket.Uploader = uploader;
-})(jQuery, Rocket);
+});

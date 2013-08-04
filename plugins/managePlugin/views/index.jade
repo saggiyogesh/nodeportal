@@ -9,10 +9,16 @@
         .tab-pane.fade.in.active#managePluginSettings
             form.well.form-search#managePluginEditTitle(action="#{viewLib.getURL(req, "updatePluginTitle")}")
                 input(type="text", name="title.en_US", value="#{mp.title.en_US}")
-                |&nbsp;
+                | &nbsp;
                 button(type="submit", class="btn") Edit Title
             -if(pluginSettingsView)
                 .well#settingsArea
                     !{pluginSettingsView}
         -if(mp.showEditPermission)
             .tab-pane.fade#managePluginPermissions
+
+
+:script
+    require(['managePlugin'],function(){
+               Rocket.trigger({type:"managePlugin:load", target:this, data:{}});
+    });

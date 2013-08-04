@@ -1,4 +1,4 @@
-(function ($, Rocket) {
+define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatables-bootstrap"], function () {
     var dataTable,
         TMPL = '<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="{tableId}"></table>';
     dataTable = function (options, data) {
@@ -7,12 +7,12 @@
             throw new Error("Content Box is undefined");
         }
 
-        var opts = { "sDom":"<'row'<'span4'l><''f>r>t<'row'<'span4'i><''p>>",
-            "sPaginationType":"bootstrap",
-            "oLanguage":{
-                "sLengthMenu":"_MENU_ records per page"
+        var opts = { "sDom": "<'row'<'span4'l><''f>r>t<'row'<'span4'i><''p>>",
+            "sPaginationType": "bootstrap",
+            "oLanguage": {
+                "sLengthMenu": "_MENU_ records per page"
             },
-            "aoColumns":options.checkBoxAll ? this.getCBHeader(data.columns) : data.columns
+            "aoColumns": options.checkBoxAll ? this.getCBHeader(data.columns) : data.columns
         };
         if (options.checkBoxAll) {
             opts["aaSorting"] = [
@@ -24,10 +24,10 @@
             opts["fnRowCallback"] = function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
                 //console.log(nRow);
                 var obj = {
-                    hasCheckbox:options.checkBoxAll ? true : false,
-                    contextMenu:options.contextMenu,
-                    nRow:nRow,
-                    aData:aData
+                    hasCheckbox: options.checkBoxAll ? true : false,
+                    contextMenu: options.contextMenu,
+                    nRow: nRow,
+                    aData: aData
 
                 };
                 that.bindContextMenu(obj);
@@ -47,11 +47,11 @@
             var that = this;
             opts["fnServerData"] = function (sSource, aoData, fnCallback) {
                 $.ajax({
-                    "dataType":'json',
-                    "type":"GET",
-                    "url":sSource,
-                    "data":aoData,
-                    "success":function (json) {
+                    "dataType": 'json',
+                    "type": "GET",
+                    "url": sSource,
+                    "data": aoData,
+                    "success": function (json) {
                         if (options.checkBoxAll) {
                             var aaData = json.aaData;
                             json.aaData = that.getValues(aaData);
@@ -76,10 +76,10 @@
         parentNode.find('.dataTables_filter input').unbind();
 
         parentNode.find('.dataTables_filter input').typing({
-            stop:function (event, $elem) {
+            stop: function (event, $elem) {
                 table.fnFilter($elem.val());
             },
-            delay:400
+            delay: 400
         });
 
         if (!options.ajax && options.checkBoxAll) {
@@ -92,9 +92,9 @@
             ns = contextMenu.namespace, that = this;
         selector = _.isString(selector) ? $("#" + selector) : selector;
         selector.contextMenu({
-            menu:menuId
+            menu: menuId
         }, function (action, el, pos) {
-            Rocket.trigger({type:ns + ":" + menuId + ":" + action, target:that, data:{el:el, pos:pos} });
+            Rocket.trigger({type: ns + ":" + menuId + ":" + action, target: that, data: {el: el, pos: pos} });
         });
     };
 
@@ -107,7 +107,7 @@
     dataTable.prototype.getValues = function (values) {
         var that = this;
         _.each(values, function (val) {
-            val[0] = that.createCB({type:'data', value:val[0]});
+            val[0] = that.createCB({type: 'data', value: val[0]});
         });
         return values;
     };
@@ -115,7 +115,7 @@
     dataTable.prototype.getCBHeader = function (columns) {
         var that = this;
         return _.flatten([
-            { "sTitle":that.createCB({type:'selectAll'}), "bSortable":false},
+            { "sTitle": that.createCB({type: 'selectAll'}), "bSortable": false},
             columns
         ]);
     };
@@ -155,7 +155,7 @@
             };
         table.find("#selectAll").click(function () {
             cbData.attr('checked', this.checked);
-            Rocket.trigger({type:tableId + ":checkBox:click", target:this, data:getCBValues()});
+            Rocket.trigger({type: tableId + ":checkBox:click", target: this, data: getCBValues()});
         });
 
         cbData.click(function () {
@@ -164,11 +164,12 @@
             } else {
                 table.find("#selectAll").removeAttr("checked");
             }
-            Rocket.trigger({type:tableId + ":checkBox:click", target:this, data:getCBValues()});
+            Rocket.trigger({type: tableId + ":checkBox:click", target: this, data: getCBValues()});
 
         });
     };
 
 
     Rocket.Table = dataTable;
-})(jQuery, Rocket);
+});
+

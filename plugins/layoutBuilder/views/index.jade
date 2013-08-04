@@ -1,4 +1,8 @@
 style(type="text/css")
+    textarea {
+        width: 300px;
+        height: 200px;
+    }
 
 
 mixin addToDropdown(layouts)
@@ -29,3 +33,6 @@ mixin addToDropdown(layouts)
     button(class="btn btn-primary disabled", type="button", id=namespace+"_close", disabled="disabled" ,style="margin-bottom: 22px;") Close
 
     div(id=namespace+"_editForm")
+
+:script
+    require(["layoutBuilder"]);

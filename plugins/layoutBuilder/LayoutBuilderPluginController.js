@@ -57,7 +57,7 @@ function createLayout(req, res, next) {
                 next(null, req, res);
             }
             else {
-                that.getFileUtil().copyFile(defaultLayoutPath, newLayoutPath, function (err) {
+                that.FileUtil.copyFile(defaultLayoutPath, newLayoutPath, function (err) {
                     dbAction.save({name:name, path:path, placeHolderNames:DEFAULT_PLACEHOLDERS},
                         function (err, result) {
                             if (!err && result) {
@@ -85,7 +85,7 @@ function openLayout(req, res, next) {
         app = req.app,
         layoutHome = getLayoutHome(app),
         layoutId = params.id,
-        fileUtil = that.getFileUtil();
+        fileUtil = that.FileUtil;
 
     if (layoutId) {
         dbAction.get("findByLayoutId", layoutId, function (err, layout) {
@@ -120,7 +120,7 @@ function openLayout(req, res, next) {
 function updateLayoutAction(req, res, next) {
     var that = this, db = that.getDB(),
         DBActions = that.getDBActionsLib(), dbAction = DBActions.getInstance(req, LAYOUT_SCHEMA),
-        fileUtil = that.getFileUtil(), formObj = Forms.EditForm;
+        fileUtil = that.FileUtil, formObj = Forms.EditForm;
 
     that.ValidateForm(req, formObj, function (err, result) {
         if (err) {

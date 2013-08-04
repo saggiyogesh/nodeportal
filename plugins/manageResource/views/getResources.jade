@@ -14,6 +14,9 @@
         button(class="close", data-dismiss="alert") x
         H4 No files or folders found.
 
-script
-    Rocket.trigger({type:"manageResource:resourceViewList:change", target: this, data: !{JSON.stringify(req.attrs.resourceModel)}});
+:script
+    require(["events"], function(){
+       Rocket.trigger({type:"manageResource:resourceViewList:change", target: this, data: !{JSON.stringify(req.attrs.resourceModel)}});
+    });
+
 

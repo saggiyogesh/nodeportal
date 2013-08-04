@@ -1,16 +1,12 @@
-/**
- *
- */
-
-(function ($, Rocket) {
+define(["events", "_", "bootstrap"], function () {
     var onLoadFns = [];
     Rocket.Util = {
-        linkAsync:function (params, fn) {
+        linkAsync: function (params, fn) {
             var that = this;
             params.success = fn;
             that.ajax(params);
         },
-        submitFormAsync:function (form, fn) {
+        submitFormAsync: function (form, fn) {
             var that = this,
                 options = {};
             form = $(form);
@@ -22,18 +18,18 @@
 
 
         },
-        ajax:function (options) {
+        ajax: function (options) {
             if (!options) {
                 throw Error("Ajax options missing");
             }
             $.ajax({
-                url:options.url,
-                global:false,
-                cache:false,
-                async:options.async || true,
-                type:options.method || 'GET',
-                data:options.data,
-                success:options.success || function () {
+                url: options.url,
+                global: false,
+                cache: false,
+                async: options.async || true,
+                type: options.method || 'GET',
+                data: options.data,
+                success: options.success || function () {
                 }
 
             });
@@ -46,7 +42,7 @@
          *  3. {Object} json given by server
          * @param {Function} fn
          */
-        ajaxResponse:function (fn) {
+        ajaxResponse: function (fn) {
             return function (response) {
                 fn(response.status === "success" ? true : false, response.message, response.data);
             };
@@ -55,7 +51,7 @@
          * Ajax io transport utility method
          * @param options
          */
-        io:function (options) {
+        io: function (options) {
             if (!options) {
                 throw Error("Ajax options missing");
             }
@@ -63,29 +59,29 @@
             options.success = util.ajaxResponse(options.callback);
             util.ajax(options);
         },
-        handleResponseError:function (obj) {
+        handleResponseError: function (obj) {
             if (obj.error) {
                 window.location.reload();
             }
         },
-        showDeleteConfirmation:function (url, redirect) {
+        showDeleteConfirmation: function (url, redirect) {
             var that = this;
             var $dialog = $('<div></div>')
                 .html('Are you sure to delete this ?')
                 .dialog({
-                    autoOpen:true,
-                    title:'Delete',
-                    resizable:false,
-                    height:200,
-                    width:300,
-                    modal:true,
-                    buttons:{
-                        "Ok":function () {
+                    autoOpen: true,
+                    title: 'Delete',
+                    resizable: false,
+                    height: 200,
+                    width: 300,
+                    modal: true,
+                    buttons: {
+                        "Ok": function () {
                             $(this).dialog("close");
                             var options = {
-                                method:"POST",
-                                url:url,
-                                success:function (data) {
+                                method: "POST",
+                                url: url,
+                                success: function (data) {
                                     that.handleResponseError(data);
                                     if (redirect) {
                                         window.location.href = redirect;
@@ -95,34 +91,34 @@
                             };
                             that.ajax(options);
                         },
-                        Cancel:function () {
+                        Cancel: function () {
                             $(this).dialog("close");
                         }
                     }
                 });
 
         },
-        showInfoDialog:function (msg) {
+        showInfoDialog: function (msg) {
             var that = this;
             msg = msg || "Sample info message"
             var $dialog = $('<div></div>')
                 .html(msg)
                 .dialog({
-                    autoOpen:true,
-                    title:'Information',
-                    resizable:false,
-                    height:200,
-                    width:300,
-                    modal:true,
-                    buttons:{
-                        Ok:function () {
+                    autoOpen: true,
+                    title: 'Information',
+                    resizable: false,
+                    height: 200,
+                    width: 300,
+                    modal: true,
+                    buttons: {
+                        Ok: function () {
                             $(this).dialog("close");
                         }
                     }
                 });
 
         },
-        invokePost:function (url, postParams) {
+        invokePost: function (url, postParams) {
             var form = $('<form></form>');
 
             form.attr("method", "post");
@@ -143,7 +139,7 @@
 
         },
 
-        onLoad:function (fn) {
+        onLoad: function (fn) {
             if (fn) {
                 onLoadFns.push(fn)
             }
@@ -153,10 +149,10 @@
                 });
             }
         },
-        getOrigin:function () {
+        getOrigin: function () {
             return window.location.origin || window.location.href.split(window.location.pathname)[0];
         },
-        onFormCancel:function (ns, cancelButtonId) {
+        onFormCancel: function (ns, cancelButtonId) {
             var that = this;
             $("#" + cancelButtonId).click(function (e) {
                 var parent = $(e.currentTarget).parent(),
@@ -175,8 +171,8 @@
                 e.preventDefault();
 
                 var redirectEl = $(parent[0]).find('input[name="' + ns + '[redirect]"]');
-                if (redirectEl) {
-                    location.href = that.getOrigin() + redirectEl.val();
+                if (redirectEl.length) {
+                    location.href = that.getOrigin() + (redirectEl.val() ? redirectEl.val() : "");
                 }
                 else {
                     window.history.back();
@@ -206,13 +202,13 @@
          * @param ns -  Namespace of current plugin
          * @param isShow - flag to show or hide
          */
-        flashMessage:function (msg, nodeId, ns, isShow) {
+        flashMessage: function (msg, nodeId, ns, isShow) {
             ns = ns || Rocket.Plugin.currentPlugin.namespace;
             var node = $("#" + ns + "_" + nodeId),
                 msgSpan = node.find("span.message");
             isShow ? node.removeClass("ui-helper-hidden") : node.addClass("ui-helper-hidden");
-            if(node.data("autohide") == true && !node.hasClass("ui-helper-hidden")){
-                node.delay(4000).fadeOut(1000, function(){
+            if (node.data("autohide") == true && !node.hasClass("ui-helper-hidden")) {
+                node.delay(4000).fadeOut(1000, function () {
                     $(this).addClass("ui-helper-hidden")
                 });
             }
@@ -224,12 +220,12 @@
          * @param nodeId
          * @param ns
          */
-        showErrorFlash:function (msg, nodeId, ns) {
+        showErrorFlash: function (msg, nodeId, ns) {
             nodeId = nodeId || "errorFlash";
             this.flashMessage(msg, nodeId, ns, true);
         },
 
-        hideErrorFlash:function (nodeId, ns) {
+        hideErrorFlash: function (nodeId, ns) {
             nodeId = nodeId || "errorFlash";
             this.flashMessage(null, nodeId, ns, false);
         },
@@ -240,19 +236,19 @@
          * @param nodeId
          * @param ns
          */
-        showSuccessFlash:function (msg, nodeId, ns) {
+        showSuccessFlash: function (msg, nodeId, ns) {
             nodeId = nodeId || "successFlash";
             this.flashMessage(msg, nodeId, ns, true);
         },
-        hideSuccessFlash:function (nodeId, ns) {
+        hideSuccessFlash: function (nodeId, ns) {
             nodeId = nodeId || "successFlash";
             this.flashMessage(null, nodeId, ns, false);
         },
-        enableButton:function (buttonObj) {
+        enableButton: function (buttonObj) {
             buttonObj.removeClass("disabled");
             buttonObj.attr("disabled", false);
         },
-        disableButton:function (buttonObj) {
+        disableButton: function (buttonObj) {
             buttonObj.addClass("disabled");
             buttonObj.attr("disabled", true);
         },
@@ -260,7 +256,7 @@
          * Utility for toggling button disable
          * @param {Jquery Object} buttonObj
          */
-        toggleButtonDisable:function (buttonObj) {
+        toggleButtonDisable: function (buttonObj) {
             if (buttonObj.hasClass("disabled")) {
                 this.enableButton(buttonObj)
             }
@@ -273,4 +269,4 @@
 
     Rocket.ajax = Rocket.Util.ajax;
     Rocket.io = Rocket.Util.io;
-})(jQuery, Rocket);
+});

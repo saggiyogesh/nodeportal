@@ -22,7 +22,7 @@ Run the server:
     node index
 
 ##External dependencies.
-* node.js, version 0.6 or 0.8
+* node.js, version > 0.8
 * mongodb, version > 2.0
 * imagemagick
 

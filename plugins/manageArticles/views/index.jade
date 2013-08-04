@@ -1,8 +1,8 @@
 !{viewLib.Messages(req , namespace)}
 
 style
-    .show-all-articles{
-        margin-top:30px;
+    .show-all-articles {
+        margin-top: 30px;
     }
 
 ul#listTableMenu.contextMenu
@@ -14,15 +14,15 @@ ul#listTableMenu.contextMenu
 .article-toolbar
     button(id='add', class='btn')
         i.icon-plus-sign
-        |  Add Article
+        | Add Article
     &nbsp;
     button(id='delete', class='btn disabled', disabled="disabled")
         i.icon-trash
-        |  Delete
+        | Delete
 
 .show-all-articles
     #listTableContentBox
-    script
-        window.onload = function(){
+    :script
+        require(["manageArticles"], function(){
             Rocket.trigger({type:"manageArticle:index:load", target:this});
-        };
+        });

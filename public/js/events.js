@@ -1,7 +1,9 @@
 /**
  *
  */
-(function () {
+
+define( function(){
+
     function Events() {
         this._listeners = {};
     }
@@ -56,5 +58,5 @@
     };
     Rocket.unbind = function (event, listener) {
         baseEvent.unbind.call(baseEvent, event, listener);
-    }
-})();
+    };
+});

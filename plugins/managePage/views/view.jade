@@ -1,34 +1,34 @@
 style(type="text/css")
-    ul.dynatree-container{
-        border:none;
+    ul.dynatree-container {
+        border: none;
     }
 
-    .page-layout{
+    .page-layout {
         border: 1px solid #ddd;
         -webkit-border-radius: 3px;
         -moz-border-radius: 3px;
         border-radius: 3px;
     }
 
-    .page-layout .page-edit-view{
+    .page-layout .page-edit-view {
         border-left: 1px solid #ddd;
         min-height: 300px;
     }
 
-    .page-layout .page-edit-view #pages_Tabs{
+    .page-layout .page-edit-view #pages_Tabs {
         margin-left: 15px;
         margin-top: 15px;
     }
 
-    .page-layout .page-edit-view #pages_Tabs form legend{
-        border:none;
+    .page-layout .page-edit-view #pages_Tabs form legend {
+        border: none;
     }
 
-    .page-layout .pagesTree{
+    .page-layout .pagesTree {
         margin-top: 15px;
     }
 
-    .page-layout .add-page{
+    .page-layout .add-page {
         margin-left: 8px;
     }
 
@@ -47,7 +47,7 @@ ul#myMenu.contextMenu
             - var params = {route: 'add'};
             a(href="#{viewLib.createURL(req , params)}", id="next")
                 i.icon-plus-sign
-                |  Add Page
+                | Add Page
 
     .page-edit-view.span9
         #pages_Tabs
@@ -58,12 +58,12 @@ ul#myMenu.contextMenu
             #tabs-2
                 .control-group
                     label(class="control-label", for="childSelect")
-                        |Move
+                        | Move
                         b
-                            |  Up
-                        |  and
+                            | Up
+                        | and
                         b
-                            |  Down
+                            | Down
                         | for page ordering.
                     .controls
                         select(size="5", id="childSelect", style="width: 400px; height: 200px;")
@@ -71,29 +71,40 @@ ul#myMenu.contextMenu
                     .controls
                         button(href='javascript:;', id='btn-up', class='btn')
                             i.icon-arrow-up
-                            |  Up
+                            | Up
                         &nbsp;
                         button(href='javascript:;', id='btn-down', class='btn')
                             i.icon-arrow-down
-                            |  Down
+                            | Down
                 !{updatePageOrderForm}
 
-    - var pagesParams = {route: 'getPagesListJSON'};
-    - var editPageParams = {route: 'edit/'};
-    - var deleteURLParams = {route: 'delete/'};
-
-script
-    $(function () {
+:script
+    require(["jqueryui", "_", "dynaTree", "contextMenu", "pluginURL"], function () {
         var pagesTab = $("#pages_Tabs").tabs();
         pagesTab.tabs("disable", 1);
         function disableChildrenTab() {
             pagesTab.tabs("option", "disabled", [1]);
         }
-
         function selectPageTab() {
             pagesTab.tabs("enable", 0);
 
-            pagesTab.tabs("select", 0);
+            pagesTab.tabs("option", "active", 0);
+        }
+
+        function activateChildrenTab(currentNode) {
+            pagesTab.tabs("option", "disabled", []);
+            var children = currentNode.data.children;
+            var html = [];
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                html.push("<option value='" + child.key + "'>" + child.title + "</option>");
+            }
+            $(".page-edit-view #tabs-2 select").html(html.join(""));
+        }
+        function selectPageTab() {
+            pagesTab.tabs("enable", 0);
+
+            pagesTab.tabs( "option", "active", 0);
         }
 
         function activateChildrenTab(currentNode) {
@@ -111,7 +122,7 @@ script
             selectPageTab();
             disableChildrenTab();
             ppId = ppId || 0;
-            var addURL = "#{viewLib.createURL(req , params)}" + "/" + ppId
+            var addURL = "#{viewLib.getURL(req, 'add', false)}" + "/" + ppId;
             var options = {
                 url:addURL,
                 data:{mode:"exclusive"},
@@ -131,7 +142,7 @@ script
         }
 
         function editPage(node, contentBox) {
-            var editURL = "#{viewLib.createURL(req , editPageParams)}" + node.data.key;
+            var editURL = "#{viewLib.getURL(req , 'edit', false)}" + "/" + node.data.key;
 
             var options = {
                 url:editURL,
@@ -152,9 +163,9 @@ script
             Rocket.ajax(options);
         }
 
-        function permissionPage(node, contentBox){
+        function permissionPage(node, contentBox) {
             var pageId = node.data.key;
-            var permissionURL =  Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/model/"
+            var permissionURL = Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/model/"
                 + pageId + "/" + "Page?redirect=" + encodeURIComponent(Rocket.PluginURL({action:""}));
 
             location.href = permissionURL;
@@ -170,19 +181,16 @@ script
                     //ids.push(nodeChild.key);
                     getChildIds(nodeChild);
                 }
-
             }
 
             //getChildIds(node);
             //console.log(id);
-            var url = "#{viewLib.createURL(req , deleteURLParams)}" + node.data.key;
+            var url = "#{viewLib.getURL(req , 'delete', false)}" + "/" + node.data.key;
             var c = confirm('Are you sure to delete this ?');
             if (c == true) {
                 Rocket.Util.invokePost(url);
             }
-
         }
-
         var pageEditView = $(".page-edit-view #tabs-1");
 
         function bindContextMenu(node, span) {
@@ -211,10 +219,9 @@ script
                 }
             });
         }
-
         var pagesTree = $(".pagesTree").dynatree({
             initAjax:{
-                url:"#{viewLib.createURL(req , pagesParams)}"
+                url:"#{viewLib.getURL(req , 'getPagesListJSON', false)}"
             },
             onClick:function (node, event) {
                 if ($(".contextMenu:visible").length > 0) {
@@ -227,7 +234,7 @@ script
                 if (node.data.key === "0") { // case for site root
                     console.log(node)
                     pagesTab.tabs("enable", 1);
-                    pagesTab.tabs("select", 1);
+                    pagesTab.tabs("option", "active", 1);
                     setTimeout(function () {
                         pagesTab.tabs("disable", 0);
                     }, 100)
@@ -249,7 +256,6 @@ script
                 bindContextMenu(node, span);
             }
         });
-
         $(".add-page a").click(function (e) {
             e.preventDefault();
             var tgt = e.currentTarget;
@@ -293,4 +299,7 @@ script
             e.preventDefault;
 
         });
+
+
     });
+

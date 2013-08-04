@@ -1,4 +1,3 @@
-script(src="/code/ace/ace.js", type="text/javascript", charset="utf-8")
 
 style(type="text/css")
     .theme-builder-container{
@@ -74,5 +73,8 @@ mixin addToDropdown(themes)
         .editor.span12
             div(id=namespace+"_code", style="display:none;")
             img(id=namespace+"_image", style="display:none;margin: 50px;")
+
+:script
+    require(['themeBuilder']);
 
 

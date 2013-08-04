@@ -1,6 +1,6 @@
 var cwd = process.cwd(),
     BasePluginController = require(cwd + "/lib/BasePluginController"),
-    defaultView = require(cwd + "/lib/articles/DefaultView")(),
+    defaultView = require(cwd + "/lib/articles/DefaultView"),
     DateUtil = require(cwd + "/lib/Utils/DateUtil"),
     ARTICLE_SCHEMA = "Article";
 
@@ -51,7 +51,7 @@ function getArticle(req, that, next) {
                         return;
                     }
 
-                    html = defaultView({article:latestArticle, req:req});
+                    html = defaultView(req.app, {article:latestArticle, req:req});
                     req.attrs.articleHTML = html;
                 }
                 else {

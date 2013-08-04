@@ -1,5 +1,4 @@
-;
-(function ($, Rocket) {
+define(["util", "plugin"], function () {
     var cache = {};
 
     Rocket.PluginURL = function (params) {
@@ -63,4 +62,4 @@
     };
 
 
-})(jQuery, Rocket);
+});

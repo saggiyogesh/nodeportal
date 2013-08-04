@@ -116,7 +116,8 @@ var captcha = {
     label:" ",
     type:"image",
     name:"captchaImage",
-    src:"/app/captcha"
+    src:"/app/captcha",
+    style:"width:150px;height:40px"
 };
 
 var captchaText = {

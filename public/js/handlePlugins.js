@@ -1,4 +1,4 @@
-$(function () {
+define(["_", "util", "bootstrap"], function () {
     var getPluginsURL = "/app/getPagePlugins",
         addPluginURL = "/app/addPlugin",
         removePluginURL = "/app/removePlugin",
@@ -14,10 +14,10 @@ $(function () {
         function handleCBClick(e) {
             var tgt = $(e.currentTarget), val = tgt.val(),
                 options = {
-                    url:addPluginURL,
-                    method:"POST",
-                    data:{id:val, pageId:Rocket.PageValues.getPageId()},
-                    success:function (responseData) {
+                    url: addPluginURL,
+                    method: "POST",
+                    data: {id: val, pageId: Rocket.PageValues.getPageId()},
+                    success: function (responseData) {
                         if (responseData) {
                             if (responseData.success == true) {
                                 location.reload();
@@ -33,14 +33,14 @@ $(function () {
 
         $('#addPluginsModal').on('show', function () {
             var options = {
-                url:getPluginsURL,
-                data:{pageId:Rocket.PageValues.getPageId()},
-                success:function (data) {
+                url: getPluginsURL,
+                data: {pageId: Rocket.PageValues.getPageId()},
+                success: function (data) {
                     if (data) {
                         var form = addPluginsModalBody.find("form");
                         form.empty();
                         _.each(JSON.parse(data), function (value, key) {
-                            form.append(ADD_TMPL({pluginId:key, name:value}));
+                            form.append(ADD_TMPL({pluginId: key, name: value}));
                         });
 
                         addPluginsModal.find("form input").click(handleCBClick);
@@ -57,10 +57,10 @@ $(function () {
         var tgt = $(e.currentTarget), id = tgt.data("id");
         e.preventDefault();
         var options = {
-            url:Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/show/" + id + "/" + Rocket.PageValues.getPageId(),
-            data:{redirect:location.href,
-                mode:"exclusive"},
-            success:function (responseData) {
+            url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/show/" + id + "/" + Rocket.PageValues.getPageId(),
+            data: {redirect: location.href,
+                mode: "exclusive"},
+            success: function (responseData) {
                 if (responseData) {
                     editPluginModalBody.html(responseData);
 
@@ -74,10 +74,10 @@ $(function () {
     $(".plugin .tools a.remove").click(function (e) {
         var tgt = $(e.currentTarget), id = tgt.data("id"),
             options = {
-                url:removePluginURL,
-                method:"POST",
-                data:{id:id, pageId:Rocket.PageValues.getPageId()},
-                success:function (responseData) {
+                url: removePluginURL,
+                method: "POST",
+                data: {id: id, pageId: Rocket.PageValues.getPageId()},
+                success: function (responseData) {
                     if (responseData) {
                         if (responseData.success == true) {
                             $("#" + id).remove();
@@ -86,8 +86,5 @@ $(function () {
                 }
             };
         Rocket.ajax(options);
-        //console.log(id);
-
-
     });
 });
