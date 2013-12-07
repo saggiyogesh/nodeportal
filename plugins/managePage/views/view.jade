@@ -32,7 +32,8 @@ style(type="text/css")
         margin-left: 8px;
     }
 
-
+- var pv = new viewLib.PermissionValidator(req, "model.pageSchema", "");
+- var hasAdd = pv.hasPermission("ADD").isAuthorized == true;
 ul#myMenu.contextMenu
     li.add-child-page: a(href='#add-child') Add child
     li.edit-page: a(href='#edit') Edit
@@ -43,11 +44,12 @@ ul#myMenu.contextMenu
 .page-layout.row-fluid
     .span2
         .pagesTree
-        .add-page
-            - var params = {route: 'add'};
-            a(href="#{viewLib.createURL(req , params)}", id="next")
-                i.icon-plus-sign
-                | Add Page
+        if hasAdd
+            .add-page
+                - var params = {route: 'add'};
+                a(href="#{viewLib.createURL(req , params)}", id="next")
+                    i.icon-plus-sign
+                    |  Add Page
 
     .page-edit-view.span9
         #pages_Tabs
@@ -77,34 +79,26 @@ ul#myMenu.contextMenu
                             i.icon-arrow-down
                             | Down
                 !{updatePageOrderForm}
-
 :script
-    require(["jqueryui", "_", "dynaTree", "contextMenu", "pluginURL"], function () {
-        var pagesTab = $("#pages_Tabs").tabs();
+    require(["jqueryui", "_", "dynaTree", "contextMenu", "pluginURL", "plugin", "actionButton"], function () {
+        var pagesTab = $("#pages_Tabs").tabs(),
+            isActionsAuthorized = Rocket.Plugin.isActionsAuthorized,
+            modelName = "Page",
+            permissionSchemaKey = "model.pageSchema.Page";
         pagesTab.tabs("disable", 1);
+
+        function getActiveNode() {
+            return $(".pagesTree").dynatree("getActiveNode");
+        }
+
         function disableChildrenTab() {
             pagesTab.tabs("option", "disabled", [1]);
         }
+
         function selectPageTab() {
             pagesTab.tabs("enable", 0);
 
             pagesTab.tabs("option", "active", 0);
-        }
-
-        function activateChildrenTab(currentNode) {
-            pagesTab.tabs("option", "disabled", []);
-            var children = currentNode.data.children;
-            var html = [];
-            for (var i = 0; i < children.length; i++) {
-                var child = children[i];
-                html.push("<option value='" + child.key + "'>" + child.title + "</option>");
-            }
-            $(".page-edit-view #tabs-2 select").html(html.join(""));
-        }
-        function selectPageTab() {
-            pagesTab.tabs("enable", 0);
-
-            pagesTab.tabs( "option", "active", 0);
         }
 
         function activateChildrenTab(currentNode) {
@@ -124,9 +118,9 @@ ul#myMenu.contextMenu
             ppId = ppId || 0;
             var addURL = "#{viewLib.getURL(req, 'add', false)}" + "/" + ppId;
             var options = {
-                url:addURL,
-                data:{mode:"exclusive"},
-                success:function (data) {
+                url: addURL,
+                data: {mode: "exclusive"},
+                success: function (data) {
                     Rocket.Util.handleResponseError(data);
                     pageEditView.html(data);
                     var forms = contentBox.find('form');
@@ -141,13 +135,13 @@ ul#myMenu.contextMenu
             Rocket.ajax(options);
         }
 
-        function editPage(node, contentBox) {
-            var editURL = "#{viewLib.getURL(req , 'edit', false)}" + "/" + node.data.key;
+        function editPage(pageId, contentBox) {
+            var editURL = "#{viewLib.getURL(req , 'edit', false)}" + "/" + pageId;
 
             var options = {
-                url:editURL,
-                data:{mode:"exclusive"},
-                success:function (data) {
+                url: editURL,
+                data: {mode: "exclusive"},
+                success: function (data) {
                     Rocket.Util.handleResponseError(data);
                     pageEditView.html(data);
                     var forms = contentBox.find('form');
@@ -163,11 +157,14 @@ ul#myMenu.contextMenu
             Rocket.ajax(options);
         }
 
-        function permissionPage(node, contentBox) {
-            var pageId = node.data.key;
-            var permissionURL = Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/model/"
-                + pageId + "/" + "Page?redirect=" + encodeURIComponent(Rocket.PluginURL({action:""}));
+        function permissionPage(pageId, contentBox) {
+            var redirect = Rocket.PluginURL({action: ""}),
+                params = [
+                    "managePermissions",
+                    "model"
 
+                ];
+            var permissionURL = Rocket.Plugin.permissionURL(pageId, modelName, permissionSchemaKey, redirect);
             location.href = permissionURL;
         }
 
@@ -191,44 +188,68 @@ ul#myMenu.contextMenu
                 Rocket.Util.invokePost(url);
             }
         }
+
         var pageEditView = $(".page-edit-view #tabs-1");
 
-        function bindContextMenu(node, span) {
-            //skip binding to Site Root node
-            if (node.data.key == 0) {
-                return;
-            }
+        Rocket.bind("managePage:edit:load", function (e) {
 
-            // Add context menu to this node:
-            $(span).contextMenu({menu:"myMenu"}, function (action, el, pos) {
-                switch (action) {
-                    case "add-child":
-                        addPage(node.data.key, pageEditView);
-                        break;
-                    case "edit":
-                        editPage(node, pageEditView);
-                        break;
-                    case "permission":
-                        permissionPage(node, pageEditView);
-                        break;
-                    case "delete":
-                        deletePage(node, pageEditView);
-                        break;
-                    default:
-                        alert("Todo: apply action '" + action + "' to node " + node);
-                }
+            var data = e.data, id = data.id, pageId = data.pageId;
+            var actions = $("#"+id),
+                addChild =  actions.find("#addChild"),
+                edit =  actions.find("#edit"),
+                permission =  actions.find("#permission"),
+                deleteA =  actions.find("#delete")
+
+            addChild && $(addChild).click(function(){
+                addPage(pageId, pageEditView);
             });
-        }
+            edit && $(edit).click(function(){
+                //editPage(pageId, pageEditView);
+                $("#managePage_fm :input").removeAttr("disabled")
+            });
+            permission && $(permission).click(function(){
+                permissionPage(pageId, pageEditView);
+            });
+            deleteA && $(deleteA).click(function(){
+                deletePage(getActiveNode(), pageEditView);
+            });
+
+
+            var opts = {
+                handlerId: id,
+                actions: [
+                    //{text: "Add Child"},
+                    {text: "Edit", permissionAction: "UPDATE", onClick: function () {
+                        editPage(pageId, pageEditView);
+                    }},
+                    {text: "Permission", permissionAction: "PERMISSION", onClick: function () {
+                        permissionPage(pageId, pageEditView);
+                    }},
+                    {text: "Delete", permissionAction: "DELETE", onClick: function () {
+                        deletePage(getActiveNode(), pageEditView);
+                    }}
+                ]
+
+            };
+            var permissionConf = {
+                modelId: pageId,
+                modelName: modelName,
+                permissionSchemaKey: permissionSchemaKey
+            };
+
+
+
+        });
         var pagesTree = $(".pagesTree").dynatree({
-            initAjax:{
-                url:"#{viewLib.getURL(req , 'getPagesListJSON', false)}"
+            initAjax: {
+                url: "#{viewLib.getURL(req , 'getPagesListJSON', false)}"
             },
-            onClick:function (node, event) {
+            onClick: function (node, event) {
                 if ($(".contextMenu:visible").length > 0) {
                     $(".contextMenu").hide();
                 }
             },
-            onActivate:function (node) {
+            onActivate: function (node) {
                 var updateOrderPPId = $("#tabs-2 form #managePage_parentPageId");
                 updateOrderPPId.val(node.data.key)
                 if (node.data.key === "0") { // case for site root
@@ -245,21 +266,22 @@ ul#myMenu.contextMenu
                 else {
                     selectPageTab();
                     disableChildrenTab();
-                    editPage(node, pageEditView);
+                    editPage(node.data.key, pageEditView);
 
                 }
                 if (node.data.children.length > 0) {
                     activateChildrenTab(node);
                 }
             },
-            onCreate:function (node, span) {
-                bindContextMenu(node, span);
+            onCreate: function (node, span) {
+                //bindContextMenu(node, span);
             }
         });
+
         $(".add-page a").click(function (e) {
             e.preventDefault();
             var tgt = e.currentTarget;
-            var node = $(".pagesTree").dynatree("getActiveNode");
+            var node = getActiveNode();
             addPage(node && node.data.key, pageEditView);
         });
 
@@ -297,9 +319,8 @@ ul#myMenu.contextMenu
             });
             orderForm.find('#managePage_pageOrder').val(val.join(","));
             e.preventDefault;
-
         });
 
-
     });
+
 

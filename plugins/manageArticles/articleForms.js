@@ -52,5 +52,5 @@ exports.ArticleEditForm = {
         method:"post",
         action:"updateArticle"
     },
-    fields:[ id, redirect, version, title, content, displayDate, expiryDate, update, cancel ]
+    fields:[articleId, id, redirect, version, title, content, displayDate, expiryDate, update, cancel ]
 };

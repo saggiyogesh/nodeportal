@@ -3,7 +3,8 @@
  */
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
 var PageManager = require("./PageManager.js"), pageForm = require("./pageForms.js"),
-    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout";
+    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout", PAGE_PERMISSION_SCHEMA_ENTRY = "model.pageSchema.Page",
+    PAGE_PERMISSION_SCHEMA = "model.pageSchema";
 //var forms = require("./forms");
 
 var PageManageController = module.exports = function (id, app) {
@@ -11,28 +12,28 @@ var PageManageController = module.exports = function (id, app) {
     var that = this;
     that.listenLoadEvent(function (params) {
         that.get({
-            route:'/getPagesListJSON', action:getPagesListJSON
+            route: '/getPagesListJSON', action: getPagesListJSON
         });
         that.get({
-            route:'/edit/:id?', action:editPageAction
+            route: '/edit/:id?', action: editPageAction
         });
         that.get({ //:ppId is parent page id
-            route:'/add/:ppId?', action:addPageAction
+            route: '/add/:ppId?', action: addPageAction
         });
         that.get({
-            route:'/:action'
+            route: '/:action'
         });
         that.post({
-            route:'/updatePage',
-            action:updatePageAction
+            route: '/updatePage',
+            action: updatePageAction
         });
         that.post({
-            route:'/updatePageOrder',
-            action:updatePageOrderAction
+            route: '/updatePageOrder',
+            action: updatePageOrderAction
         });
         that.post({
-            route:'/delete/:id?',
-            action:deletePage
+            route: '/delete/:id?',
+            action: deletePage
         });
 
         that.addCustomValidations(pageForm.customValidations);
@@ -58,15 +59,15 @@ var PageManageController = module.exports = function (id, app) {
                                     var data = shufflePageData(page, layout);
 
                                     var model = {
-                                        pageId : page.pageId,
-                                        data:data
+                                        pageId: page.pageId,
+                                        data: data
                                     };
 
-                                    dbAction.update(model, function(err, result){
-                                        if(err){
+                                    dbAction.update(model, function (err, result) {
+                                        if (err) {
                                             Debug._l(err);
                                         }
-                                        if(result){
+                                        if (result) {
                                             Debug._l("Page updated by model event, " + page.pageId);
                                         }
                                     })
@@ -92,7 +93,7 @@ util.inherits(PageManageController, BasePluginController);
  */
 function deletePage(req, res, next) {
     var that = this, db = that.getDB(), DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, PAGE_SCHEMA);
+        dbAction = DBActions.getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY);
     var params = req.params;
     var pageId = params.id;
     if (!pageId) {
@@ -100,32 +101,39 @@ function deletePage(req, res, next) {
         return next(null, req, res);
     }
     var redirect = "/" + req.params.page + "/" + req.params.plugin;
-    if (that.getAppProperty("DEFAULT_INDEX_PAGE_ID") == pageId) {
-        that.setErrorMessage(req, "Cannot delete index page.");
-        that.setRedirect(req, redirect);
-        return next(null, req, res);
-    }
-    PageManager.hasChildren(dbAction, pageId, function (err, pages) {
-        if (pages.length > 0) {
-            that.setRedirect(req, redirect);
-            that.setErrorMessage(req, "Delete all child pages.");
-            next(err, req, res);
-        } else {
-            dbAction.authorizedRemove(pageId, function (err, result) {
-                if (result) {
-                    that.setRedirect(req, redirect);
-                    that.setSuccessMessage(req, "Page deleted successfully.");
-                }
-                next(err, req, res);
-            });
+    dbAction.get("findByPageId", pageId, function (err, page) {
+        if(err){
+            return next(err, req, res);
         }
-    });
+        if (page && (that.getAppProperty("DEFAULT_INDEX_PAGE") == page.friendlyURL)) {
+            that.setErrorMessage(req, "Cannot delete index page.");
+            that.setRedirect(req, redirect);
+            return next(null, req, res);
+        }
+        PageManager.hasChildren(dbAction, pageId, function (err, pages) {
+            if (pages.length > 0) {
+                that.setRedirect(req, redirect);
+                that.setErrorMessage(req, "Delete all child pages.");
+                next(err, req, res);
+            } else {
+                dbAction.authorizedRemove(pageId, function (err, result) {
+                    if (result) {
+                        that.setRedirect(req, redirect);
+                        that.setSuccessMessage(req, "Page deleted successfully.");
+                    }
+                    next(err, req, res);
+                });
+            }
+        });
+
+    })
+
 }
 
 function updatePageOrderAction(req, res, next) {
     var that = this, db = that.getDB();
     var DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, PAGE_SCHEMA);
+        dbAction = DBActions.getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY);
     var postParams = that.getPluginHelper().getPostParams(req);
     if (!postParams) {
         return next(null, req, res);
@@ -145,10 +153,10 @@ function updatePageOrderAction(req, res, next) {
 
     var asyncProcess = function () {
         var that = this, i = that.i, pageOrder = that.vals;
-        var query = {pageId:pageOrder[i]}, param = {order:i};
+        var query = {pageId: pageOrder[i]}, param = {order: i};
         var obj = {
-            pageId:pageOrder[i],
-            order:i
+            pageId: pageOrder[i],
+            order: i
         };
         dbAction.authorizedUpdate(obj, function (err, page) {
             if (err) {
@@ -164,7 +172,6 @@ function updatePageOrderAction(req, res, next) {
 }
 
 function addPageAction(req, res, next) {
-//    Debug._l("add page");
     var that = this, db = that.getDB();
     var DBActions = that.getDBActionsLib();
     var params = req.params;
@@ -185,9 +192,10 @@ function addPageAction(req, res, next) {
                 return next(err, req, res);
             }
 
-            req.query[that.getPluginId()] = {redirect:"/" + params.page + "/" + that.getPluginId() + "/view", parentPageId:ppId };
+            req.query[that.getPluginId()] = {redirect: "/" + params.page + "/" + that.getPluginId() + "/view", parentPageId: ppId };
             req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US", "add");
             params.action = "edit";
+            req.attrs.showToolbar = false;
             next(err, req, res);
         });
     });
@@ -195,23 +203,23 @@ function addPageAction(req, res, next) {
 
 function getPageJSON(page) {
     var json = {
-        title:page.localizedName["en_US"],
-        key:page.pageId,
-        expand:true,
-        icon:false,
-        children:[]
+        title: page.localizedName["en_US"],
+        key: page.pageId,
+        expand: true,
+        icon: false,
+        children: []
     };
     return json;
 }
 
 function getPagesListJSON(req, res, next) {
     var that = this;
-    PageManager.viewAll(that.getDBActionsLib().getInstance(req, PAGE_SCHEMA), function (err, models) {
+    PageManager.viewAll(that.getDBActionsLib().getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY), function (err, models) {
         if (err) {
             return  next(err, req, res);
         }
-        var siteRoot = {title:"Site Root", key:"0", expand:true, icon:false, children:[]}, json = [siteRoot], pagesJSON = {
-            0:siteRoot
+        var siteRoot = {title: "Site Root", key: "0", expand: true, icon: false, children: []}, json = [siteRoot], pagesJSON = {
+            0: siteRoot
         };
         models.forEach(function (model) {
             var pageJSON = getPageJSON(model);
@@ -257,6 +265,7 @@ function shufflePageData(page, layout) {
 function updatePageAction(req, res, next) {
     var that = this, db = that.getDB(),
         DBActions = that.getDBActionsLib(), dbAction = DBActions.getInstance(req, PAGE_SCHEMA);
+
     pageForm.PageForm(req, DBActions, function (err, formObj) {
         if (err) {
             return next(err, req, res);
@@ -284,14 +293,16 @@ function updatePageAction(req, res, next) {
                         }
                         if (!post.pageId) { //save a new model called
                             //initiate the page data as per layout
-
                             var placeHolders = layout.placeHolderNames;
                             var data = {};
                             placeHolders.forEach(function (name) {
                                 data[name] = [];
                             });
                             DBActions.authorizedPopulateModelAndSave(req, PAGE_SCHEMA,
-                                {localizedName:{en_US:req.body[that.getPluginId()].name}, data:data}, {layoutId:"layout", themeId:"theme"},
+                                {localizedName: {en_US: req.body[that.getPluginId()].name}, data: data,
+                                    rolePermissions: PAGE_PERMISSION_SCHEMA_ENTRY}, {layoutId: "layout",
+                                    themeId: "theme"},
+                                PAGE_PERMISSION_SCHEMA,
                                 updateOrSave);
 
                         } else {
@@ -304,7 +315,7 @@ function updatePageAction(req, res, next) {
 
                             that.getDBActionsLib().getInstance(req, PAGE_SCHEMA).get("findByPageId", post.pageId,
                                 function (err, page) {
-                                    var updateObj = {localizedName:{en_US:req.body[that.getPluginId()].name}};
+                                    var updateObj = {localizedName: {en_US: req.body[that.getPluginId()].name}};
                                     //update plugins from old layout to new layout
                                     if (page.layoutId != post.layout) {
                                         var data = shufflePageData(page, layout);
@@ -313,7 +324,7 @@ function updatePageAction(req, res, next) {
                                     }
 
                                     DBActions.authorizedPopulateModelAndUpdate(req, PAGE_SCHEMA,
-                                        updateObj, {layoutId:"layout", themeId:"theme"}, updateOrSave);
+                                        updateObj, {layoutId: "layout", themeId: "theme"}, PAGE_PERMISSION_SCHEMA_ENTRY, updateOrSave);
 
                                 });
                         }
@@ -340,7 +351,7 @@ function editPageAction(req, res, next) {
         pageId = params.id,
         that = this, db = that.getDB(),
         DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, PAGE_SCHEMA);
+        dbAction = DBActions.getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY);
     if (!pageId) {
         that.setInfoMessage(req, "Page not exists");
         return  next(null, req, res);
@@ -351,10 +362,18 @@ function editPageAction(req, res, next) {
         }
         pageForm.PageForm(req, DBActions, function (err, formObj) {
             if (!err) {
-                req.query[that.getPluginId()] = utils.cloneExtend(page, {redirect:"/" + params.page + "/" + that.getPluginId() + "/view",
-                    name:page.localizedName["en_US"], theme:page.themeId, layout:page.layoutId});
+
+                formObj.fields.forEach(function (el) {
+                    if (el.type != "hidden") {
+                        el.disabled = true;
+                    }
+                });
+                req.query[that.getPluginId()] = utils.cloneExtend(page, {redirect: "/" + params.page + "/" + that.getPluginId() + "/view",
+                    name: page.localizedName["en_US"], theme: page.themeId, layout: page.layoutId});
                 req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US", "add");
+                req.attrs.pageId = pageId;
                 params.action = "edit";
+                req.attrs.showToolbar = true;
             }
             next(err, req, res);
         });
@@ -369,7 +388,7 @@ PageManageController.prototype.render = function (req, res, next) {
     view = view || "view";
     var ret = {};
     var that = this, formObj = pageForm.updatePageOrderForm, DynamicForm = that.getFormBuilder().DynamicForm;
-    req.query[that.getPluginId()] = {redirect:"/" + req.params.page + "/" + that.getPluginId() + "/view" };
+    req.query[that.getPluginId()] = {redirect: "/" + req.params.page + "/" + that.getPluginId() + "/view" };
     ret.updatePageOrderForm = DynamicForm(req, formObj, "en_US");
     next(null, [ view, ret ]);
 };

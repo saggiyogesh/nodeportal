@@ -1,24 +1,43 @@
-define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatables-bootstrap"], function () {
+//Bootstrap data tables plugin with multiple checkboxes to select rows and action button to add action for each row
+//Only tested with ajax source
+define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatables-bootstrap", "actionButton"], function () {
     var dataTable,
         TMPL = '<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="{tableId}"></table>';
     dataTable = function (options, data) {
-        var contentBox = options.contentBox, tableId = options.id;
+        var contentBox = options.contentBox, tableId = options.id || _.uniqueId("__rocket__table_");
         if (!contentBox) {
             throw new Error("Content Box is undefined");
         }
+
+        this.getContentBox = function () {
+            return $('#' + contentBox);
+        };
+
+        this.getOptions = function () {
+            return options;
+        };
 
         var opts = { "sDom": "<'row'<'span4'l><''f>r>t<'row'<'span4'i><''p>>",
             "sPaginationType": "bootstrap",
             "oLanguage": {
                 "sLengthMenu": "_MENU_ records per page"
             },
-            "aoColumns": options.checkBoxAll ? this.getCBHeader(data.columns) : data.columns
+            "aoColumns": this.manageColumns(options, data.columns)
         };
+
         if (options.checkBoxAll) {
             opts["aaSorting"] = [
                 [1, 'asc']
             ];
         }
+
+        if (options.actionButton) {
+            if (!options.actionButton.actions) {
+                throw new Error("Actions are not defined")
+            }
+            var actions = options.actionButton.actions;
+        }
+
         if (options.contextMenu) {
             var that = this;
             opts["fnRowCallback"] = function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
@@ -38,7 +57,7 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
             opts["aaData"] = data.values;
 
 //            options.checkBoxAll ? this.getCBHeader(data.columns) : data.columns,
-//            options.checkBoxAll ? this.getValues(data.values) : data.values
+//            options.checkBoxAll ? this.manageValues(data.values) : data.values
         }
         else {
             opts["bProcessing"] = true;
@@ -46,7 +65,7 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
             opts["sAjaxSource"] = options.ajax;
             var that = this;
             opts["fnServerData"] = function (sSource, aoData, fnCallback) {
-                $.ajax({
+                Rocket.ajax({
                     "dataType": 'json',
                     "type": "GET",
                     "url": sSource,
@@ -54,23 +73,23 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
                     "success": function (json) {
                         if (options.checkBoxAll) {
                             var aaData = json.aaData;
-                            json.aaData = that.getValues(aaData);
-
+                            json.aaData = that.manageValues(aaData);
                         }
-
                         fnCallback(json);
                         if (options.checkBoxAll) {
                             that.handleCheckBoxClick();
                         }
 
-
+                        if (options.actionButton) {
+                            that.renderActions();
+                        }
                     }
                 });
 
             }
         }
 
-        $('#' + contentBox).html(TMPL.replace("{tableId}", tableId));
+        this.getContentBox().html(TMPL.replace("{tableId}", tableId));
         var table = this.table = $('#' + tableId).dataTable(opts), parentNode = table.parent();
 
         parentNode.find('.dataTables_filter input').unbind();
@@ -87,6 +106,27 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
         }
     };
 
+    dataTable.prototype.renderActions = function () {
+        var that = this, actions = that.getOptions().actionButton.actions;
+
+        that.getContentBox().find('table td .action-button').each(function (i, node) {
+            console.info(node)
+            node = $(node);
+            var opts = that.getOptions().actionButton;
+            opts.handlerId = node.attr("id");
+            opts.actions = actions;
+            var permissionConf = {
+                modelId: node.data("id"),
+                modelName: opts.modelName,
+                permissionSchemaKey: opts.permissionSchemaKey
+            };
+//            delete opts.modelName;
+//            delete opts.permissionSchemaKey;
+            new Rocket.ActionButton(opts, permissionConf);
+        });
+
+
+    };
     dataTable.prototype.attachMenu = function (selector, contextMenu) {
         var menuId = contextMenu.menuId, items = contextMenu.items,
             ns = contextMenu.namespace, that = this;
@@ -104,12 +144,38 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
         this.attachMenu($(nRow), contextMenu);
     };
 
-    dataTable.prototype.getValues = function (values) {
-        var that = this;
+    dataTable.prototype.createActionButton = function (id) {
+        var that = this, options = that.getOptions();
+        return "<button class='action-button' style='min-width: 80px;' id='actionButton__" + id + "' data-id='" + id + "'>  Action  </button>"
+    };
+
+
+    dataTable.prototype.manageValues = function (values) {
+        var that = this, options = that.getOptions();
         _.each(values, function (val) {
-            val[0] = that.createCB({type: 'data', value: val[0]});
+            var id = val[0];
+            if (options.checkBoxAll) {
+                val[0] = that.createCB({type: 'data', value: id});
+            }
+
+            if (options.actionButton) {
+                var actions = options.actionButton.actions;
+                val.push(that.createActionButton(id));
+            }
         });
         return values;
+    };
+
+    dataTable.prototype.manageColumns = function (options, columns) {
+        var that = this;
+        if (options.checkBoxAll) {
+            columns = that.getCBHeader(columns);
+        }
+
+        if (options.actionButton) {
+            columns.push({ "sTitle": "", "bSortable": false})
+        }
+        return columns;
     };
 
     dataTable.prototype.getCBHeader = function (columns) {

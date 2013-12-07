@@ -129,7 +129,7 @@ function updateLayoutAction(req, res, next) {
         var pluginHelper = that.getPluginHelper();
         if (!result.hasErrors) {
             var redirect = pluginHelper.getPostParam(req, "redirect");
-            DBActions.authorizedPopulateModelAndUpdate(req, LAYOUT_SCHEMA,
+            DBActions.populateModelAndUpdate(req, LAYOUT_SCHEMA,
                 {placeHolderNames:pluginHelper.getPostParam(req, "placeholders").split(",")}, {},
                 function (err, result) {
                     if (err) {

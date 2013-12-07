@@ -1,10 +1,13 @@
 /***
  * Manages resources image and docs
  */
-var RESOURCES_PATH = "resources", RESOURCE_SCHEMA = "Resource";
+var RESOURCES_PATH = "resources", RESOURCE_SCHEMA = "Resource",
+    RESOURCE_PERMISSION_SCHEMA_ENTRY = "model.resourceSchema.Resource";
+RESOURCE_PERMISSION_SCHEMA = "model.resourceSchema";
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController");
 var ResourceManageUtil = require("./ResourceManageUtil"),
-    ImageUtil = require(process.cwd() + "/lib/file/images/ImageUtil");
+    ImageUtil = require(process.cwd() + "/lib/file/images/ImageUtil"),
+    async = require("async");
 
 var ResourceManageController = module.exports = function (id, app) {
     BasePluginController.call(this, id, app);
@@ -56,13 +59,13 @@ var ResourceManageController = module.exports = function (id, app) {
 
 util.inherits(ResourceManageController, BasePluginController);
 
-function remove(that, resourceId, req, res, next) {
+function remove(that, resourceId, isFile, req, res, next) {
     var DBActions = that.getDBActionsLib(),
         FileUtil = that.FileUtil,
         realPath = FileUtil.realPath,
         resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH);
 
-    DBActions.getInstance(req, RESOURCE_SCHEMA).authorizedRemove(resourceId, function (err, result) {
+    DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY).authorizedRemove(resourceId, function (err, result) {
         if (err) {
             that.setJSON(req, {error: err.message});
             next(null, req, res);
@@ -71,39 +74,27 @@ function remove(that, resourceId, req, res, next) {
 
         that.setJSON(req, {success: true, resourceId: resourceId});
         next(null, req, res);
-
-        process.nextTick(function () {
-            var dirPath = realPath(resourceFolderPath, resourceId);
-            FileUtil.readDir(dirPath, function (err, files) {
-                var AsyncIterator = that.AsyncIterator;
-                var asycI = new AsyncIterator(files, function (err, result) {
-                    if (err) {
-                        Debug._l(err);
-                    }
-                    if (result) {
-                        FileUtil.removeDir(dirPath, function (err) {
-                            if (err) {
-                                Debug._l(err);
-                            }
-                        });
-                    }
-                });
-
-                var asyncProcess = function () {
-                    var that = this, i = that.i, files = that.vals;
-                    var file = files[i];
-                    //Debug._l(file);
-                    FileUtil.removeFile(realPath(dirPath, file), function (err) {
+        if (isFile) {
+            process.nextTick(function () {
+                var dirPath = realPath(resourceFolderPath, resourceId);
+                FileUtil.readDir(dirPath, function (err, files) {
+                    async.eachSeries(files, function (file, next) {
+                        FileUtil.removeFile(realPath(dirPath, file), next);
+                    }, function (err) {
                         if (err) {
-                            asycI.next(err);
-                            return;
+                            Debug._l(err);
+                        } else {
+                            FileUtil.removeDir(dirPath, function (err) {
+                                if (err) {
+                                    Debug._l(err);
+                                }
+                            });
                         }
-                        asycI.iterate();
+
                     });
-                };
-                asycI.setAsyncProcess(asyncProcess);
+                });
             });
-        });
+        }
     });
 }
 
@@ -126,11 +117,11 @@ function deleteAction(req, res, next) {
                     next(null, req, res);
                     return;
                 }
-                remove(that, resourceId, req, res, next);
+                remove(that, resourceId, false, req, res, next);
             });
         }
         else {
-            remove(that, resourceId, req, res, next);
+            remove(that, resourceId, true, req, res, next);
         }
     }
 }
@@ -142,7 +133,7 @@ function renameAction(req, res, next) {
         newName = req.params.newName, resourceId = req.params.resourceId, parentFolderId = req.params.parentFolderId;
     if (newName && resourceId && parentFolderId) {
 
-        var dbAction = DBActions.getInstance(req, RESOURCE_SCHEMA);
+        var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY);
 
         dbAction.get("findByResourceId", resourceId, function (err, model) {
             if (err) {
@@ -198,8 +189,8 @@ function addFolderAction(req, res, next) {
         realPath = FileUtil.realPath,
         name = req.params.name, parentFolderId = req.params.parentFolderId;
     if (name && parentFolderId) {
-        //check existance of folder in parent folder
-        var dbAction = DBActions.getInstance(req, RESOURCE_SCHEMA);
+        //check existence of folder in parent folder
+        var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA);
 
         dbAction.get("findByNameAndFolderId", [name, parentFolderId], function (err, model) {
             if (err) {
@@ -217,7 +208,8 @@ function addFolderAction(req, res, next) {
             var model = {
                 name: name,
                 type: "folder",
-                folderId: parentFolderId
+                folderId: parentFolderId,
+                rolePermissions: RESOURCE_PERMISSION_SCHEMA_ENTRY
             };
 
             dbAction.authorizedSave(model, function (err, model) {
@@ -256,7 +248,7 @@ function viewResourcesAction(req, res, next) {
         resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH),
         params = req.params, query = req.query, resourceId = params.id, name = params.name,
         folderId = params.folderId;
-    var dbAction = DBActions.getInstance(req, RESOURCE_SCHEMA);
+    var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY);
     //Debug._li("params: ", params, true);
     if (resourceId) {
         function sendFile(path, type, next) {
@@ -337,7 +329,7 @@ function viewResourcesAction(req, res, next) {
             }
             else {
                 err = new Error("No resource exists");
-                that.set404StatusCode(res)
+                that.set404StatusCode(res);
                 next(err, req, res);
             }
         });
@@ -365,7 +357,7 @@ function getResourcesByFolderId(req, res, next) {
         FileUtil = that.FileUtil,
         realPath = FileUtil.realPath,
         folderId = req.params.folderId || 0,
-        dbAction = DBActions.getInstance(req, RESOURCE_SCHEMA),
+        dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY),
         query = dbAction.getQuery().where("folderId", folderId);
 
     dbAction.authorizedGetByQuery(query, function (err, models) {
@@ -388,7 +380,7 @@ function uploadResourceAction(req, res, next) {
 
     //save info in db
     //check existance of resource in folder
-    var dbAction = DBActions.getInstance(req, RESOURCE_SCHEMA);
+    var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA);
     dbAction.get("findByNameAndFolderId", [file.name, folderId], function (err, model) {
         //Debug._li("model: >> ", model, false);
         if (err) {
@@ -408,7 +400,8 @@ function uploadResourceAction(req, res, next) {
             name: file.name,
             type: file.type.split(".")[1],
             size: file.size,
-            folderId: folderId
+            folderId: folderId,
+            rolePermissions: RESOURCE_PERMISSION_SCHEMA_ENTRY
         };
 
         if (model.size == 0) {

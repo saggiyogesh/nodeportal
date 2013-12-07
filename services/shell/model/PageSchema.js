@@ -32,6 +32,8 @@ var pageSchema = new Schema({
     rolePermissions: {}
 });
 
+//pageSchema.set('toObject', { getters: true });
+
 pageSchema.pre('save', function (next) {
     if (this.isNew) {
         this.createDate = Date.now();

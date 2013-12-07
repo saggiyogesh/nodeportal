@@ -49,7 +49,8 @@ var doRegister = function (req, res, next) {
                 if(err){
                     return next(err, req, res);
                 }
-                that.getDBActionsLib().authorizedPopulateModelAndSave(req, "User", {roles:["User"],
+                var userRole = require(req.app.set('appPath') + "/lib/permissions/Roles").getUserRole();
+                that.getDBActionsLib().populateModelAndSave(req, "User", {roles:[userRole.roleId ],
                         passwordEnc:hash}, {emailId:"email"},
                     loginProcess(req, res, next, postParams));
             });

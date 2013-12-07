@@ -1,21 +1,30 @@
 - var mp = req.attrs.managePlugin, ns = mp.ns, pageId = mp.pageId, instanceId= mp.instanceId, pluginSettingsView = mp.pluginSettingsView;
-.managePlugin(data-ns="#{ns}" ,data-pageid="#{pageId}", data-instanceid="#{instanceId}")
+.managePlugin(data-ns="#{ns}" ,data-pageid="#{pageId}", data-instanceid="#{instanceId}", data-settingsplugin="#{!!mp.settingsPlugin}")
     ul.nav.nav-tabs
-        li.active: a(href="#managePluginSettings", data-id="settings",data-toggle="tab") Settings
+        -if(mp.showSettingsTab)
+            li.active: a(href="#managePluginSettings", data-id="settings",data-toggle="tab") Settings
         -if(mp.showEditPermission)
-            li: a(href="#managePluginPermissions", data-id="permissions",data-toggle="tab") Permissions
+            if(!mp.showSettingsTab)
+                li.active: a(href="#managePluginPermissions", data-id="permissions",data-toggle="tab") Permissions
+            else
+                li: a(href="#managePluginPermissions", data-id="permissions",data-toggle="tab") Permissions
+
 
     .tab-content
-        .tab-pane.fade.in.active#managePluginSettings
-            form.well.form-search#managePluginEditTitle(action="#{viewLib.getURL(req, "updatePluginTitle")}")
-                input(type="text", name="title.en_US", value="#{mp.title.en_US}")
-                | &nbsp;
-                button(type="submit", class="btn") Edit Title
-            -if(pluginSettingsView)
-                .well#settingsArea
-                    !{pluginSettingsView}
+        -if(mp.showSettingsTab)
+            .tab-pane.fade.in.active#managePluginSettings
+                form.well.form-search#managePluginEditTitle(action="#{viewLib.getURL(req, "updatePluginTitle")}")
+                    input(type="text", name="title.en_US", value="#{mp.title.en_US}")
+                    | &nbsp;
+                    button(type="submit", class="btn") Edit Title
+                -if(pluginSettingsView)
+                    .well#settingsArea
+                        !{pluginSettingsView}
         -if(mp.showEditPermission)
-            .tab-pane.fade#managePluginPermissions
+            if(!mp.showSettingsTab)
+                .tab-pane.fade.in.active#managePluginPermissions
+            else
+                .tab-pane.fade#managePluginPermissions
 
 
 :script

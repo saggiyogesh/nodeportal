@@ -7,13 +7,14 @@ define(["tables", "pluginURL"], function () {
     var toolbar = $('.article-toolbar'), addButton = toolbar.find("button#add"),
         deleteButton = toolbar.find("button#delete"), checkVals;
 
+    var modelName = "Article", permissionSchemaKey = "model.articleSchema.Article";
 
     function goTo(url) {
         location.href = url;
     }
 
     function getURL(action) {
-        return Rocket.PluginURL({action:action});
+        return Rocket.PluginURL({action: action});
     }
 
     function removeArticles(ids) {
@@ -29,7 +30,7 @@ define(["tables", "pluginURL"], function () {
         var data = e.data, id = data.id || "";
 
         var editor = CKEDITOR.replace('manageArticles_content', {
-            width:800
+            width: 800
         });
 
         $(".manage-articles form").submit(function (e) {
@@ -41,24 +42,18 @@ define(["tables", "pluginURL"], function () {
             if ($(e.currentTarget).data("id") == "version" && $("#versionTableContentBox").children().length == 0) {
                 //console.log(e);
                 var options = {
-                    url:Rocket.PluginURL({action:"getArticleVersions"}) + "/" + id,
-                    success:function (response) {
+                    url: Rocket.PluginURL({action: "getArticleVersions"}) + "/" + id,
+                    success: function (response) {
                         var data = {
-                            columns:[
-                                {"sTitle":"Version" },
-                                {"sTitle":"Create Date" }
+                            columns: [
+                                {"sTitle": "Version" },
+                                {"sTitle": "Create Date" }
                             ],
-                            values:response.values
+                            values: response.values
                         };
                         new Rocket.Table({
-                            contentBox:"versionTableContentBox",
-                            id:"versionTable"
-//                            ,
-//                            contextMenu:{
-//                                menuId:"versionTableMenu",
-//                                namespace:"manageArticle",
-//                                items:[PREVIEW_ARTICLE_COMMAND, DELETE_ARTICLE_COMMAND]
-//                            }
+                            contentBox: "versionTableContentBox",
+                            id: "versionTable"
                         }, data);
                     }
                 };
@@ -69,24 +64,76 @@ define(["tables", "pluginURL"], function () {
 
     //index page load event handler
     Rocket.bind("manageArticle:index:load", function (e) {
+        function getId(tgt){
+            return $(tgt).closest(".btn-group").find("button").data("id");
+        }
+
+        function getArticleId(tgt){
+            return $(tgt).closest("tr").find("td:eq(1)").text();
+        }
+
         var data = {
-            columns:[
-                {"sTitle":"Id" },
-                {"sTitle":"Title" },
-                {"sTitle":"Create Date" },
-                {"sTitle":"Display Date" }
+            columns: [
+                {"sTitle": "Id" },
+                {"sTitle": "Title" },
+                {"sTitle": "Create Date" },
+                {"sTitle": "Display Date" }
             ]
         };
+
         new Rocket.Table({
-            contentBox:LIST_TABLE_CB,
+            contentBox: LIST_TABLE_CB,
             id:ARTICLES_TABLE_ID,
-            checkBoxAll:true,
-            contextMenu:{
-                items:[EDIT_ARTICLE_COMMAND, PREVIEW_ARTICLE_COMMAND, DELETE_ARTICLE_COMMAND],
-                menuId:"listTableMenu",
-                namespace:"manageArticle"
+            checkBoxAll: true,
+            actionButton: {
+                modelName: modelName,
+                permissionSchemaKey: permissionSchemaKey,
+                pullRight: true,
+                dropUp: true,
+                actions: [
+                    {
+                        text: "Edit",
+                        permissionAction: "UPDATE",
+                        onClick: function (e) {
+                            console.log(e);
+                            var id = getArticleId(e.target);
+                            goTo(getURL("edit") + "/" + id);
+                        }
+                    },
+                    {
+                        text: "Preview",
+                        permissionAction: "VIEW",
+                        onClick: function (e) {
+                            var id = getArticleId(e.target);
+                            window.open(getURL("preview") + "/" + id, '_blank');
+                        }
+                    },
+                    {
+                        text: "Permission",
+                        permissionAction: "PERMISSION",
+                        onClick: function (e) {
+                            var id = getId(e.target);
+                            var redirect = Rocket.PluginURL({action: ""}),
+                                params = [
+                                    "managePermissions",
+                                    "model"
+                                ];
+                            var permissionURL = Rocket.Plugin.permissionURL(id, modelName, permissionSchemaKey, redirect);
+                            location.href = permissionURL;
+
+                        }
+                    },
+                    {
+                        text: "Delete",
+                        permissionAction: "DELETE",
+                        onClick: function (e) {
+                            var id = getArticleId(e.target);
+                            removeArticles(id);
+                        }
+                    }
+                ]
             },
-            ajax:Rocket.PluginURL({action:"getArticles"})
+            ajax: Rocket.PluginURL({action: "getArticles"})
         }, data);
     });
 

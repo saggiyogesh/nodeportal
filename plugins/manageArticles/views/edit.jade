@@ -1,13 +1,10 @@
 <script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
 !{viewLib.Messages(req , namespace)}
-ul#versionTableMenu.contextMenu
-    li.preview-article: a(href='#preview-article') Preview
-    li.delete-article: a(href='#delete-article') Delete
 
 .manage-articles
     ul.nav.nav-tabs
         li.active: a(href="#article", data-id="article",data-toggle="tab") Article
-        - if(req.query && req.query[namespace].articleId)
+        - if(req.query && req.query[namespace] && req.query[namespace].articleId)
             li: a(href="#version", data-id="version", data-toggle="tab") Version
 
     .tab-content

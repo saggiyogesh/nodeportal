@@ -4,8 +4,9 @@
     ul.thumbnails
         for resource in req.attrs.resourceModel
             li.item.span3
-                a(href = "javascript:;" , class="thumbnail #{resource.type == 'folder' ? 'resource-item folder' : 'resource-item' }", id="#{resource.resourceId}")
+                div(class="thumbnail #{resource.type == 'folder' ? 'resource-item folder' : 'resource-item' }", id="#{resource.resourceId}")
                     - var type = ResourceManageUtil.getIconImage(req, resource);
+                    button(id="actionButton_#{resource.resourceId}", class="action-button")
                     img(src="#{type == "image" ? viewLib.createURL(req , viewParams) + '/' + resource.resourceId  : fileIconsUrl + type+'.png'}" )
                     h5.name.caption #{decodeURI(resource.name)}
 

@@ -1,3 +1,34 @@
 .page-edit
     !{viewLib.Messages(req , namespace)}
+    - if(req.attrs.showToolbar){
+        - var pageId = req.attrs.pageId, pv = new viewLib.PermissionValidator(req, "model.pageSchema.Page", "Page");
+        - var hasEdit =  pv.hasPermission("UPDATE", pageId).isAuthorized == true;
+        - var hasPerm =  pv.hasPermission("PERMISSION", pageId).isAuthorized == true;
+        - var hasDelete =  pv.hasPermission("DELETE", pageId).isAuthorized == true;
+        - var pv = new viewLib.PermissionValidator(req, "model.pageSchema", "");
+        - var hasAdd = pv.hasPermission("ADD").isAuthorized == true;
+
+        .btn-group#managePage_Actions
+            if hasAdd
+                .btn#addChild
+                    i.icon-plus
+                    |  Add Child
+            if hasEdit
+                .btn#edit
+                    i.icon-edit
+                    |  Edit
+            if hasPerm
+                .btn#permission
+                    i.icon-wrench
+                    |  Permission
+            if hasDelete
+                .btn#delete
+                    i.icon-trash
+                    |  Delete
+
+    - }
+
+    br
     !{req.attrs.pageForm}
+    script
+        Rocket.trigger({type:"managePage:edit:load", target:this, data:{id:'managePage_Actions', pageId: '#{req.attrs.pageId}'}});

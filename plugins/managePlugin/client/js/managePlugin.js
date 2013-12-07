@@ -1,12 +1,14 @@
 define(["pluginURL"], function () {
     Rocket.bind("managePlugin:load", function (e) {
-        var managePlugin = $("#editPluginModal .managePlugin"),
+        var managePlugin = $("#editPlugin_Modal .managePlugin"),
             editTitleForm = managePlugin.find("form#managePluginEditTitle"),
             ns = managePlugin.data("ns"),
             pageId = managePlugin.data("pageid"),
-            instanceId = managePlugin.data("instanceid"),
+            instanceId = managePlugin.data("instanceid") || ns,
             settingsArea = managePlugin.find("#settingsArea"),
-            permissionArea = managePlugin.find("#managePluginPermissions");
+            permissionArea = managePlugin.find("#managePluginPermissions"),
+            isSettingsPlugin = managePlugin.data("settingsplugin"),
+            hasSettingsTab = managePlugin.find("a[data-id='settings']").length > 0 ;
 
         function appendFormFields(form) {
             form = $(form);
@@ -64,8 +66,12 @@ define(["pluginURL"], function () {
         managePlugin.find('a[data-toggle="tab"]').on('shown', function (e) {
             if ($(e.currentTarget).data("id") == "permissions") {
                 //console.log(Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/plugin/"+ instanceId + "/" + ns)
+                var type = "plugin";
+                if (isSettingsPlugin) {
+                    type = "settings";
+                }
                 var options = {
-                    url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/plugin/"
+                    url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/" + type + "/"
                         + instanceId + "/" + ns,
                     data: {mode: "exclusive"},
                     success: function (response) {
@@ -77,5 +83,9 @@ define(["pluginURL"], function () {
                 Rocket.ajax(options);
             }
         });
+
+        if (!hasSettingsTab) {
+            managePlugin.find('a[data-toggle="tab"]').trigger('shown');
+        }
     });
 });

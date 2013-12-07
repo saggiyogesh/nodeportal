@@ -11,6 +11,9 @@ style(type="text/css")
         margin-top: 15px;
         list-style: none;
     }
+    .manage-resource-container ul.dropdown-menu{
+        margin-top: 0px;
+    }
     .manage-resource-container .resource-view{
         border-left: 1px solid #ddd;
         min-height: 300px;
@@ -46,27 +49,14 @@ style(type="text/css")
         margin-right: 15px;
     }
 
-
-
-ul#itemMenu.contextMenu
-    li.download: a(href='#download') Download
-    //li.edit: a(href='#edit') Edit
-    li.rename: a(href='#rename') Rename
-    li.delete: a(href='#delete') Delete
-
-ul#folderMenu.contextMenu
-    //li.edit: a(href='#edit') Edit
-    li.add-subfolder: a(href='#add-subfolder') Subfolder
-    li.rename: a(href='#rename') Rename
-    li.delete: a(href='#delete') Delete
-
-
+- var pv = new viewLib.PermissionValidator(req, "model.resourceSchema", "");
+- var hasAdd = pv.hasPermission("ADD").isAuthorized == true;
 .manage-resource
     ul#breadcrumbs.breadcrumb
-    .top-bar
-        #uploader
-            noscript |Please enable JavaScript to use file uploader.
-        //a(href='javascript:;', id='addFolder', class='') Add Folder
+    if hasAdd
+        .top-bar
+            #uploader
+                noscript |Please enable JavaScript to use file uploader.
     #upload_error.ui-helper-hidden.alert.alert-error
         button(class="close", data-dismiss="alert") x
         span#error_message
@@ -78,9 +68,10 @@ ul#folderMenu.contextMenu
 .manage-resource-container.row-fluid
     .resource-tree.span2
         ul
-        a(href='javascript:;', id='addFolder', class='add-folder')
-            i.icon-plus-sign
-            |  Add Folder
+        if hasAdd
+            a(href='javascript:;', id='addFolder', class='add-folder')
+                i.icon-plus-sign
+                |  Add Folder
     .resource-view.span10
         #list
         #detail.ui-helper-hidden

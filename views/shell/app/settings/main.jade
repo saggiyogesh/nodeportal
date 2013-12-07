@@ -220,8 +220,20 @@ style
       }
       .settings .plugin-body{
         min-height: 550px;
-
       }
+    .plugin-head .tools {
+        top: -15px;
+        position: relative;
+        cursor: pointer;
+    }
+    div.thumbnail:hover {
+        border-color: #0088cc;
+        -webkit-box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
+        -moz-box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
+        box-shadow: 0 1px 4px rgba(0, 105, 214, 0.25);
+        cursor: pointer;
+    }
+
 
 -var pluginName = "";
 
@@ -239,11 +251,40 @@ mixin renderNav()
 .row
     .span12
         .plugin
-            .navbar-inner.title
+            .navbar-inner.title.plugin-head
                 .header #{pluginName}
+                !=tools
             .plugin-body
                 .content !{pluginHtml}
+if showTools
+    script
+        require(["_", "util", "modal"],function () {
+            settingPermissionsModal = new Rocket.Modal({
+                id: "editPlugin",
+                title: "Manage Permissions",
+                width: 0.7
+            }),
+            settingPermissionsModalBody = settingPermissionsModal.getBody();
 
+            $(".plugin .tools a.edit").click(function (e) {
+                var tgt = $(e.currentTarget), id = tgt.data("id");
+                e.preventDefault();
+                var options = {
+                    url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/settings/" + id ,
+                    data: {redirect: location.href,
+                        mode: "exclusive"},
+                    success: function (responseData) {
+                        if (responseData) {
+                            settingPermissionsModal.show();
+                            settingPermissionsModalBody.html(responseData);
+
+                        }
+                    }
+                };
+                Rocket.ajax(options);
+
+            });
+        });
 
 :script
     require([""],function () {

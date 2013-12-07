@@ -1,145 +1,165 @@
 [
     {
-        "id":"login",
-        "name":{
-            "en_US":"Login"
+        "id": "login",
+        "name": {
+            "en_US": "Login"
         },
-        "description":"Login",
-        "group":"Plugin",
-        "config":{
-
+        "description": "Login",
+        "group": "Plugin",
+        "config": {
+            "page": true
         },
-        "controller":"LoginController"
+        "controller": "LoginController"
     },
 
     {
-        "id":"error",
-        "name":{
-            "en_US":"Error"
+        "id": "error",
+        "name": {
+            "en_US": "Error"
         },
-        "description":"Error",
-        "group":"Shell",
-        "config":{
-
+        "description": "Error",
+        "group": "Shell",
+        "config": {
         },
-        "controller":"ErrorController"
+        "controller": "ErrorController"
     },
     {
-        "id":"userManage",
-        "name":{
-            "en_US":"My Profile"
+        "id": "userManage",
+        "name": {
+            "en_US": "My Profile"
         },
-        "description":"Manage User Profile",
-        "group":"Plugin",
-        "config":{
-            "settings":true
+        "description": "Manage User Profile",
+        "group": "Plugin",
+        "config": {
+            "settings": true,
+            "defaultData": true,
+            "defaultDataHandler": "DefaultDataHandler"
         },
-        "controller":"UserManageController"
+        "controller": "UserManageController"
     },
     {
-        "id":"managePage",
-        "name":{
-            "en_US":"Site Pages"
+        "id": "managePage",
+        "name": {
+            "en_US": "Site Pages"
         },
-        "description":"Manage Pages",
-        "group":"Plugin",
-        "config":{
-            "settings":true
+        "description": "Manage Pages",
+        "group": "Plugin",
+        "config": {
+            "settings": true,
+            "defaultData": true,
+            "defaultDataHandler": "DefaultDataHandler"
         },
-        "controller":"PageManageController"
+        "controller": "PageManageController"
     },
     {
-        "id":"manageResource",
-        "name":{
-            "en_US":"Site Resources"
+        "id": "manageResource",
+        "name": {
+            "en_US": "Site Resources"
         },
-        "description":"Manage Resources",
-        "group":"Plugin",
-        "config":{
-            "settings":true
+        "description": "Manage Resources",
+        "group": "Plugin",
+        "config": {
+            "settings": true
         },
-        "controller":"ResourceManageController"
+        "controller": "ResourceManageController"
     },
     {
-        "id":"manageArticles",
-        "name":{
-            "en_US":"Articles"
+        "id": "manageArticles",
+        "name": {
+            "en_US": "Articles"
         },
-        "description":"Manage Articles",
-        "group":"Plugin",
-        "config":{
-            "settings":true
+        "description": "Manage Articles",
+        "group": "Plugin",
+        "config": {
+            "settings": true
         },
-        "controller":"ArticlesManageController"
+        "controller": "ArticlesManageController"
     },
     {
-        "id":"managePermissions",
-        "name":{
-            "en_US":"Permissions"
+        "id": "managePermissions",
+        "name": {
+            "en_US": "Permissions"
         },
-        "description":"Manage Permissions",
-        "group":"Plugin",
-        "config":{
+        "description": "Manage Permissions",
+        "group": "Plugin",
+        "config": {
         },
-        "controller":"PermissionController"
+        "controller": "PermissionController"
     },
     {
-        "id":"managePlugin",
-        "name":{
-            "en_US":"Manage Plugin"
+        "id": "managePlugin",
+        "name": {
+            "en_US": "Manage Plugin"
         },
-        "description":"Manage Plugin",
-        "group":"Plugin",
-        "config":{
+        "description": "Manage Plugin",
+        "group": "Plugin",
+        "config": {
+            "defaultData": true,
+            "defaultDataHandler": "DefaultDataHandler"
         },
-        "controller":"ManagePluginController"
+        "controller": "ManagePluginController"
     },
     {
-        "id":"displayArticle",
-        "name":{
-            "en_US":"Display Article"
+        "id": "displayArticle",
+        "name": {
+            "en_US": "Display Article"
         },
-        "description":"Display Article",
-        "group":"Plugin",
-        "config":{
-            "many":true
+        "description": "Display Article",
+        "group": "Plugin",
+        "config": {
+            "many": true,
+            "page": true
         },
-        "controller":"DisplayArticleController"
+        "controller": "DisplayArticleController"
     },
     {
-        "id":"asyncDemo",
-        "name":{
-            "en_US":"Async Demo"
+        "id": "asyncDemo",
+        "name": {
+            "en_US": "Async Demo"
         },
-        "description":"Async Demo",
-        "group":"Plugin",
-        "config":{
-            "async":true
+        "description": "Async Demo",
+        "group": "Plugin",
+        "config": {
+            "async": true
         },
-        "controller":"AsyncDemoController"
+        "controller": "AsyncDemoController"
     },
     {
-        "id":"themeBuilder",
-        "name":{
-            "en_US":"Theme Builder"
+        "id": "themeBuilder",
+        "name": {
+            "en_US": "Theme Builder"
         },
-        "description":"Theme Builder Plugin",
-        "group":"Plugin",
-        "config":{
-            "settings":true
+        "description": "Theme Builder Plugin",
+        "group": "Plugin",
+        "config": {
+            "settings": true,
+            "defaultData": true
         },
-        "controller":"ThemeBuilderPluginController"
+        "controller": "ThemeBuilderPluginController"
     },
     {
-        "id":"layoutBuilder",
-        "name":{
-            "en_US":"Layout Builder"
+        "id": "layoutBuilder",
+        "name": {
+            "en_US": "Layout Builder"
         },
-        "description":"Layout Builder Plugin",
-        "group":"Plugin",
-        "config":{
-            "settings":true
+        "description": "Layout Builder Plugin",
+        "group": "Plugin",
+        "config": {
+            "settings": true,
+            "defaultData": true
         },
-        "controller":"LayoutBuilderPluginController"
+        "controller": "LayoutBuilderPluginController"
+    },
+    {
+        "id": "manageRole",
+        "name": {
+            "en_US": "Manage Role"
+        },
+        "description": "Manage Role Plugin",
+        "group": "Plugin",
+        "config": {
+            "defaultData": true
+        },
+        "controller": "ManageRolePluginController"
     }
 ]

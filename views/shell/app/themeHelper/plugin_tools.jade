@@ -3,12 +3,11 @@
     showTools: {Boolean} to show the tools
     showSettingIcon: {Boolean} to show the settings
     showCloseIcon:  {Boolean} to show the remove icon
-
 -if(showTools)
     .tools.pull-right
         -if(showSettingIcon)
-            a.edit(data-id=id, href="#editPluginModal",data-toggle="modal")
+            a.edit(data-id=id, href="#editPluginModal")
                 i.icon-edit.icon-white
         -if(showCloseIcon)
-        a.remove(data-id=id)
-            i.icon-remove.icon-white
+            a.remove(data-id=id)
+                i.icon-remove.icon-white

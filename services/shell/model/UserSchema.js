@@ -48,5 +48,9 @@ userSchema.statics.findByPhoneNo = function (phoneNo, callback) {
     return this.findOne({ "phoneNo":phoneNo }, callback);
 };
 
+userSchema.statics.getDefaultUser = function ( callback) {
+    return this.findOne({"default": true}, callback);
+};
+
 
 module.exports = mongoose.model('User', userSchema);

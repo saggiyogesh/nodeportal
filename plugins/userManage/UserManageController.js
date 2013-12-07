@@ -33,11 +33,11 @@ function updateUserProfileAction(req, res, next) {
         if (!result.hasErrors) {
             var redirect = that.getPluginHelper().getPostParam(req, "redirect"),
                 dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-            that.getDBActionsLib().authorizedPopulateModelAndUpdate(req, USER_SCHEMA, {}, {emailId:"email"}, function (err, result) {
+            that.getDBActionsLib().populateModelAndUpdate(req, USER_SCHEMA, {}, {emailId:"email"}, function (err, result) {
                 if (err) {
                     return next(err, req, res);
                 }
-                dbAction.authorizedGet("findByEmailId", req.session.user.emailId, function (err, user) {
+                dbAction.get("findByEmailId", req.session.user.emailId, function (err, user) {
                     if (user) {
                         req.session.user = user;
                     }

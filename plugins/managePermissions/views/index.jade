@@ -1,17 +1,22 @@
 !{viewLib.Messages(req , namespace)}
 - var roles = req.attrs.roles, actions = req.attrs.actions, actionsValue = req.attrs.actionsValue;
-- var permissions = req.attrs.permissions, formAction = {route: 'updatePermissions'};
+- var permissions = req.attrs.permissions, formAction = {route: 'updatePermissions'}, guestRoleId = req.attrs.guestRoleId;
+- var isSettingsPlugin = !!req.attrs.isSettingsPlugin;
 - if(req.attrs.hasAuth)
 
     form.form-horizontal(method="POST", action="#{viewLib.createURL(req , formAction)}", id='#{namespace +"_fm"}')
         input(name='#{namespace +"[redirect]"}', type="hidden", value="#{req.query.redirect}")
         input(name='#{namespace +"[modelId]"}', type="hidden", value="#{req.params.modelId}")
         input(name='#{namespace +"[modelName]"}', type="hidden", value="#{req.params.name}")
+        input(name='#{namespace +"[modelPermissionSchema]"}', type="hidden", value="#{req.params.modelPermissionSchema}")
+        if isSettingsPlugin
+            input(name='#{namespace +"[isSettingsPlugin]"}', type="hidden", value="#{isSettingsPlugin}")
+
         table.table.table-bordered
             thead
                 tr
                     each role, i in roles
-                        th= role
+                        th= role.name
             tbody
                 each action, i in actions
                     tr
@@ -19,10 +24,11 @@
                         each role, j in roles
                             if role
                                 td
-                                    - var chkStr = permissions[role].join(',').indexOf(actionsValue[action]) > -1 ? 'checked' : '';
+                                    - var roleId = role.roleId
+                                    - var chkStr = permissions[roleId].indexOf(actionsValue[action]) > -1 ? 'checked' : '';
                                         //-only VIEW action is enabled for Guest to give permission
-                                        disableStr = (role == "Guest" && action != "VIEW") ? "disabled" : "";
-                                    !{'<input type="checkbox" name="'+ namespace+'[' + role + '_' + action +']"' + chkStr + ' ' + disableStr +'/>'}
+                                        disableStr = (roleId == guestRoleId.toString() && action != "VIEW") ? "disabled" : "";
+                                    !{'<input type="checkbox" name="'+ namespace+'[' + roleId + '___' + action +']"' + chkStr + ' ' + disableStr +'/>'}
 
         .form-actions
             button.btn.btn-primary(type="submit") Save
@@ -31,13 +37,8 @@
                 |&nbsp;
                 button.btn(id='#{namespace +"_cancel"}') Cancel
 
-                script
-                    window.onload = function(){
+                :script
+                    require(["util"], function () {
                         var ns = "#{namespace}";
                         Rocket.Util.onFormCancel("#{namespace + '_cancel'}");
-                    }
-
-
-
-
-
+                    });

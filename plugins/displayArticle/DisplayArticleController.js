@@ -1,8 +1,7 @@
 var cwd = process.cwd(),
     BasePluginController = require(cwd + "/lib/BasePluginController"),
     defaultView = require(cwd + "/lib/articles/DefaultView"),
-    DateUtil = require(cwd + "/lib/Utils/DateUtil"),
-    ARTICLE_SCHEMA = "Article";
+    ARTICLE_SCHEMA = "Article", ARTICLE_PERMISSION_SCHEMA = "model.articleSchema.Article";
 
 var DisplayArticleController = module.exports = function (id, app) {
     BasePluginController.call(this, id, app);
@@ -29,11 +28,12 @@ function getArticle(req, that, next) {
                 return next();
             }
 
-            var dbAction = DBActionsLib.getInstance(req, ARTICLE_SCHEMA);
-            dbAction.authorizedGet("findById", id, function (err, latestArticle) {
+            var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA);
+            var query = dbAction.getQuery(true).where("id", id);
+            dbAction.authorizedGetByQuery(query, function (err, latestArticle) {
                 if (err) return next(err);
 
-                var html;
+                var html, DateUtil = that.DateUtil;
                 if (latestArticle) {
                     var expiryDate = latestArticle.expiryDate;
                     if (latestArticle.isExpired) {
@@ -42,7 +42,7 @@ function getArticle(req, that, next) {
                         return;
                     }
                     else if (expiryDate && (DateUtil.datePassed(expiryDate) || DateUtil.equalToToday(expiryDate))) {
-                        dbAction.update({articleId:latestArticle.articleId, isExpired:true}, function (err, result) {
+                        dbAction.update({articleId: latestArticle.articleId, isExpired: true}, function (err, result) {
                             if (!err) {
                                 setExpiryMsg();
                             }
@@ -51,7 +51,7 @@ function getArticle(req, that, next) {
                         return;
                     }
 
-                    html = defaultView(req.app, {article:latestArticle, req:req});
+                    html = defaultView(req.app, {article: latestArticle, req: req});
                     req.attrs.articleHTML = html;
                 }
                 else {
@@ -91,7 +91,7 @@ function Settings(jade, params) {
 DisplayArticleController.prototype.settings = function (obj, next) {
     if (obj.post) { //save instance settings
         var id = obj.post.id;
-        var settings = {id:id};
+        var settings = {id: id};
         next(null, settings);
 
         return;
@@ -100,8 +100,8 @@ DisplayArticleController.prototype.settings = function (obj, next) {
     //else render instance settings
     var jade = "settings.jade",
         config = {
-            jade:jade,
-            viewOptions:{}
+            jade: jade,
+            viewOptions: {}
         };
     next(null, config);
 };

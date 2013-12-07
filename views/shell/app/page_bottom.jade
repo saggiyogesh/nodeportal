@@ -1,5 +1,5 @@
-script
-    require(["main"], function(){
+:script
+    require(["main", "bootstrap"], function(){
         Rocket.PageValues = {
             getPageId: function(){
                 return "#{page.pageId}";
@@ -25,7 +25,7 @@ script
     });
 
 - if(req.params.plugin)
-    script
+    :script
         require(["plugin"], function(){
             var currentPlugin = {
                 pluginId : '#{req.params.plugin}'
@@ -39,27 +39,17 @@ script
 
 
 
-//-script(type="text/javascript", src="/js/history.js")
 
--if(req.session.loggedIn &&  (req.query && req.query.mode != "maximized"))
-    .modal.hide.fade#addPluginsModal
-        .modal-header
-            button(class="close", data-dismiss="modal") x
-            h3 Add Plugins
-        .modal-body
-            form.form-horizontal
-        .modal-footer
-            a(href="#", class="btn", data-dismiss="modal") Close
-
-    .modal.hide.fade#editPluginModal
-        .modal-header
-            button(class="close", data-dismiss="modal") x
-            h3 Edit Plugin
-        .modal-body
-
-        .modal-footer
-            a(href="#", class="btn", data-dismiss="modal") Close
-    -if(req.session.roles[0] == "Administrator")
+-if(!req.attrs.isErrorPage && req.session.loggedIn &&  (req.query && req.query.mode != "maximized"))
+    - var permissionValidator = new PermissionValidator(req, "model.pageSchema.Page", "Page");
+    - var hasPageUpdatePermission =  permissionValidator.hasPermission("UPDATE", page.pageId).isAuthorized == true;
+    - var hasPageAddPluginPermission =  permissionValidator.hasPermission("ADD_PLUGIN", page.pageId).isAuthorized == true;
+    - var hasPageRemovePluginPermission =  permissionValidator.hasPermission("REMOVE_PLUGIN", page.pageId).isAuthorized == true;
+    -if(hasPageUpdatePermission)
         script
-            require(['layout', 'handlePlugins']);
+            require(['layout']);
+
+
+    :script
+        require(['handlePlugins']);
 

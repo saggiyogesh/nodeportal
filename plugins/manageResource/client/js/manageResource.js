@@ -1,4 +1,4 @@
-define(["fileuploader", "pluginURL", "contextMenu"], function () {
+define(["fileuploader", "pluginURL", "actionButton"], function () {
     var folderId = 0, resourceModels = [], urls = {},
         path = [
             {name: "Home", resourceId: 0, type: 'folder'}
@@ -15,6 +15,8 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
         resourceDetail = resourceView.find('#detail'), resourceTree = $(".resource-tree"),
         resourceTreeList = resourceTree.find("ul"), breadcrumbs = $('#breadcrumbs'),
         successMsgContainer = $('#successMsg'), uploadFileList;
+
+    var modelName = "Resource", permissionSchemaKey = "model.resourceSchema.Resource";
 
     var DEFAULT_DETAIL_WIDTH = 400, DEFAULT_DETAIL_HEIGHT = 400;
 
@@ -84,8 +86,12 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
 
     function initUploader(url) {
         //create ajax uploader
+        var el = document.getElementById('uploader');
+        if(!el){
+            return;
+        }
         new qq.FileUploader({
-            element: document.getElementById('uploader'),
+            element: el,
             // path to server-side upload script
             action: url + "/",
             params: {type: "ajaxUpload"},
@@ -246,7 +252,9 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
 
 
     function handleItemClick(e) {
-        //console.log(e);
+        if ($(e.target).hasClass('dropdown-toggle')) {
+            return;
+        }
         resetAllMsgs();
         var tgt = e.currentTarget, id = tgt.children[0].id;
         //open item in resouce view in edit mode
@@ -271,35 +279,71 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
         }
     }
 
-
-    //attach menu as per type
-    function attachMenu(item) {
-        var menuType = item.find('a').hasClass(FOLDER_TYPE) ? "folderMenu" : "itemMenu";
-        item.contextMenu({
-                menu: menuType
-            },
-            function (action, el, pos) {
-                switch (action) {
-                    case ADD_SUBFOLDER_MENU_COMMAND:
-                        var parentFolderId = el.find('a').attr('id');
-                        addFolder(parentFolderId);
-                        break;
-                    case DOWNLOAD_MENU_COMMAND:
-                        download(el.find('a').attr('id'));
-                        break;
-                    case RENAME_MENU_COMMAND:
-                        rename(el.find('a').attr('id'), true);
-                        break;
-                    case DELETE_MENU_COMMAND:
-                        var link = el.find('a');
-                        remove(link.attr('id'), link.hasClass(FOLDER_TYPE) ? FOLDER_TYPE : "");
-                        break;
-                    default:
-                        alert("Todo: apply action '" + action + "' to node " + el);
-                }
-            });
-
+    function openPermissions(resourceId) {
+        var redirect = Rocket.PluginURL({action: ""}),
+            params = [
+                "managePermissions",
+                "model"
+            ];
+        var permissionURL = Rocket.Plugin.permissionURL(resourceId, modelName, permissionSchemaKey, redirect);
+        location.href = permissionURL;
     }
+
+    //render action button
+    function renderActionButtons() {
+        $('.manage-resource-container .action-button').each(function (i, action) {
+            action = $(action);
+            var type = action.parent().hasClass(FOLDER_TYPE) ? FOLDER_TYPE : "";
+            var id = action.attr("id"),
+                dataId = action.parent('.resource-item').attr("id");
+
+            var actions = [
+                {
+                    text: type ? "View" : "Download", onClick: function (e) {
+                    if (type) {
+                        renderItemsByFolderId(dataId);
+
+                    } else {
+                        download(dataId);
+                    }
+                },
+                    permissionAction: "VIEW"
+                },
+                {
+                    text: "Permission", data: {id: dataId}, onClick: function (e) {
+                    openPermissions(dataId);
+                },
+                    permissionAction: "PERMISSION"
+                },
+                {
+                    text: "Rename", data: {id: dataId}, onClick: function (e) {
+                    rename(dataId, true);
+                },
+                    permissionAction: "UPDATE"
+                },
+                {
+                    text: "Delete", onClick: function (e) {
+                    remove(dataId, type);
+                },
+                    permissionAction: "DELETE"
+                }
+            ];
+            var opts = {
+                handlerId: id,
+                buttonSize: "mini",
+                actions: actions
+            };
+
+            var permissionConf = {
+                modelId: dataId,
+                modelName: modelName,
+                permissionSchemaKey: permissionSchemaKey
+            };
+
+            new Rocket.ActionButton(opts, permissionConf)
+        });
+    }
+
 
     //fetch items under a folder
     function renderItemsByFolderId(id) {
@@ -312,11 +356,10 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
             data: {mode: "exclusive"},
             success: function (data) {
                 resourcesList.html(data);
+
+                renderActionButtons();
                 var items = resourcesList.find("li");
                 items.click(handleItemClick);
-                _.each(items, function (item) {
-                    attachMenu($(item));
-                });
             }
         };
         Rocket.ajax(options);
@@ -350,7 +393,6 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
             }
             handleItemClick(e);
         });
-        attachMenu(li);
     }
 
     //bind manageResource:resourceView:change event
@@ -452,4 +494,5 @@ define(["fileuploader", "pluginURL", "contextMenu"], function () {
     //init
     renderItemsByFolderId(folderId);
     updateBreadcrumb();
+
 });

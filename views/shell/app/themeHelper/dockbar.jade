@@ -1,16 +1,18 @@
 //- Definition of variables
     req: {Object} Request object
-
 if req.session && req.session.loggedIn
     ul.nav.pull-right
         li.dropdown
             a(class="dropdown-toggle", data-toggle="dropdown", href="#")!{req.session.user.firstName + " "}
                 b.caret
             ul.dropdown-menu
-                -if(req.session.roles[0] == "Administrator" && req.params && req.params.page != "settings") //TODO handle with permissions actions
-                    li: a(href="#addPluginsModal",data-toggle="modal", id="add_plugins")
-                        i.icon-plus-sign
-                        |&nbsp;Add Plugins
+                -if(!req.attrs.isErrorPage && req.params && req.params.page != "settings")
+                    - var permissionValidator = new PermissionValidator(req, "model.pageSchema.Page", "Page");
+                    - var hasPageAddPluginPermission =  permissionValidator.hasPermission("ADD_PLUGIN", req.attrs.page.pageId).isAuthorized == true;
+                    -if(hasPageAddPluginPermission)
+                        li: a(href="#addPluginsModal", id="add_plugins")
+                            i.icon-plus-sign
+                            |&nbsp;Add Plugins
                 li: a(href="/settings", id="site_settings_page")
                     i.icon-cog
                     |&nbsp;Settings

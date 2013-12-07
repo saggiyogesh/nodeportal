@@ -1,21 +1,22 @@
 !{viewLib.Messages(req , namespace)}
 
+- var pv = new viewLib.PermissionValidator(req, "model.articleSchema", "");
+- var hasAdd = pv.hasPermission("ADD").isAuthorized == true;
+
 style
     .show-all-articles {
         margin-top: 30px;
     }
+    div.dataTables_wrapper {
+        overflow: visible;
+    }
 
-ul#listTableMenu.contextMenu
-    li.edit-article: a(href='#edit-article') Edit
-    li.preview-article: a(href='#preview-article') Preview
-    li.permission: a(href='#permission') Permission
-    li.delete-article: a(href='#delete-article') Delete
-
-.article-toolbar
-    button(id='add', class='btn')
-        i.icon-plus-sign
-        | Add Article
-    &nbsp;
+yy.article-toolbar
+    if hasAdd
+        button(id='add', class='btn')
+            i.icon-plus-sign
+            | Add Article
+        &nbsp;
     button(id='delete', class='btn disabled', disabled="disabled")
         i.icon-trash
         | Delete

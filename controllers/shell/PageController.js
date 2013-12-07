@@ -9,7 +9,7 @@ var PageRenderer = require("../../lib/PageRenderer");
 
 module.exports = function (app) {
     var availableLocales = getProp("AVAILABLE_LOCALES").split(",");
-    var pagePermission = require(app.set("appPath") + "/lib/permissions/PagePermission");
+
     app.get("/", function (req, res) {
         res.redirect(getProp("DEFAULT_INDEX_PAGE"));
     });
@@ -27,7 +27,7 @@ module.exports = function (app) {
         Debug._l("3: ");
         next();
 
-    }, pagePermission, handleRequest);
+    }, utils.getRequestMiddlewares(app), handleRequest);
 
 
     //for instanciable plugins

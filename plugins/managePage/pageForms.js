@@ -2,7 +2,7 @@ function checkFriendlyURL(req, model, val, next) {
     if (val.indexOf("/") == -1) {
         val = "/" + val;
     }
-    var db = this.db, dbAction = this.dbAction.setModelName("Page");
+    var db = this.db, dbAction = require(req.app.set('appPath') + "/lib/DBActions").getInstanceFromDB(db, "Page");
     dbAction.get("findByFriendlyURL", val, function (err, page) {
         if (err) {
             next(err);
@@ -31,84 +31,84 @@ function checkAppUrl(req, model, val, next) {
 }
 
 var name = {
-    label:"Name",
-    type:"text",
-    name:"name",
-    rules:[ "required"]
+    label: "Name",
+    type: "text",
+    name: "name",
+    rules: [ "required"]
 };
 
 var friendlyURL = {
-    label:"Friendly URL",
-    type:"text",
-    name:"friendlyURL",
-    rules:[ "required", "checkFriendlyURL", "checkAppUrl"]
+    label: "Friendly URL",
+    type: "text",
+    name: "friendlyURL",
+    rules: [ "required", "checkFriendlyURL", "checkAppUrl"]
 };
 
 var isHidden = {
-    label:"Hidden",
-    type:"checkbox",
-    name:"isHidden"
+    label: "Hidden",
+    type: "checkbox",
+    name: "isHidden"
 };
 
 var isIndex = {
-    label:"Index",
-    type:"checkbox",
-    name:"isIndex"
+    label: "Index",
+    type: "checkbox",
+    name: "isIndex"
 };
 var theme = {
-    label:"Theme",
-    type:"select",
-    name:"theme",
-    options:[],
-    rules:[ "required"]
+    label: "Theme",
+    type: "select",
+    name: "theme",
+    options: [],
+    rules: [ "required"]
 };
 var layout = {
-    label:"Layout",
-    type:"select",
-    name:"layout",
-    options:[],
-    rules:[ "required"]
+    label: "Layout",
+    type: "select",
+    name: "layout",
+    options: [],
+    rules: [ "required"]
 };
 var update = {
-    type:"submit",
-    value:"Update"
+    type: "submit",
+    value: "Update"
 };
 
 var cancel = {
-    type:"cancel",
-    value:"Cancel"
+    type: "cancel",
+    value: "Cancel"
 };
 
 var redirect = {
-    type:"hidden",
-    name:"redirect"
+    type: "hidden",
+    name: "redirect"
 };
 var pageId = {
-    type:"hidden",
-    name:"pageId"
+    type: "hidden",
+    name: "pageId"
 };
 var parentPageId = {
-    type:"hidden",
-    name:"parentPageId"
+    type: "hidden",
+    name: "parentPageId"
 };
 var description = {
-    label:"Description",
-    type:"textarea",
-    name:"description"
+    label: "Description",
+    type: "textarea",
+    name: "description"
 };
 var keywords = {
-    label:"Keywords",
-    type:"text",
-    name:"keywords"
+    label: "Keywords",
+    type: "text",
+    name: "keywords"
 };
 var formObj = {
-    form:{
-        id:"fm",
-        method:"post",
-        action:"updatePage",
-        autocomplete:"off"
+    form: {
+        id: "fm",
+        method: "post",
+        action: "updatePage",
+        autocomplete: "off"
     },
-    fields:[ pageId, parentPageId, redirect, name, friendlyURL, theme, layout, isHidden ,
+    fields: [ pageId, parentPageId, redirect, name, friendlyURL, theme, layout, isHidden ,
         description, keywords, update, cancel ]
 };
 exports.PageForm = function (req, DBActions, next) {
@@ -135,27 +135,42 @@ exports.PageForm = function (req, DBActions, next) {
                 }
             }
 
-            next(err, formObj);
+            var cloneFormObj = _.clone(formObj);
+            cloneFormObj.fields.forEach(function (el) {
+                if (el.type != "hidden") {
+                    delete  el.disabled;
+                }
+            });
+            next(err, cloneFormObj);
         });
 
     });
 };
 
 var pageOrder = {
-    type:"hidden",
-    name:"pageOrder"
+    type: "hidden",
+    name: "pageOrder"
+};
+var updatePO = {
+    type: "submit",
+    value: "Update"
+};
+
+var cancelPO = {
+    type: "cancel",
+    value: "Cancel"
 };
 exports.updatePageOrderForm = {
-    form:{
-        id:"update_order_fm",
-        method:"post",
-        action:"updatePageOrder"
+    form: {
+        id: "update_order_fm",
+        method: "post",
+        action: "updatePageOrder"
     },
-    fields:[ parentPageId, redirect, pageOrder, update, cancel ]
+    fields: [ parentPageId, redirect, pageOrder, updatePO, cancelPO ]
 }
 
 exports.customValidations = {
-    checkFriendlyURL:{ruleFunction:checkFriendlyURL, msgs:{en_US:"Friendly url already exists."}},
-    checkAppUrl:{ruleFunction:checkAppUrl, msgs:{en_US:"Friendly url can't be same as app url."}}
+    checkFriendlyURL: {ruleFunction: checkFriendlyURL, msgs: {en_US: "Friendly url already exists."}},
+    checkAppUrl: {ruleFunction: checkAppUrl, msgs: {en_US: "Friendly url can't be same as app url."}}
 
 };

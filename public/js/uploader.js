@@ -1,13 +1,8 @@
 /**
  * Lib for ajax uploading of file to server.
  */
-define(["util", "_", "dynaTree", "fileUpload"], function () {
-    var MODEL_TMPL = '<div id="<%=modelId%>" class="modal hide fade" tabindex="-1" role="dialog" ' +
-            'aria-labelledby="<%=modelId%>_Label" aria-hidden="true" style="display: none;"><div class="modal-header">' +
-            '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>' +
-            '<h3 id="myModalLabel"><%=modelHeading%></h3></div><div class="modal-body"><%=modelBody %></div>' +
-            '<div class="modal-footer"><button class="btn" data-dismiss="modal">Close</button></div></div>',
-
+define(["util", "_", "dynaTree", "fileUpload", "modal"], function () {
+    var
         UPLOADER_TMPL = '<form id="<%=uploaderId%>" action="" method="POST" enctype="multipart/form-data">' +
             '<div class="row fileupload-buttonbar"><div class="span4"><span class="btn btn-success fileinput-button">' +
             '<i class="icon-plus icon-white"></i><span>Add file(s)</span><input type="file" name="files[]" multiple>' +
@@ -20,6 +15,7 @@ define(["util", "_", "dynaTree", "fileUpload"], function () {
             '</div><div class="progress-extended"></div></div></div><div class="fileupload-loading"></div>' +
             '<br><table role="presentation" class="table table-striped"><tbody class="files" ' +
             'data-toggle="modal-gallery" data-target="#modal-gallery"></tbody></table></form>',
+
         HIDDEN_INPUT_TMPL = '<input type="hidden" name="<%=name%>" value="<%=value%>" class="uploader-hidden-input"/>';
 
     /**
@@ -47,17 +43,21 @@ define(["util", "_", "dynaTree", "fileUpload"], function () {
         var that = this;
         that.modelId = that.uploaderId + "_Model";
         that.pluginNS = Rocket.Plugin.currentPlugin.namespace;
-        var uploaderCompiled = _.template(UPLOADER_TMPL),
-            modelCompiled = _.template(MODEL_TMPL);
-        var modelHTML = modelCompiled({
-            modelId: that.modelId,
-            modelHeading: "Upload files to server",
-            modelBody: uploaderCompiled({
+        var uploaderCompiled = _.template(UPLOADER_TMPL);
+
+        that.model = new Rocket.Modal({
+            id: that.uploaderId,
+            body: uploaderCompiled({
                 uploaderId: that.uploaderId
-            })
+            }),
+            title: "Upload files to server",
+            width: 0.7,
+            onHide: function () {
+                that._clearFormData();
+                that._clearUploads();
+            }
+
         });
-        var body = $("body");
-        body.append(modelHTML);
 
         var options = that.options;
 
@@ -122,9 +122,6 @@ define(["util", "_", "dynaTree", "fileUpload"], function () {
 
         that.form = $('#' + that.uploaderId);
 
-        //handle model close
-        that._onModelClose();
-
         that.bindEvents();
     };
 
@@ -151,17 +148,7 @@ define(["util", "_", "dynaTree", "fileUpload"], function () {
      */
     uploader.prototype.open = function () {
         var that = this;
-        $('#' + that.modelId).modal({
-            backdrop: true,
-            keyboard: true
-        }).css({
-                'width': function () {
-                    return ($(document).width() * .7) + 'px';
-                },
-                'margin-left': function () {
-                    return -($(this).width() / 2);
-                }
-            });
+        that.model.show();
     };
 
     /**
@@ -183,7 +170,6 @@ define(["util", "_", "dynaTree", "fileUpload"], function () {
 
     /**
      * Provides handler of 'always' event of uploader.
-     * @param {Function} always
      */
     uploader.prototype._handleAlways = function () {
         var that = this, options = that.options;
@@ -202,18 +188,6 @@ define(["util", "_", "dynaTree", "fileUpload"], function () {
             }
 
         };
-    };
-
-    /**
-     * Handler of Model 'hide' event
-     */
-    uploader.prototype._onModelClose = function () {
-        var that = this;
-        $('#' + that.modelId).on('hide', function () {
-            //clear from data and other upload info
-            that._clearFormData();
-            that._clearUploads();
-        });
     };
 
     /**
