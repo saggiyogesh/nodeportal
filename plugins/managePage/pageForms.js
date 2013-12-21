@@ -115,27 +115,24 @@ exports.PageForm = function (req, DBActions, next) {
     var dbActionTheme = DBActions.getInstance(req, "Theme"),
         dbActionLayout = DBActions.getInstance(req, "Layout");
 
+    var cloneFormObj = utils.clone(formObj), fields = cloneFormObj.fields;
+
     dbActionTheme.get("find", {}, function (err, themes) {
         if (err) return next(err);
 
-        if (themes.length != theme.options.length) { //prevent appending of same theme on each request
-            for (var i = 0; i < themes.length; i++) {
-                var t = themes[i];
-                theme.options.push([t.name, t.themeId]);
-            }
-        }
+        var theme = fields[5];
+        themes.forEach(function (t) {
+            theme.options.push([t.name, t.themeId]);
+        });
 
         dbActionLayout.get("find", {}, function (err, layouts) {
             if (err) return next(err);
 
-            if (layouts.length != layout.options.length) {
-                for (var i = 0; i < layouts.length; i++) {
-                    var l = layouts[i];
-                    layout.options.push([l.name, l.layoutId]);
-                }
-            }
+            var layout = fields[6];
+            layouts.forEach(function (l) {
+                layout.options.push([l.name, l.layoutId]);
+            });
 
-            var cloneFormObj = _.clone(formObj);
             cloneFormObj.fields.forEach(function (el) {
                 if (el.type != "hidden") {
                     delete  el.disabled;

@@ -1,7 +1,8 @@
 var cwd = process.cwd(),
     BasePluginController = require(cwd + "/lib/BasePluginController"),
     defaultView = require(cwd + "/lib/articles/DefaultView"),
-    ARTICLE_SCHEMA = "Article", ARTICLE_PERMISSION_SCHEMA = "model.articleSchema.Article";
+    ARTICLE_SCHEMA = "Article", ARTICLE_PERMISSION_SCHEMA = "model.articleSchema.Article",
+    SettingsForm = require('./settingsForm');
 
 var DisplayArticleController = module.exports = function (id, app) {
     BasePluginController.call(this, id, app);
@@ -75,10 +76,7 @@ function displayArticleAction(req, res, next) {
     });
 }
 
-function Settings(jade, params) {
-    this.jade = jade;
-    this.params = params
-}
+
 /**
  * Method used in both render and save settings.
  * If obj has post then go for save settings.
@@ -89,19 +87,25 @@ function Settings(jade, params) {
  * @param next
  */
 DisplayArticleController.prototype.settings = function (obj, next) {
+    var that = this;
+
     if (obj.post) { //save instance settings
-        var id = obj.post.id;
-        var settings = {id: id};
+        var post = obj.post;
+        var ns = post.ns;
+        var id = post[ns].id;
+        var settings = {id: id, enableComments: post[ns].enableComments};
         next(null, settings);
 
         return;
     }
 
     //else render instance settings
+    var formObj = SettingsForm.settingsForm();
     var jade = "settings.jade",
         config = {
             jade: jade,
-            viewOptions: {}
+            viewOptions: {},
+            settingsForm: formObj
         };
     next(null, config);
 };
@@ -112,8 +116,18 @@ DisplayArticleController.prototype.render = function (req, res, next) {
     view = view || "index";
     var ret = {}, that = this;
 
-    getArticle(req, that, function (err) {
-        next(err, [ view, ret ]);
+    ret.settings = that.getSettings(req, function (err, settings) {
+        if (err) {
+            next(err, [ view, ret ]);
+        }
+        else {
+            getArticle(req, that, function (err) {
+                ret.settings = settings || {
+                    id: 0,
+                    enableComments: false
+                };
+                next(err, [ view, ret ]);
+            });
+        }
     });
-
 };

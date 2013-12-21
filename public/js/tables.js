@@ -25,6 +25,10 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
             "aoColumns": this.manageColumns(options, data.columns)
         };
 
+        if(options.hideSearch){
+            opts.bFilter = false;
+        }
+
         if (options.checkBoxAll) {
             opts["aaSorting"] = [
                 [1, 'asc']
@@ -71,10 +75,7 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
                     "url": sSource,
                     "data": aoData,
                     "success": function (json) {
-                        if (options.checkBoxAll) {
-                            var aaData = json.aaData;
-                            json.aaData = that.manageValues(aaData);
-                        }
+                        json.aaData = that.manageValues(json.aaData);
                         fnCallback(json);
                         if (options.checkBoxAll) {
                             that.handleCheckBoxClick();
@@ -115,11 +116,14 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
             var opts = that.getOptions().actionButton;
             opts.handlerId = node.attr("id");
             opts.actions = actions;
-            var permissionConf = {
-                modelId: node.data("id"),
-                modelName: opts.modelName,
-                permissionSchemaKey: opts.permissionSchemaKey
-            };
+            var permissionConf;
+            if (opts.permissionSchemaKey) {
+                permissionConf = {
+                    modelId: node.data("id"),
+                    modelName: opts.modelName,
+                    permissionSchemaKey: opts.permissionSchemaKey
+                };
+            }
 //            delete opts.modelName;
 //            delete opts.permissionSchemaKey;
             new Rocket.ActionButton(opts, permissionConf);

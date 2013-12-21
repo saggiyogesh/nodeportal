@@ -15,6 +15,7 @@ var app = module.exports = express.createServer();
  };*/
 global.util = util;
 global.utils = require("./lib/utils");
+global.async = require("async");
 //add Debug object to global
 global.Debug = global.utils.Debug;
 global._ = require("underscore");

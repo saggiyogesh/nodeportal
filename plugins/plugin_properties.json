@@ -161,5 +161,28 @@
             "defaultData": true
         },
         "controller": "ManageRolePluginController"
+    },
+    {
+        "id": "pluginsManager",
+        "name": {
+            "en_US": "Plugins Manager"
+        },
+        "description": "Plugins Manager.",
+        "group": "Plugin",
+        "config": {
+            "settings": true
+        },
+        "controller": "PluginsManagerController"
+    }  ,
+    {
+        "id": "threadComments",
+        "name": {
+            "en_US": "Thread comments plugin"
+        },
+        "description": "Thread comments plugin",
+        "group": "Plugin",
+        "config": {
+        },
+        "controller": "ThreadCommentsController"
     }
 ]

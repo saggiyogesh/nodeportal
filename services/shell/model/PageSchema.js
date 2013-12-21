@@ -67,4 +67,8 @@ pageSchema.statics.findByLayoutId = function (layoutId, callback) {
     return this.find({"layoutId": layoutId }, callback);
 };
 
+pageSchema.statics.findByThemeId = function (themeId, callback) {
+    return this.find({ "themeId": themeId }, callback);
+};
+
 module.exports = mongoose.model('Page', pageSchema);

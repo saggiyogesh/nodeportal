@@ -1,3 +1,24 @@
 .displayArticle
     !{viewLib.Messages(req , namespace)}
     !{req.attrs.articleHTML}
+
+
+-if(settings.enableComments)
+    .article-comments
+        div(id="#{namespace}_comments")
+        script
+            setTimeout(function(){
+                require(["threadComments"], function(){
+                    new Rocket.ThreadComments({
+                        linkedModelId:'#{settings.id}',
+                        linkedModelName:'Article',
+                        linkedModelFinderParam:'id',
+                        container: '##{namespace}_comments',
+                        linkedPermissionSchemaKey: 'model.articleSchema.Article'
+                    });
+                });
+            }, 100)
+
+
+
+

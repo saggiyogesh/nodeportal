@@ -94,7 +94,7 @@ function updatePluginSettings(req, res, next) {
                     pluginSettings: instance.settings || {},
                     post: body
                 };
-                settingsFn(obj, save);
+                settingsFn.apply(exec, [obj, save]);
 
             }
         }
@@ -152,14 +152,25 @@ function editPlugin(req, res, next) {
                     pluginSettings: instance.settings || {}
 
                 };
-                var url = URLCreator.createExclusiveURLFromRequest(that.getPluginHelper().cloneRequest(req, that.getPluginId())).setAction("updatePluginSettings");
+                var url = URLCreator.createExclusiveURLFromRequest(that.getPluginHelper()
+                    .cloneRequest(req, that.getPluginId())).setAction("updatePluginSettings");
                 settingsFn(obj, function (err, config) {
-                    var viewPath = req.app.set('appPath') + "/plugins/" + pluginId + "/views/"
-                        + config.jade , view = PageRenderer.viewParser(req, viewPath, {
-                        settings: obj.pluginSettings,
-                        settingsURL: url,
-                        viewOptions: config.viewOptions
-                    });
+                    var viewPath = req.app.set('appPath') + "/plugins/" + pluginId + "/views/" + config.jade,
+                        opts = {
+                            settings: obj.pluginSettings,
+                            settingsURL: url,
+                            viewOptions: config.viewOptions,
+                            namespace: ns
+                        };
+                    if (config.settingsForm) {
+                        var fm = config.settingsForm;
+                        fm.form.action = url;
+                        fm = that.getFormBuilder().SettingsDynamicForm(req.app, ns, fm, "en_US", obj.pluginSettings, "add");
+                        opts.settingsForm = fm;
+                    }
+
+
+                    var view = PageRenderer.viewParser(req, viewPath, opts);
                     managePlugin["pluginSettingsView"] = view;
                     next(err, req, res);
                 });

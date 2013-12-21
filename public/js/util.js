@@ -1,4 +1,4 @@
-define(["events", "_", "bootstrap"], function () {
+define(["events", "_", "bootstrap", "autosize"], function () {
     var onLoadFns = [];
     Rocket.Util = {
         linkAsync: function (params, fn) {
@@ -263,7 +263,11 @@ define(["events", "_", "bootstrap"], function () {
             else {
                 this.disableButton(buttonObj)
             }
-
+        },
+        autoSizeTextArea: function (textAreaId) {
+            $(function () {
+                $("body #"+ textAreaId).autosize();
+            });
         }
     };
 

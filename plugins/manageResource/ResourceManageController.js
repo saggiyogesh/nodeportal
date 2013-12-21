@@ -311,7 +311,7 @@ function viewResourcesAction(req, res, next) {
 
         var dirPath = realPath(resourceFolderPath, resourceId);
 
-        dbAction.authorizedGet("findByResourceId", [resourceId], function (err, model) {
+        dbAction.authorizedGet("findByResourceId", resourceId, function (err, model) {
             if (model) {
                 if (params.action === "thumb") {
                     var thumbName = that.getAppProperty("DEFAULT_THUMB_NAME");

@@ -21,13 +21,18 @@ exports.getArticles = function (dbAction, queryParams, next) {
         searchKeyword = queryParams["sSearch"];
 
     //same query can't be used for count & search
+    if(sortDir == "desc"){
+        sortDir = "-";
+    }
+    else{
+        sortDir = "";
+    }
 
     var searchQuery = dbAction.getQuery()
-            .sort(columns[sortCol], direction[sortDir])
+            .sort(sortDir + columns[sortCol])
             .limit(length).skip(start),
 
         countQuery = dbAction.getQuery()
-            .sort(columns[sortCol], direction[sortDir])
             .limit(length).skip(start);
 
 

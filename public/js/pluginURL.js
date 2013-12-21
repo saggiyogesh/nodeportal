@@ -21,11 +21,40 @@ define(["util", "plugin"], function () {
         return url;
     };
 
+    Rocket.PluginURL.createByNamespace = function (namespace, paths, params, mode) {
+        var o = Rocket.Props.getPluginIdAndIId(namespace);
+        var arr = [o.pluginId];
+        if(o.iId){
+            arr.push(o.iId);
+        }
+
+        if (!_.isArray(paths)) {
+            paths = [paths];
+        }
+
+        arr = _.union(arr, paths);
+
+        if (mode) {
+            params = params || {};
+            params.mode = mode;
+        }
+
+        var query = $.param(params);
+        var url = Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/" + arr.join("/");
+        if (query) {
+            url = url + "?" + query;
+        }
+
+        return url;
+
+
+    };
+
     Rocket.PluginURL.async = function (params, callback) {
         var pageUrl = Rocket.PageValues.getPageFriendlyURL(), namespace = Rocket.Plugin.currentPlugin.namespace,
             data = {
-                page:pageUrl,
-                namespace:namespace
+                page: pageUrl,
+                namespace: namespace
             }, key = [namespace];
 
 
@@ -45,9 +74,9 @@ define(["util", "plugin"], function () {
             return;
         }
         Rocket.ajax({
-            url:Rocket.Props.getAppUrl() + "/pluginUrl",
-            data:data,
-            success:function (response) {
+            url: Rocket.Props.getAppUrl() + "/pluginUrl",
+            data: data,
+            success: function (response) {
                 if (response.success == true) {
                     if (callback) {
                         callback(response.url);

@@ -6,7 +6,15 @@
             },
             getPageFriendlyURL : function(){
                 return "#{page.friendlyURL}";
+            }
+        };
+        Rocket.Props = {
+            getAppUrl: function(){
+                return "#{props.appURL}"
             },
+            getPluginIdAndIId: #{getPluginIdAndIId}
+        };
+        Rocket.User ={
             getUserName : function(){
                 return "#{user.userName}";
             },
@@ -15,13 +23,11 @@
             },
             isSignedIn : function(){
                 return #{req.session.loggedIn};
+            },
+            getUserId: function(){
+                return "#{user.userId}";
             }
-        };
-        Rocket.Props = {
-            getAppUrl: function(){
-                return "#{props.appURL}"
-            }
-        };
+        }
     });
 
 - if(req.params.plugin)

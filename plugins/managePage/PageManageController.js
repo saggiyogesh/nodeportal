@@ -3,7 +3,7 @@
  */
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
 var PageManager = require("./PageManager.js"), pageForm = require("./pageForms.js"),
-    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout", PAGE_PERMISSION_SCHEMA_ENTRY = "model.pageSchema.Page",
+    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout", THEME_SCHEMA = "Theme", PAGE_PERMISSION_SCHEMA_ENTRY = "model.pageSchema.Page",
     PAGE_PERMISSION_SCHEMA = "model.pageSchema";
 //var forms = require("./forms");
 
@@ -39,51 +39,133 @@ var PageManageController = module.exports = function (id, app) {
         that.addCustomValidations(pageForm.customValidations);
 
         //Listen layout update event and update page data field
-        that.getModelEvent(LAYOUT_SCHEMA).handleUpdate(function (event) {
-            var schemaName = event.schemaName, modelId = event.modelId;
-            if (schemaName === LAYOUT_SCHEMA) {
-                var DBActions = that.getDBActionsLib();
-                var dbAction = DBActions.getSimpleInstance(app, PAGE_SCHEMA);
-                dbAction.get("findByLayoutId", modelId, function (err, pages) {
-                    if (err) {
-                        Debug._l(err);
-                        return;
-                    }
-                    if (pages) {
-                        DBActions.getSimpleInstance(app, LAYOUT_SCHEMA).get("findByLayoutId", modelId, function (err, layout) {
-                            if (err) {
-                                return Debug._l(err);
-                            }
-                            if (layout) {
-                                pages.forEach(function (page) {
-                                    var data = shufflePageData(page, layout);
-
-                                    var model = {
-                                        pageId: page.pageId,
-                                        data: data
-                                    };
-
-                                    dbAction.update(model, function (err, result) {
-                                        if (err) {
-                                            Debug._l(err);
-                                        }
-                                        if (result) {
-                                            Debug._l("Page updated by model event, " + page.pageId);
-                                        }
-                                    })
-
-                                });
-                            }
-                        });
-
-                    }
-                });
-            }
-        });
+        that.getModelEvent(LAYOUT_SCHEMA).handleUpdate(handleLayoutUpdate, that);
+        that.getModelEvent(LAYOUT_SCHEMA).handleDelete(handleLayoutDelete, that);
+        that.getModelEvent(THEME_SCHEMA).handleDelete(handleThemeDelete, that);
     });
 };
 
 util.inherits(PageManageController, BasePluginController);
+
+function handleThemeDelete(event) {
+    var schemaName = event.schemaName, modelId = event.modelId, that = this, app = that.getApp();
+    var DBActions = that.getDBActionsLib();
+    if (schemaName === THEME_SCHEMA) {
+        var dbActionP = DBActions.getSimpleInstance(app, PAGE_SCHEMA);
+        var dbActionT = DBActions.getSimpleInstance(app, THEME_SCHEMA);
+        async.parallel({
+            pages: function (next) {
+                dbActionP.get("findByThemeId", modelId, next);
+            },
+            theme: function (next) {
+                dbActionT.get("getDefault", next);
+            }
+        }, function (err, results) {
+            if (!err && results.pages && results.theme) {
+                results.pages.forEach(function (page) {
+                    var model = {
+                        pageId: page.pageId,
+                        themeId: results.theme.themeId
+                    };
+
+                    dbActionP.update(model, function (err, result) {
+                        if (err) {
+                            Debug._l(err);
+                        }
+                        if (result) {
+                            Debug._l("Page updated by model event, " + page.pageId);
+                        }
+                    });
+
+                })
+            }
+
+        });
+    }
+}
+
+function handleLayoutDelete(event) {
+    var schemaName = event.schemaName, modelId = event.modelId, that = this, app = that.getApp();
+    var DBActions = that.getDBActionsLib();
+    if (schemaName === LAYOUT_SCHEMA) {
+        var dbActionP = DBActions.getSimpleInstance(app, PAGE_SCHEMA);
+        var dbActionL = DBActions.getSimpleInstance(app, LAYOUT_SCHEMA);
+        async.parallel({
+            pages: function (next) {
+                dbActionP.get("findByLayoutId", modelId, next);
+            },
+            layout: function (next) {
+                dbActionL.get("getDefault", next);
+            }
+        }, function (err, results) {
+            Debug._li(">> ", results, true);
+            if (!err && results.pages && results.layout) {
+                results.pages.forEach(function (page) {
+                    var layout = results.layout;
+                    var data = shufflePageData(page, layout);
+                    var model = {
+                        pageId: page.pageId,
+                        layoutId: layout.layoutId,
+                        data: data
+                    };
+
+                    dbActionP.update(model, function (err, result) {
+                        if (err) {
+                            Debug._l(err);
+                        }
+                        if (result) {
+                            Debug._l("Page updated by model event, " + page.pageId);
+                        }
+                    });
+
+                })
+            }
+
+        });
+
+    }
+}
+function handleLayoutUpdate(event) {
+    var schemaName = event.schemaName, modelId = event.modelId, that = this, app = that.getApp();
+    if (schemaName === LAYOUT_SCHEMA) {
+        var DBActions = that.getDBActionsLib();
+        var dbAction = DBActions.getSimpleInstance(app, PAGE_SCHEMA);
+        dbAction.get("findByLayoutId", modelId, function (err, pages) {
+            if (err) {
+                Debug._l(err);
+                return;
+            }
+            if (pages) {
+                DBActions.getSimpleInstance(app, LAYOUT_SCHEMA).get("findByLayoutId", modelId, function (err, layout) {
+                    if (err) {
+                        return Debug._l(err);
+                    }
+                    if (layout) {
+                        pages.forEach(function (page) {
+                            var data = shufflePageData(page, layout);
+
+                            var model = {
+                                pageId: page.pageId,
+                                data: data
+                            };
+
+                            dbAction.update(model, function (err, result) {
+                                if (err) {
+                                    Debug._l(err);
+                                }
+                                if (result) {
+                                    Debug._l("Page updated by model event, " + page.pageId);
+                                }
+                            });
+
+                        });
+                    }
+                });
+
+            }
+        });
+    }
+}
 
 /**
  * only single page is deleted at a time, ie if a page doesn't have any children
@@ -102,7 +184,7 @@ function deletePage(req, res, next) {
     }
     var redirect = "/" + req.params.page + "/" + req.params.plugin;
     dbAction.get("findByPageId", pageId, function (err, page) {
-        if(err){
+        if (err) {
             return next(err, req, res);
         }
         if (page && (that.getAppProperty("DEFAULT_INDEX_PAGE") == page.friendlyURL)) {

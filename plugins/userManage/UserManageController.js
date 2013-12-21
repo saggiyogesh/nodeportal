@@ -47,7 +47,7 @@ function updateUserProfileAction(req, res, next) {
             });
         }
         else {
-            this.setErrorMessage(req, "entered-invalid-data");
+            that.setErrorMessage(req, "entered-invalid-data");
             next(err, req, res);
         }
     });

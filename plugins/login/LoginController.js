@@ -99,11 +99,11 @@ LoginController.prototype.render = function (req, res, next) {
         if (params.params && (params.params.action === "register" || params.params.action === "Update" || params.params.action === "doRegister")) {
             view = "register";
             page = 1;
-            var formObj = loginForms.RegisterForm;
+            var formObj = utils.clone(loginForms.RegisterForm);
             ret.registerForm = DynamicForm(req, formObj, "en_US");
         }
         if (page === 0) {
-            var formObj = loginForms.LoginForm;
+            var formObj = utils.clone(loginForms.LoginForm);
             ret.loginForm = DynamicForm(req, formObj, "en_US");
         }
     }

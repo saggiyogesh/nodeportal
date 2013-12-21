@@ -1,0 +1,111 @@
+
+- var thread = req.attrs.thread;
+- var pv = new viewLib.PermissionValidator(req, thread.linkedPermissionSchemaKey, thread.linkedModelName);
+- var hasAdd = pv.hasPermission("ADD_DISCUSSION", thread.linkedModelPK).isAuthorized == true;
+- var hasEdit = pv.hasPermission("EDIT_DISCUSSION", thread.linkedModelPK).isAuthorized == true;
+- var hasDelete = pv.hasPermission("DELETE_DISCUSSION", thread.linkedModelPK).isAuthorized == true;
+- var hasView = pv.hasPermission("VIEW", thread.linkedModelPK).isAuthorized == true;
+
+- if(hasView)
+    style
+        .comment-form textarea{
+            width:95%;
+        }
+
+        .comment-form .post-button{
+            margin-top: 10px;
+        }
+        .media .media-body .media-controls .reply,
+        .media .media-body .media-controls .edit{
+            margin-right: 5px;
+        }
+
+        .comment-list .reply-comment-form {
+            margin-top: 10px;
+        }
+        .comment-list .editable-click{
+            border-bottom: none;
+        }
+
+        .comment-list .media-content{
+            white-space: pre-wrap;
+        }
+
+        .comment-list .editable-container.editable-inline{
+            width: 100%;
+        }
+
+        .comment-list .editable-input{
+            width: 100%;
+            display: inline;
+        }
+        .comment-list .input-large{
+            width: 70%;
+        }
+
+
+
+
+        /*Below css can be removed after bootstrap upgrade to v2.3.2+ */
+        .media,
+        .media-body {
+            overflow: hidden;
+            *overflow: visible;
+            zoom: 1;
+        }
+
+        .media,
+        .media .media {
+            margin-top: 15px;
+        }
+
+        .media:first-child {
+            margin-top: 0;
+        }
+
+        .media-object {
+            display: block;
+        }
+
+        .media-heading {
+            margin: 0 0 5px;
+        }
+
+        .media > .pull-left {
+            margin-right: 10px;
+        }
+
+        .media > .pull-right {
+            margin-left: 10px;
+        }
+
+        .media-list {
+            margin-left: 0;
+            list-style: none;
+        }
+
+
+
+    div(id="#{thread.threadId}_thread", data-permissionschema="#{thread.linkedPermissionSchemaKey}")
+        h3 Comments
+        hr
+        .form
+
+        hr
+
+        .comment-list.hide(id="#{thread.threadId}_commentList")
+
+
+    //TODO :script filter should be used, if filter can take jade options like thread obj in this case
+    script
+        require(["threadComments"], function(){
+            Rocket.trigger({type:"threadComments:index:load", target:this, data:{
+                threadId: "#{thread.threadId}",
+                linkedPermissionSchemaKey: "#{thread.linkedPermissionSchemaKey}",
+                auth:{
+                    hasAdd: #{hasAdd},
+                    hasEdit: #{hasEdit},
+                    hasDelete: #{hasDelete}
+                }
+            }});
+        })

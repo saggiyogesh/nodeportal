@@ -1,0 +1,7 @@
+!{viewLib.Messages(req , namespace)}
+.show-all-plugins
+    #pluginsTable
+    :script
+        require(["pluginsManager"], function(){
+            Rocket.trigger({type:"pluginsManager:index:load", target:this});
+        });

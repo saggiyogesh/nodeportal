@@ -14,7 +14,10 @@
         "fileUpload-ui": "jquery.fileupload-ui",
         "typing": "jquery.typing",
         json: "json2",
-        _: "underscore.min"
+        _: "underscore.min",
+        autosize: "jquery.autosize.min",
+        editable: "bootstrap-editable.min"
+
     };
 
     window.Rocket = function () {
