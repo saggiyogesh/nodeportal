@@ -37,7 +37,7 @@ Run the server:
 Create `np-override.properties` file  in root folder contains all needed configuration information like DB connection information etc of portal.
 
 ##New in version 0.2.3
-* [Report bugs](https://github.com/saggiyogesh/nodeportal/releases/tag/v0.2.3)
+* [v0.2.3](https://github.com/saggiyogesh/nodeportal/releases/tag/v0.2.3)
 
 
 
