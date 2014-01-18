@@ -1,7 +1,7 @@
 var USER_SCHEMA = "User";
 
 function checkUserName(req, model, val, next) {
-    var db = this.db,  dbAction = require(req.app.set('appPath') + "/lib/DBActions").getInstanceFromDB(db, USER_SCHEMA);
+    var db = this.db, dbAction = require(utils.getLibPath() + "/DBActions").getInstanceFromDB(db, USER_SCHEMA);
     dbAction.get("findByUserName", val, function (err, user) {
         if (!err) {
             if (user) {
@@ -17,7 +17,7 @@ function checkUserName(req, model, val, next) {
 }
 
 function checkEmail(req, model, val, next) {
-    var db = this.db, dbAction = require(req.app.set('appPath') + "/lib/DBActions").getInstanceFromDB(db, USER_SCHEMA);
+    var db = this.db, dbAction = require(utils.getLibPath() + "/DBActions").getInstanceFromDB(db, USER_SCHEMA);
     dbAction.get("findByEmailId", val, function (err, user) {
         if (!err) {
             if (user) {

@@ -21,10 +21,10 @@ define(["util", "plugin"], function () {
         return url;
     };
 
-    Rocket.PluginURL.createByNamespace = function (namespace, paths, params, mode) {
+    Rocket.PluginURL.createByNamespace = function (namespace, paths, params, mode, isAppRoute) {
         var o = Rocket.Props.getPluginIdAndIId(namespace);
         var arr = [o.pluginId];
-        if(o.iId){
+        if (o.iId) {
             arr.push(o.iId);
         }
 
@@ -39,8 +39,8 @@ define(["util", "plugin"], function () {
             params.mode = mode;
         }
 
-        var query = $.param(params);
-        var url = Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/" + arr.join("/");
+        var query = params && $.param(params);
+        var url = Rocket.Util.getOrigin() + (isAppRoute ? Rocket.Props.getAppUrl() : Rocket.PageValues.getPageFriendlyURL()) + "/" + arr.join("/");
         if (query) {
             url = url + "?" + query;
         }

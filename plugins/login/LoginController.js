@@ -5,22 +5,23 @@ var util = require("util");
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController"),
     PasswordUtil = require(process.cwd() + "/lib/PasswordUtil"),
     LoginUtil = require(process.cwd() + "/lib/login/LoginUtil");
-var loginForms = require("./loginForms");
+var loginForms = require("./loginForms"), USER_SCHEMA = "User";
+var gravatar = require('gravatar');
 
 var LoginController = module.exports = function (id, app) {
     BasePluginController.call(this, id, app);
     var that = this;
     that.listenLoadEvent(function (params) {
         that.get({
-            route:'/:action' // by this route /home/login/login, /home/login/register is called. Generic one
+            route: '/:action' // by this route /home/login/login, /home/login/register is called. Generic one
         });
         that.post({
-            route:'/doLogin',
-            action:doLoginAction
+            route: '/doLogin',
+            action: doLoginAction
         });
         that.post({
-            route:'/doRegister',
-            action:doRegister
+            route: '/doRegister',
+            action: doRegister
         });
 
         that.addCustomValidations(loginForms.customValidations);
@@ -37,6 +38,50 @@ function loginProcess(req, res, next, post) {
         LoginUtil.processLogin(req, res, post, next);
     }
 }
+
+function getGravatar(req, that) {
+    utils.tick(function () {
+        var emailId = that.getPluginHelper().getPostParam(req, "email"),
+            gravatar = require('gravatar'),
+            DBActions = that.getDBActionsLib(),
+            dbAction = DBActions.getInstance(req, USER_SCHEMA),
+            sessionUser = req.session.user,
+            userId, profilePic = sessionUser.profilePic || {}, hash;
+        async.series([
+            function (n) {
+                //get user
+                dbAction.get("findByEmailId", emailId, function (err, m) {
+                    if (m && m.userId) {
+                        userId = m.userId;
+                    }
+                    n(err);
+                });
+            },
+            function (n) {
+                //checking  gravatar url
+                var url = gravatar.url(emailId);
+                hash = url.split("/").pop();
+                n(null);
+            },
+            function (n) {
+                //saving gravatar hash
+                profilePic.gravatar = hash;
+                profilePic.uploaded = false;
+                dbAction.update({
+                    userId: userId,
+                    profilePic: profilePic
+                }, n);
+            }
+        ],
+            function (err, results) {
+                if (!err) {
+                    sessionUser.profilePic = profilePic;
+                }
+
+            })
+
+    })
+}
 var doRegister = function (req, res, next) {
     var that = this, formObj = loginForms.RegisterForm;
     that.ValidateForm(req, formObj, function (err, result) {
@@ -46,13 +91,17 @@ var doRegister = function (req, res, next) {
         if (!result.hasErrors) { // this means data is valid
             var postParams = that.getPluginHelper().getPostParams(req);
             PasswordUtil.encrypt(postParams.password, function (err, hash) {
-                if(err){
+                if (err) {
                     return next(err, req, res);
                 }
-                var userRole = require(req.app.set('appPath') + "/lib/permissions/Roles").getUserRole();
-                that.getDBActionsLib().populateModelAndSave(req, "User", {roles:[userRole.roleId ],
-                        passwordEnc:hash}, {emailId:"email"},
-                    loginProcess(req, res, next, postParams));
+                var userRole = require(utils.getLibPath() + "/permissions/Roles").getUserRole();
+                that.getDBActionsLib().populateModelAndSave(req, USER_SCHEMA, {roles: [userRole.roleId ],
+                        passwordEnc: hash}, {emailId: "email"},
+                    function (err) {
+                        loginProcess(req, res, next, postParams)(err);
+                        getGravatar(req, that);
+                    }
+                );
             });
         }
         else {

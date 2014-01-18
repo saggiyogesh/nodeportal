@@ -3,28 +3,6 @@ define(["util", "_", "bootstrap", "plugin"], function () {
     var UL_TMPL = '<ul class="dropdown-menu"><%=liHtml%></ul>';
     var LI_TMPL = '<li><a href="<%=href%>" id="<%=id%>" class="<%=className%>" <%=dataAttrs%>><%=text%></a></li>';
 
-    var opts = {
-        handlerId: "testActionButton",
-        buttonType: "danger",
-        buttonSize: "mini",
-        dropUp: false,
-        actions: [
-            {text: "Action 1", id: "12", href: "http://www.google.com"},
-            {
-                text: "Action 2", id: "45", data: {
-                id: 12,
-                name: 'test_data'
-            },
-                onClick: function (e) {
-                    console.info("clicked");
-                    console.log(e);
-                    console.log(this);
-
-                }
-            }
-        ]
-    };
-
     /**
      * Options:
      *      handlerId {String}: id of node(anchor tag), rendered as action button

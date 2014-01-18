@@ -25,11 +25,11 @@ var LayoutBuilderPluginController = module.exports = function (id, app) {
 util.inherits(LayoutBuilderPluginController, BasePluginController);
 
 function getViewsHome(app) {
-    return app.set("views");
+    return utils.getViewsPath();
 }
 
 function getLayoutHome(app) {
-    return getViewsHome(app) + "/layouts";
+    return utils.getLayoutsDirPath();
 }
 
 function getDefaultLayoutPath(app) {

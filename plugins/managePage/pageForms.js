@@ -2,7 +2,7 @@ function checkFriendlyURL(req, model, val, next) {
     if (val.indexOf("/") == -1) {
         val = "/" + val;
     }
-    var db = this.db, dbAction = require(req.app.set('appPath') + "/lib/DBActions").getInstanceFromDB(db, "Page");
+    var db = this.db, dbAction = require(utils.getLibPath() + "/DBActions").getInstanceFromDB(db, "Page");
     dbAction.get("findByFriendlyURL", val, function (err, page) {
         if (err) {
             next(err);
@@ -18,7 +18,7 @@ function checkFriendlyURL(req, model, val, next) {
 }
 
 function checkAppUrl(req, model, val, next) {
-    var appURL = require(req.app.set("appPath") + "/lib/AppProperties").get("APP_URL");
+    var appURL = require(utils.getLibPath() + "/AppProperties").get("APP_URL");
     if (val.indexOf("/") == -1) {
         val = "/" + val;
     }

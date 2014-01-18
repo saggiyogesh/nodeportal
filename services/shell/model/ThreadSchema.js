@@ -10,6 +10,7 @@ var ThreadSchema = new Schema({
     threadId: { type: Number, unique: true},
     linkedModelId: Number,
     linkedModelName: String,
+    linkedModelFinderField: String,
     linkedPermissionSchemaKey: String,
     linkedModelPK: Number
 

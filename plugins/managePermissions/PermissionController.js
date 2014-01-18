@@ -47,8 +47,8 @@ function updatePermissionsAction(req, res, next) {
     delete postParams.modelPermissionSchema;
     delete postParams.isSettingsPlugin;
 
-    var PermissionsCache = require(req.app.set('appPath') + "/lib/permissions/Cache");
-    var Roles = require(req.app.set('appPath') + "/lib/permissions/Roles");
+    var PermissionsCache = require(utils.getLibPath() + "/permissions/Cache");
+    var Roles = require(utils.getLibPath() + "/permissions/Roles");
 
     var dbAction = DBActionsLib.getAuthInstance(req, modelName, permissionSchemaKey);
     var pm, roles;
@@ -136,8 +136,8 @@ function updatePermissionsAction(req, res, next) {
 function getPermissions(req, res, next) {
     var that = this, params = req.params, type = params.type, modelId = params.modelId, name = params.name;
     if (type && modelId && name) {
-        var PermissionsCache = require(req.app.set('appPath') + "/lib/permissions/Cache");
-        var Roles = require(req.app.set('appPath') + "/lib/permissions/Roles");
+        var PermissionsCache = require(utils.getLibPath() + "/permissions/Cache");
+        var Roles = require(utils.getLibPath() + "/permissions/Roles");
 
         try {
             var dbAction, permissionSchemaKey;

@@ -7,7 +7,7 @@ var async = require('async');
  * @returns {Function}
  */
 exports.PluginInstance = function (app, data) {
-    var DBActions = require(app.set('appPath') + "/lib/DBActions");
+    var DBActions = require(utils.getLibPath() + "/DBActions");
     var pluginDBAction = DBActions.getSimpleInstance(app, "PluginInstance");
     var userDBAction = DBActions.getSimpleInstance(app, "User");
     var pageDBAction = DBActions.getSimpleInstance(app, "Page");

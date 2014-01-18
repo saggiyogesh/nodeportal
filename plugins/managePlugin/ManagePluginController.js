@@ -155,7 +155,7 @@ function editPlugin(req, res, next) {
                 var url = URLCreator.createExclusiveURLFromRequest(that.getPluginHelper()
                     .cloneRequest(req, that.getPluginId())).setAction("updatePluginSettings");
                 settingsFn(obj, function (err, config) {
-                    var viewPath = req.app.set('appPath') + "/plugins/" + pluginId + "/views/" + config.jade,
+                    var viewPath = utils.realPath(utils.getPluginsPath(), pluginId, "views", config.jade),
                         opts = {
                             settings: obj.pluginSettings,
                             settingsURL: url,

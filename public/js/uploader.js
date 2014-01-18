@@ -22,14 +22,14 @@ define(["util", "_", "dynaTree", "fileUpload", "modal"], function () {
      * Constructor.
      * options object supports mostly all options of jQuery-File-Upload(https://github.com/blueimp/jQuery-File-Upload/wiki/Options)
      * Compulsory are :
-     * uploaderId {String}: Id of ajax uploader
      * url {String} : server url to which files are uploaded
      * Optional are:
+     * uploaderId {String}: Id of ajax uploader. This is not the html node id. No need to create html node.
      * deleteFormData {Boolean}: Default value is false. if true then after each upload, form hidden params are cleared.
      * @param {Object} options
      */
     function uploader(options) {
-        this.uploaderId = options.uploaderId;
+        this.uploaderId = options.uploaderId || _.uniqueId("__uploader__");
         this.url = options.url;
         this.deleteFormData = options.deleteFormData || false;
         this.options = options;

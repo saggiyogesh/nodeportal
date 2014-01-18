@@ -1,0 +1,22 @@
+.row-fluid
+    .span6
+        !{viewLib.Messages(req , namespace)}
+        !{req.attrs.profileForm}
+    .span3
+        .profile-pic
+            .well.fade.in
+                h6 Profile pic
+
+                div(style="margin-top:10px;")
+                    button.btn(id="#{namespace}_uploadButton") Upload
+                    button.close(type="button", id="#{namespace}_closeButton", title="Remove") x
+                img(id="#{namespace}_img", style="margin-top:10px;")
+
+
+
+
+:script
+    require(["userManage"], function(){
+        Rocket.trigger({type:"userManage:profileForm:load", target:this});
+
+    });

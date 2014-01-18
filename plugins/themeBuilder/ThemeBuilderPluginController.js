@@ -34,11 +34,11 @@ var ThemeBuilderPluginController = module.exports = function (id, app) {
 util.inherits(ThemeBuilderPluginController, BasePluginController);
 
 function getViewsHome(app) {
-    return app.set("views");
+    return utils.getViewsPath();
 }
 
 function getThemeHome(app) {
-    return getViewsHome(app) + "/themes";
+    return utils.getThemesDirPath();
 }
 
 function getDefaultThemePath(app) {
@@ -57,8 +57,8 @@ function uploadThemeFile(req, res, next) {
         folderName = postParams.folderName,
         fileName = file.name, tmpPath = file.path;
 
-    Debug._li("", file, true);
-    Debug._li("post", req.body, true);
+//    Debug._li("", file, true);
+//    Debug._li("post", req.body, true);
     if (folderName === DEFAULT_DIRS[0] || folderName === DEFAULT_DIRS[1] || folderName === DEFAULT_DIRS[3]) {
         //for css and js files and images
         dbAction.get("findByThemeId", themeId, function (err, theme) {
@@ -101,7 +101,7 @@ function newFile(req, res, next) {
                 }
                 else {
                     that.setSuccess(req, "File created successfully.");
-                    require(req.app.set("appPath") + "/lib/ThemeUtil").
+                    require(utils.getLibPath() + "/ThemeUtil").
                         setThemeFile(folderName, utils.normalize(theme.name), fileName);
                 }
                 next(null, req, res);
@@ -129,7 +129,7 @@ function deleteFile(req, res, next) {
                 }
                 else {
                     if (folderName === DEFAULT_DIRS[0] || folderName === DEFAULT_DIRS[1]) {
-                        require(req.app.set("appPath") + "/lib/ThemeUtil").
+                        require(utils.getLibPath() + "/ThemeUtil").
                             removeThemeFile(folderName, utils.normalize(theme.name), fileName);
                     }
                     that.setSuccess(req, "File deleted successfully.");
@@ -250,7 +250,7 @@ function openTheme(req, res, next) {
 function setupWatcher(app, dbAction, name) {
     dbAction.get("findByName", name, function (err, theme) {
         if (!err && theme) {
-            require(app.set("appPath") + "/lib/static/ThemesWatcher").cacheAndWatchTheme(app, theme);
+            require(utils.getLibPath() + "/static/ThemesWatcher").cacheAndWatchTheme(app, theme);
         }
     });
 }

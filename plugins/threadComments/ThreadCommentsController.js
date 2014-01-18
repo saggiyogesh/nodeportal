@@ -1,5 +1,5 @@
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
-var THREAD_SCHEMA = "Thread", COMMENT_SCHEMA = "Comment",
+var THREAD_SCHEMA = "Thread", COMMENT_SCHEMA = "Comment", USER_SCHEMA = "User",
     sanitize = require('validator').sanitize;
 
 var ThreadCommentsController = module.exports = function (id, app) {
@@ -51,12 +51,13 @@ function editCommentAction(req, res, next) {
                 //check permissions
                 var permissionSchemaKey = thread.linkedPermissionSchemaKey;
                 var pv = new that.PermissionValidator(req, permissionSchemaKey, thread.linkedModelName);
-                pv.hasPermission("DELETE_DISCUSSION", thread.linkedModelPK, n);
+                pv.hasPermission("EDIT_DISCUSSION", thread.linkedModelPK, n);
             },
             function (n) {
                 commentDBAction.update({
                     commentId: commentId,
-                    content: sanitize(content).xss()
+                    content: sanitize(content).xss(),
+                    updateDate: Date.now()
                 }, n);
             }
         ], function (err, result) {
@@ -127,15 +128,35 @@ function getCommentsAction(req, res, next) {
         threadId = params.threadId;
     if (threadId) {
         var commentDBAction = DBActions.getInstance(req, COMMENT_SCHEMA),
-            q = commentDBAction.getQuery().where("threadId", threadId).sort("createDate");
-        commentDBAction.getByQuery(q, function (err, comments) {
-            if (comments) {
-                var json = [];
-                comments.forEach(function (c) {
-                    json.push(c.toJSON());
+            userDBAction = DBActions.getInstance(req, USER_SCHEMA),
+            q = commentDBAction.getQuery().where("threadId", threadId).sort("createDate"),
+            comments, json = [];
+
+        async.series([
+            function (n) {
+                commentDBAction.getByQuery(q, function (err, model) {
+                    if (model) {
+                        comments = model;
+                    }
+                    n(err, model);
                 });
-                that.setSend(req, JSON.stringify(json));
+            },
+            function (n) {
+                async.eachSeries(comments, function (c, cb) {
+                    c = c.toJSON();
+                    userDBAction.getByDefaultFinderMethod(c.authorId, function (err, user) {
+                        var profilePicURL = utils.getUserProfilePicURL(user);
+                        c.userPicURL = profilePicURL;
+                        json.push(c);
+                        cb(err, user)
+                    });
+
+                }, function (err) {
+                    n(err, true);
+                });
             }
+        ], function (err, r) {
+            that.setSend(req, JSON.stringify(json));
             next(err, req, res);
         });
     }
@@ -148,18 +169,19 @@ function getCommentsAction(req, res, next) {
 function postCommentAction(req, res, next) {
     var that = this, DBActions = that.getDBActionsLib(), db = that.getDB(), params = req.params,
         post = req.body;
-    var content = sanitize(post.content).xss(), threadId = post.threadId
-    Debug._li("> ", post, true)
+    var content = sanitize(post.content).xss(), threadId = post.threadId;
 
     if (threadId && content) {
         var userId = req.session.user.userId;
         var commentDBAction = DBActions.getInstance(req, COMMENT_SCHEMA);
-        var threadDBAction = DBActions.getInstance(req, THREAD_SCHEMA);
+        var threadDBAction = DBActions.getInstance(req, THREAD_SCHEMA),
+            commentDate = Date.now();
         var comment = {
             content: content,
             authorId: userId,
             threadId: threadId,
-            parentCommentId: post.parentCommentId
+            parentCommentId: post.parentCommentId,
+            createDate: commentDate
         };
         var thread;
         var permissionAction = "ADD_DISCUSSION";
@@ -181,11 +203,67 @@ function postCommentAction(req, res, next) {
             },
             function (n) {
                 commentDBAction.save(comment, n);
+            },
+            function (n) {
+                n(null, true);
+
+                utils.tick(function () {
+                    //send email for comment notifications
+                    commentDBAction.get("findByThreadId", threadId, function (err, comments) {
+                        if (comments && comments.length > 0) {
+                            var authorIds = _.uniq(_.pluck(comments, "authorId"));
+                            var userDBAction = DBActions.getInstance(req, USER_SCHEMA),
+                                query = userDBAction.getQuery();
+
+                            var arr = [];
+                            authorIds.forEach(function (id) {
+                                if (userId != id) {
+                                    var q = {};
+                                    q["userId" ] = id;
+                                    arr.push(q);
+                                }
+                            });
+                            query.or(arr);
+
+                            var emailUsers = [];
+                            userDBAction.getByQuery(query, function (err, users) {
+                                if (users) {
+                                    users.forEach(function (user) {
+                                        if (user.notifications.comments) {
+                                            emailUsers.push(user.fullName + " " + user.emailId);
+                                        }
+                                    });
+
+                                    Debug._l("Sending comments email:" + emailUsers);
+
+                                    var Mailer = that.Mailer;
+
+                                    var from = 'NodePortal <comments@nodeportal.com>',
+
+                                        to = 'NodePortal <comments@nodeportal.com>',
+
+                                        subject = 'New comment';
+
+                                    var m = new Mailer.MailMessage(from, to, subject);
+                                    var tmpl = that.realPath() + "/tmpl/commentsMail.jade";
+                                    m.renderBodyFromJadeTemplate(that.getApp(), tmpl, {
+                                        userFullName: req.session.user.fullName.trim() + " wrote:",
+                                        commentContent: content,
+                                        commentDate: that.DateUtil.formatArticleDate(commentDate),
+                                        commentURL: post.url
+                                    }).setBcc(emailUsers);
+
+                                    Mailer.sendMail(m, function (err, success) {
+                                        if (!err) {
+                                            Debug._l("Comments mail delivered successfully..")
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
             }
-//            ,
-//            function (n) {
-//                commentDBAction.get("findByThreadId", threadId, n);
-//            }
         ], function (err, result) {
             if (result) {
 //                var comments = result[1];
@@ -268,6 +346,7 @@ function initThreadAction(req, res, next) {
                         linkedModelId: linkedModelFinderParam,
                         linkedModelName: linkedModelName,
                         linkedPermissionSchemaKey: linkedPermissionSchemaKey,
+                        linkedModelFinderField: linkedModelFinderField,
                         linkedModelPK: pk
                     };
                     threadDBAction.save(thread, next);

@@ -1,86 +1,66 @@
-//var email = {
-//    label:"Email",
-//    type:"text",
-//    name:"email",
-//    rules:[ "required", "email" ]
-//};
-var password = {
-    label:"Password",
-    type:"password",
-    name:"password",
-    rules:[ "required" ]
-};
-var confirm = {
-    label:"Confirm Password",
-    type:"password",
-    name:"confirmPassword",
-    rules:[ "required" , 'equalTo:password']
-};
-var login = {
-    type:"submit",
-    value:"Login"
-};
-
 var update = {
-    type:"submit",
-    value:"Update"
+    type: "submit",
+    value: "Update"
 };
 var userName = {
-    label:"User Name",
-    type:"text",
-    name:"userName"
+    label: "User Name",
+    type: "text",
+    name: "userName"
 };
 
 var firstName = {
-    label:"First Name",
-    type:"text",
-    name:"firstName",
-    rules:[ "required" ]
+    label: "First Name",
+    type: "text",
+    name: "firstName",
+    rules: [ "required" ]
 };
 var middleName = {
-    label:"Middle Name",
-    type:"text",
-    name:"middleName"
+    label: "Middle Name",
+    type: "text",
+    name: "middleName"
 };
 var lastName = {
-    label:"Last Name",
-    type:"text",
-    name:"lastName"
-};
-var telNo = {
-    label:"Tel No",
-    type:"text",
-    name:"telNo"
-};
-var address = {
-    label:"Tel No",
-    type:"text",
-    name:"telNo"
+    label: "Last Name",
+    type: "text",
+    name: "lastName"
 };
 
 var dob = {
-    label:"Date of birth",
-    type:"date",
-    name:"dob",
-    rules:[ "required" ]
+    label: "Date of birth",
+    type: "date",
+    name: "dob",
+    rules: [ "required" ]
 };
 
 
 var redirect = {
-    type:"hidden",
-    name:"redirect"
+    type: "hidden",
+    name: "redirect"
 };
 var userId = {
-    type:"hidden",
-    name:"userId"
+    type: "hidden",
+    name: "userId"
 };
 
+var gender = {
+    label: "Gender",
+    type: "select",
+    name: "gender",
+    options: [
+        [ 'Please select..', ''],
+        [ 'Male', 'male' ]   ,
+        [ 'Female', 'female' ]
+    ]
+};
+
+
 exports.ProfileForm = {
-    form:{
-        id:"fm",
-        method:"post",
-        action:"updateProfile"
+    form: {
+        id: "fm",
+        method: "post",
+        action: "updateProfile",
+        legendText: "Edit user info"
     },
-    fields:[ userId,redirect, firstName, middleName, lastName, dob,
+    fields: [ userId, redirect, firstName, middleName, lastName, dob, gender,
         update ]
 };

@@ -1,0 +1,14 @@
+-var roles = req.attrs.roles;
+
+
+.row-fluid
+    .span6
+        table.table
+            thead
+                tr
+                    th Roles
+            tbody
+                each role in roles
+                    tr
+                        td=role.name
+

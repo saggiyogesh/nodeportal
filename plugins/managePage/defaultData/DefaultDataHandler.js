@@ -10,7 +10,7 @@ var async = require('async');
  * @returns {Function}
  */
 exports.Page = function (app, data) {
-    var DBActions = require(app.set('appPath') + "/lib/DBActions");
+    var DBActions = require(utils.getLibPath() + "/DBActions");
     var themeDBAction = DBActions.getSimpleInstance(app, "Theme");
     var layoutDBAction = DBActions.getSimpleInstance(app, "Layout");
     var userDBAction = DBActions.getSimpleInstance(app, "User");

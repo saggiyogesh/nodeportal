@@ -19,7 +19,7 @@ var CommentSchema = new Schema({
 
 CommentSchema.pre('save', function (next) {
     if (this.isNew) {
-        this.createDate = Date.now();
+        this.createDate = this.createDate || Date.now();
     }
     this.updateDate = Date.now();
     next();

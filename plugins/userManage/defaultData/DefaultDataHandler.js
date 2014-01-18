@@ -7,8 +7,8 @@ var async = require('async');
  * @returns {Function}
  */
 exports.User = function (app, data) {
-    var PasswordUtil = require(app.set('appPath') + "/lib/PasswordUtil");
-    var DBActions = require(app.set('appPath') + "/lib/DBActions");
+    var PasswordUtil = require(utils.getLibPath() + "/PasswordUtil");
+    var DBActions = require(utils.getLibPath() + "/DBActions");
     var roleDBAction = DBActions.getSimpleInstance(app, "Role");
     var userDBAction = DBActions.getSimpleInstance(app, "User");
 

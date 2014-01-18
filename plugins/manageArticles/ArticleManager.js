@@ -77,7 +77,7 @@ exports.moveArticleToArticleVersion = function (id, dbAction, dbActionVersion, n
         if (err) {
             return next(err);
         }
-        Debug._li("", curArticle, true);
+//        Debug._li("", curArticle, true);
         dbActionVersion.save(curArticle, function (err, result) {
             if (err) {
                 return next(err);

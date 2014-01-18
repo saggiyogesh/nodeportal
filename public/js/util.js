@@ -6,11 +6,14 @@ define(["events", "_", "bootstrap", "autosize"], function () {
             params.success = fn;
             that.ajax(params);
         },
-        submitFormAsync: function (form, fn) {
+        submitFormAsync: function (form, fn, queryParams) {
             var that = this,
                 options = {};
             form = $(form);
             options.url = form.attr('action');
+            if (queryParams) {
+                options.url = options.url + "?" + $.param(queryParams);
+            }
             options.method = form.attr('method') || "POST";
             options.data = form.serialize();
             options.success = fn;
@@ -266,7 +269,7 @@ define(["events", "_", "bootstrap", "autosize"], function () {
         },
         autoSizeTextArea: function (textAreaId) {
             $(function () {
-                $("body #"+ textAreaId).autosize();
+                $("body #" + textAreaId).autosize();
             });
         }
     };

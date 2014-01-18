@@ -17,11 +17,21 @@ var userSchema = new Schema({
     emailId: { type: String, index: true },
     phoneNo: { type: String, index: true },
     dob: { type: Date},
+    gender: {type: String, default: ""},
     roles: [],
     active: Boolean,
     createDate: Date,
     updateDate: Date,
-    "default": { type: Boolean, default: false }
+    "default": { type: Boolean, default: false },
+    /**
+     * properties of profilePic:
+     *      gravatar {String} gravatar hash
+     *      uploaded {Boolean} if image is uploaded by user
+     */
+    profilePic: {type: Object, default: {}},
+    address: {},
+    telNos: {},
+    notifications: {type: Object, default: {}}
 });
 
 userSchema.pre('save', function (next) {
@@ -52,5 +62,12 @@ userSchema.statics.getDefaultUser = function (callback) {
     return this.findOne({"default": true}, callback);
 };
 
+//virtuals
+userSchema.virtual('fullName').get(function () {
+    return this.firstName + ' ' + this.lastName;
+});
+
+
+userSchema.set('toObject', { virtuals: true });
 
 module.exports = mongoose.model('User', userSchema);

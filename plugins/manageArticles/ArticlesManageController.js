@@ -3,6 +3,7 @@ var BasePluginController = require(process.cwd() + "/lib/BasePluginController"),
     PermissionCache = require(process.cwd() + "/lib/permissions/Cache"),
     articleForms = require("./articleForms"),
     ARTICLE_SCHEMA = "Article", ARTICLE_VERSION_SCHEMA = "ArticleVersion",
+    PLUGIN_INSTANCE_SCHEMA = "PluginInstance", ARTICLE_LOCATION_SCHEMA = "ArticleLocation",
     ARTICLE_PERMISSION_SCHEMA_ENTRY = "model.articleSchema.Article",
     ARTICLE_PERMISSION_SCHEMA = "model.articleSchema",
     ArticleManager = require("./ArticleManager"),
@@ -34,11 +35,95 @@ var ArticlesManageController = module.exports = function (id, app) {
             route: '/updateArticle', action: updateArticleAction
         });
 
+
+        that.getModelEvent(PLUGIN_INSTANCE_SCHEMA).handleUpdate(handleDisplayArticleSettingsUpdate, that);
+        that.getModelEvent(PLUGIN_INSTANCE_SCHEMA).handleDelete(handleDisplayArticleRemove, that);
     });
 };
 
 util.inherits(ArticlesManageController, BasePluginController);
 
+function handleDisplayArticleSettingsUpdate(event) {
+    var schemaName = event.schemaName, modelId = event.modelId, modelData = event.modelData,
+        that = this, app = that.getApp();
+    var displayArticlePluginId = "displayArticle", ns = modelData.pluginNamespace;
+    Debug._l(">>> " + schemaName);
+    if (utils.contains(ns, displayArticlePluginId)) {
+        var pageId = modelData.pageId, locations, id, articleId;
+        var dbAction = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_SCHEMA);
+        var dbActionPlugin = that.getDBActionsLib().getInstanceFromDB(that.getDB(), PLUGIN_INSTANCE_SCHEMA);
+        var dbActionAL = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_LOCATION_SCHEMA);
+        async.series([
+            function (n) {
+                //get plugin instance model
+                dbActionPlugin.get("findByPluginInstanceId", modelData.pluginInstanceId, function (err, plugin) {
+                    if (plugin) {
+                        if (plugin.settings) {
+                            id = plugin.settings.id;
+                            Debug._l(">> " + id)
+                        }
+                    }
+                    else {
+                        err = err || new Error("Plugin not found by instanceId: " + modelData.pluginInstanceId);
+                    }
+                    n(err, true);
+                });
+            },
+            function (n) {
+                //get article
+                dbAction.get("findById", id, function (err, art) {
+                    if (art) {
+                        Debug._l(">> " + art)
+
+                        articleId = art.articleId;
+//                        locations = getArticleLocations(art, pageId, ns);
+                    } else {
+                        err = err || new Error("Article Not Found id:" + id);
+                    }
+                    n(err, true);
+                });
+            },
+            function (n) {
+                //check for already configured model & remove it.
+                var q = dbActionAL.getQuery(true);
+                q.where("pageId", pageId).where("namespace", ns);
+                dbActionAL.removeByQuery(q, n);
+            },
+            function (n) {
+                dbActionAL.save({
+                    namespace: ns,
+                    pageId: pageId,
+                    id: id
+                }, n);
+            }
+        ], function (err, result) {
+            Debug._l(err);
+        });
+    }
+
+}
+
+function handleDisplayArticleRemove(event) {
+    var schemaName = event.schemaName, modelId = event.modelId, modelData = event.modelData,
+        that = this, app = that.getApp();
+    var displayArticlePluginId = "displayArticle", ns = modelData.pluginNamespace;
+    Debug._l(">>> " + schemaName);
+    if (utils.contains(ns, displayArticlePluginId)) {
+        var pageId = modelData.pageId, locations, id, articleId;
+        var dbActionAL = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_LOCATION_SCHEMA);
+        async.series([
+            function (n) {
+                //check for already configured model & remove it.
+                var q = dbActionAL.getQuery(true);
+                q.where("pageId", pageId).where("namespace", ns);
+                dbActionAL.removeByQuery(q, n);
+            }
+        ], function (err, result) {
+            Debug._l(err);
+        });
+    }
+
+}
 
 function incrementVersion(version) {
     return (parseInt(version) + 1);
@@ -125,7 +210,9 @@ function removeArticleAction(req, res, next) {
         var redirect = "/" + params.page + "/" + ns;
         var ids = idStr.split("~"),
             dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY),
-            dbActionVersion = DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA);
+            dbActionVersion = DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA),
+            dbActionAL = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_LOCATION_SCHEMA);
+
         var AsyncIterator = that.AsyncIterator;
         var asycI = new AsyncIterator(ids, function (err, result) {
             if (!err && result) {
@@ -151,6 +238,18 @@ function removeArticleAction(req, res, next) {
                     if (err)
                         Debug._l(err);
                     //Debug._l("Versions removed: " + result);
+                });
+
+                //delete article locations
+                dbActionAL.get("findById", ids[i], function (err, models) {
+                    if (models) {
+                        var alIds = _.pluck(models, "articleLocationId");
+                        dbActionAL.multipleRemove(alIds, function (err, r) {
+                            if (err) {
+                                Debug._l(err);
+                            }
+                        });
+                    }
                 });
                 asycI.iterate();
             });
@@ -191,7 +290,7 @@ function updateArticleAction(req, res, next) {
         ns = that.getNamespace(req), PluginHelper = that.getPluginHelper();
 //    params.action = "edit";
 
-    that.ValidateForm(req, articleForms.ArticleEditForm, function (err, result) {
+    that.ValidateForm(req, articleForms.getArticleEditForm(), function (err, result) {
         if (err) {
             return next(err, req, res);
         }
@@ -212,7 +311,7 @@ function updateArticleAction(req, res, next) {
                 },
                 save = function (id, version, oldArticleId) {
                     var permissionSchemaKey = ARTICLE_PERMISSION_SCHEMA_ENTRY;
-                    if(oldArticleId){
+                    if (oldArticleId) {
                         permissionSchemaKey = PermissionCache.generateKeyByModelId(permissionSchemaKey, oldArticleId);
                     }
 
@@ -239,7 +338,6 @@ function updateArticleAction(req, res, next) {
                 var id = PluginHelper.getPostParam(req, "id"),
                     version = PluginHelper.getPostParam(req, "version"),
                     articleId = PluginHelper.getPostParam(req, "articleId");
-                Debug._l(">>>> " + articleId)
                 version = incrementVersion(version);
                 req.body[ns].version = version;
                 ArticleManager.moveArticleToArticleVersion(
@@ -257,7 +355,7 @@ function updateArticleAction(req, res, next) {
         }
         else {
             that.setErrorMessage(req, "entered-invalid-data");
-            req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.ArticleEditForm, "en_US");
+            req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US");
             req.params.action = "edit";
             next(err, req, res);
         }
@@ -288,14 +386,14 @@ function editArticleAction(req, res, next) {
             req.query[ns] = utils.cloneExtend(latestArticle, {redirect: redirect,
                 title: latestArticle.localizedTitle["en_US"], content: latestArticle.localizedContent["en_US"] });
             params.action = "edit";
-            req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.ArticleEditForm, "en_US", "add");
+            req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US", "add");
             next(err, req, res);
         });
 
     }
     else {
         req.query[ns] = {redirect: "/" + params.page + "/" + ns };
-        req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.ArticleEditForm, "en_US", "add");
+        req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US", "add");
         next(null, req, res);
     }
 }

@@ -26,6 +26,12 @@
             },
             getUserId: function(){
                 return "#{user.userId}";
+            },
+            getProfilePicURL: function(){
+                return '!{getUserProfilePicURL(user)}' ;
+            },
+            getDefaultProfilePicURL: function(){
+                return '!{getDefaultProfilePicURL()}';
             }
         }
     });
@@ -55,7 +61,7 @@
         script
             require(['layout']);
 
-
-    :script
-        require(['handlePlugins']);
+    -if(page.friendlyURL != "/settings")
+        script
+            require(['handlePlugins']);
 

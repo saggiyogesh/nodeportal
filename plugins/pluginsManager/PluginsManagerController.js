@@ -17,7 +17,7 @@ var PluginsManagerController = module.exports = function (id, app) {
 util.inherits(PluginsManagerController, BasePluginController);
 
 function getRealPath(app, model) {
-    var p  = app.set("views") + "/" + model.path;
+    var p  = utils.getViewsPath() + "/" + model.path;
     return model.type == LAYOUT_SCHEMA ? p + ".jade" : p ;
 }
 

@@ -4,7 +4,7 @@
 var fs = require("fs");
 
 module.exports = function (app) {
-    var config, controllerPath = app.set('appPath') + '/controllers';
+    var config, controllerPath = utils.getRootPath() + '/controllers';
 
     require(controllerPath + "/shell/PageController")(app);
 //    fs.readFile(controllerPath + "/controller_config.json", "utf8", function (err, data) {

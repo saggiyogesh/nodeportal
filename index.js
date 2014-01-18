@@ -22,64 +22,6 @@ global._ = require("underscore");
 
 require("./lib/BootstrapApp")(app);
 
-//var getProp = require("./lib/AppProperties").get,
-//    staticUtil = require("./lib/static/Util");
-
-/*app.configure(function () {
- //app.use(express.logger());
- app.use(express.favicon());
- app.use(express.bodyParser());
- app.use(express.cookieParser());
- app.use(express.session({secret: "90ndsj9dfdsf"}));
- //    app.use(app.router);
- app.set('view engine', 'jade');
- app.set('view options', {
- layout: false
- });
- app.set('appPath', process.cwd());
- app.set('views', app.set('appPath') + '/views');
- app.set('libs', libs);
-
- staticUtil.setStaticFolder(app, __dirname + '/public');
- app.use(require("./lib/middleware")());
- app.use(app.router);
- app.use(express.errorHandler({
- dumpExceptions: true,
- showStack: true
- }));
-
- });*/
-
-/*app.error(function (err, req, res, next) {
- next(err);
- });*/
-
-/*
- app.configure('development', function () {
- staticUtil.setStaticFolder(app, __dirname + '/public');
- app.use(require("./lib/middleware")());
- app.use(app.router);
- app.use(express.errorHandler({
- dumpExceptions: true,
- showStack: true
- }));
-
- });
-
- app.configure('production', function () {
- staticUtil.setStaticFolder(app, __dirname + '/public');
- app.use(require("./lib/middleware")());
- app.use(app.router);
- app.use(express.errorHandler({
- dumpExceptions: true,
- showStack: true
- }));
- });
- */
-//require(libPath + 'plugins').init(app);
-//require(libPath + 'AppRoutes')(app);
-
-
 process.on('uncaughtException', function (err) {
     setTimeout(function () {
         Debug._li("uncaughtException: ", err, true);
