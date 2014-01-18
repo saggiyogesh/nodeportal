@@ -34,11 +34,11 @@ Run the server:
     2. 70 - 30 layout
 
 ##Configuration:
-`np.properties` in `/lib` folder contains all needed configuration information like DB connection information etc of portal.
+Create `np-override.properties` file  in root folder contains all needed configuration information like DB connection information etc of portal.
 
-##New in version 0.2
-* Stability on windows. various fixes are implemented to use all api on windows.
-* Require.js is used for loading async public and client's scripts of plugins.
+##New in version 0.2.3
+* [Report bugs](https://github.com/saggiyogesh/nodeportal/releases/tag/v0.2.3)
+
 
 
 ##More Information.
