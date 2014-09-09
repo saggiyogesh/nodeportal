@@ -2,9 +2,9 @@
 <html>
 
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Nodeportal : nodeportal(NP), Portal platform built on Node.js" />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Nodeportal : nodeportal(NP), Portal platform built on Node.js">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
@@ -31,15 +31,90 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>nodeportal</h1>
+        <h1>
+<a name="nodeportal" class="anchor" href="#nodeportal"><span class="octicon octicon-link"></span></a>nodeportal</h1>
+
+<h1></h1>
 
 <p>nodeportal (or simply NP) is a portal platform built on Node.js and mongodb making it amazingly fast.</p>
 
-<p>NP is currently in heavy development.</p>
+<h2>
+<a name="install-create-and-run-a-new-site" class="anchor" href="#install-create-and-run-a-new-site"><span class="octicon octicon-link"></span></a>Install, create and run a new site.</h2>
 
-<p><a href="http://groups.google.com/group/nodeportal">Google group</a> for discussion.</p>
+<p>Execute following commands to install nodeportal globally and create a new site:</p>
 
-<p>MIT Licensed</p>
+<pre><code>npm install nodeportal -g
+nodeportal -n ~/NP
+</code></pre>
+
+<p>or simply clone the repo:</p>
+
+<pre><code>git clone git://github.com/saggiyogesh/nodeportal.git
+</code></pre>
+
+<p>and install dependencies:</p>
+
+<pre><code> npm install
+</code></pre>
+
+<p>Run the server:</p>
+
+<pre><code>node index
+</code></pre>
+
+<h2>
+<a name="external-dependencies" class="anchor" href="#external-dependencies"><span class="octicon octicon-link"></span></a>External dependencies.</h2>
+
+<ul>
+<li>node.js, version &gt; 0.8</li>
+<li>mongodb, version &gt; 2.0</li>
+<li>imagemagick</li>
+</ul><h2>
+<a name="default-data" class="anchor" href="#default-data"><span class="octicon octicon-link"></span></a>Default data.</h2>
+
+<ul>
+<li>Admin email and password: <code>admin@nodeportal.com</code>/<code>admin</code>
+</li>
+<li>Default theme based on twitter bootstrap</li>
+<li>Layouts:
+
+<ol>
+<li>One column layout</li>
+<li>70 - 30 layout</li>
+</ol>
+</li>
+</ul><h2>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration:</h2>
+
+<p>Create <code>np-override.properties</code> file  in root folder contains all needed configuration information like DB connection information etc of portal.</p>
+
+<h2>
+<a name="new-in-version-023" class="anchor" href="#new-in-version-023"><span class="octicon octicon-link"></span></a>New in version 0.2.3</h2>
+
+<ul>
+<li><a href="https://github.com/saggiyogesh/nodeportal/releases/tag/v0.2.3">v0.2.3</a></li>
+</ul><h2>
+<a name="more-information" class="anchor" href="#more-information"><span class="octicon octicon-link"></span></a>More Information.</h2>
+
+<ul>
+<li>
+<a href="http://groups.google.com/group/nodeportal">Google group</a> for discussion.</li>
+<li><a href="http://www.nodeportal.com/" title="nodeportal">Home Page</a></li>
+<li><a href="https://github.com/saggiyogesh/nodeportal/issues">Report bugs</a></li>
+</ul><h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License.</h2>
+
+<p>The MIT License (MIT)</p>
+
+<p>Copyright (c) 2012 Yogesh</p>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+
+<p><a href="https://bitdeli.com/free" title="Bitdeli Badge"><img src="https://d2weczhvl823v0.cloudfront.net/saggiyogesh/nodeportal/trend.png" alt="Bitdeli Badge"></a></p>
       </section>
     </div>
 
@@ -50,19 +125,7 @@
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
-<script type="text/javascript">
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-33626428-1']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-
-</script>
     
 
   </body>
