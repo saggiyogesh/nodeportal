@@ -22,7 +22,7 @@ Run the server:
     node index
 
 ##External dependencies.
-* node.js, version > 0.8
+* node.js, version > 0.10
 * mongodb, version > 2.0
 * imagemagick
 
@@ -36,8 +36,8 @@ Run the server:
 ##Configuration:
 Create `np-override.properties` file  in root folder contains all needed configuration information like DB connection information etc of portal.
 
-##New in version 0.2.3
-* [v0.2.3](https://github.com/saggiyogesh/nodeportal/releases/tag/v0.2.3)
+##New in version 0.2.4
+* [v0.2.4](https://github.com/saggiyogesh/nodeportal/releases/tag/v0.2.4)
 
 
 
