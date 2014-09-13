@@ -1,6 +1,6 @@
 //Bootstrap data tables plugin with multiple checkboxes to select rows and action button to add action for each row
 //Only tested with ajax source
-define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatables-bootstrap", "actionButton"], function () {
+define(["_", "util", "bootstrap", "typing", "dataTable", "datatables-bootstrap", "actionButton"], function () {
     var dataTable,
         TMPL = '<table cellpadding="0" cellspacing="0" border="0" class="table table-striped table-bordered" id="{tableId}"></table>';
     dataTable = function (options, data) {
@@ -42,21 +42,21 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
             var actions = options.actionButton.actions;
         }
 
-        if (options.contextMenu) {
-            var that = this;
-            opts["fnRowCallback"] = function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
-                //console.log(nRow);
-                var obj = {
-                    hasCheckbox: options.checkBoxAll ? true : false,
-                    contextMenu: options.contextMenu,
-                    nRow: nRow,
-                    aData: aData
-
-                };
-                that.bindContextMenu(obj);
-
-            }
-        }
+//        if (options.contextMenu) {
+//            var that = this;
+//            opts["fnRowCallback"] = function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+//                //console.log(nRow);
+//                var obj = {
+//                    hasCheckbox: options.checkBoxAll ? true : false,
+//                    contextMenu: options.contextMenu,
+//                    nRow: nRow,
+//                    aData: aData
+//
+//                };
+//                that.bindContextMenu(obj);
+//
+//            }
+//        }
         if (!options.ajax) {
             opts["aaData"] = data.values;
 
@@ -131,22 +131,22 @@ define(["_", "util", "bootstrap", "contextMenu", "typing", "dataTable", "datatab
 
 
     };
-    dataTable.prototype.attachMenu = function (selector, contextMenu) {
-        var menuId = contextMenu.menuId, items = contextMenu.items,
-            ns = contextMenu.namespace, that = this;
-        selector = _.isString(selector) ? $("#" + selector) : selector;
-        selector.contextMenu({
-            menu: menuId
-        }, function (action, el, pos) {
-            Rocket.trigger({type: ns + ":" + menuId + ":" + action, target: that, data: {el: el, pos: pos} });
-        });
-    };
-
-    dataTable.prototype.bindContextMenu = function (obj) {
-        var hasCheckBox = obj.hasCheckbox, nRow = obj.nRow, aData = obj.aData,
-            contextMenu = obj.contextMenu;
-        this.attachMenu($(nRow), contextMenu);
-    };
+//    dataTable.prototype.attachMenu = function (selector, contextMenu) {
+//        var menuId = contextMenu.menuId, items = contextMenu.items,
+//            ns = contextMenu.namespace, that = this;
+//        selector = _.isString(selector) ? $("#" + selector) : selector;
+//        selector.contextMenu({
+//            menu: menuId
+//        }, function (action, el, pos) {
+//            Rocket.trigger({type: ns + ":" + menuId + ":" + action, target: that, data: {el: el, pos: pos} });
+//        });
+//    };
+//
+//    dataTable.prototype.bindContextMenu = function (obj) {
+//        var hasCheckBox = obj.hasCheckbox, nRow = obj.nRow, aData = obj.aData,
+//            contextMenu = obj.contextMenu;
+//        this.attachMenu($(nRow), contextMenu);
+//    };
 
     dataTable.prototype.createActionButton = function (id) {
         var that = this, options = that.getOptions();

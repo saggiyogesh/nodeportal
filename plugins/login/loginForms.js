@@ -151,6 +151,29 @@ exports.RegisterForm = {
         captcha, captchaText, register , cancel]
 };
 
+var emailOAuth = {
+    label: "Email",
+    type: "text",
+    name: "email",
+    rules: [ "required", "email" ]
+};
+
+var userNameOAuth = {
+    label: "User Name",
+    type: "text",
+    name: "userName"
+};
+
+
+exports.OAuthRegisterForm = {
+    form: {
+        id: "fm",
+        method: "post",
+        action: "oauthRegister"
+    },
+    fields: [ emailOAuth, firstName, middleName, lastName, register ]
+};
+
 exports.customValidations = {
     checkUserName: {ruleFunction: checkUserName, msgs: {en_US: "User name already exists."}},
     checkEmail: {ruleFunction: checkEmail, msgs: {en_US: "Email already exists."}},

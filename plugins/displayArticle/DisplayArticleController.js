@@ -52,13 +52,17 @@ function getArticle(req, that, next) {
                         return;
                     }
 
-                    html = defaultView(req.app, {article: latestArticle, req: req});
-                    req.attrs.articleHTML = html;
+                    defaultView({article: latestArticle, req: req}, function(err, html){
+                        req.attrs.articleHTML = html;
+                        next();
+                    });
+
                 }
                 else {
                     setErrMsg("Wrong article Id");
+                    next();
                 }
-                next();
+
             });
         }
         else {
@@ -72,7 +76,7 @@ function displayArticleAction(req, res, next) {
     var that = this;
 
     getArticle(req, that, function (err) {
-        next(err, req, res);
+        next(err);
     });
 }
 
@@ -118,7 +122,8 @@ DisplayArticleController.prototype.render = function (req, res, next) {
 
     ret.settings = that.getSettings(req, function (err, settings) {
         if (err) {
-            next(err, [ view, ret ]);
+            req.pluginRender.setView(view).setLocals(ret);
+            next(err);
         }
         else {
             getArticle(req, that, function (err) {
@@ -126,7 +131,8 @@ DisplayArticleController.prototype.render = function (req, res, next) {
                     id: 0,
                     enableComments: false
                 };
-                next(err, [ view, ret ]);
+                req.pluginRender.setView(view).setLocals(ret);
+                next(err);
             });
         }
     });

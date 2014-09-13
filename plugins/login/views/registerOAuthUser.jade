@@ -1,0 +1,8 @@
+!{viewLib.Messages(req , namespace)}
+!{req.attrs.OAuthRegisterForm}
+
+- if(req.attrs.redirect)
+    script.
+        location.href= '#{req.attrs.redirect}' ;
+
+

@@ -3,7 +3,8 @@
  */
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
 var PageManager = require("./PageManager.js"), pageForm = require("./pageForms.js"),
-    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout", THEME_SCHEMA = "Theme", PAGE_PERMISSION_SCHEMA_ENTRY = "model.pageSchema.Page",
+    PAGE_SCHEMA = "Page", LAYOUT_SCHEMA = "Layout", THEME_SCHEMA = "Theme",
+    PAGE_PERMISSION_SCHEMA_ENTRY = "model.pageSchema.Page",
     PAGE_PERMISSION_SCHEMA = "model.pageSchema";
 //var forms = require("./forms");
 
@@ -180,36 +181,65 @@ function deletePage(req, res, next) {
     var pageId = params.id;
     if (!pageId) {
         that.setErrorMessage(req, "No page is selected");
-        return next(null, req, res);
+        return next(null);
     }
-    var redirect = "/" + req.params.page + "/" + req.params.plugin;
+    var redirect = req.params.page + "/" + req.params.plugin;
     dbAction.get("findByPageId", pageId, function (err, page) {
         if (err) {
-            return next(err, req, res);
+            return next(err);
         }
+        page && (page = page.toObject());
         if (page && (that.getAppProperty("DEFAULT_INDEX_PAGE") == page.friendlyURL)) {
             that.setErrorMessage(req, "Cannot delete index page.");
             that.setRedirect(req, redirect);
-            return next(null, req, res);
+            return next(null);
         }
         PageManager.hasChildren(dbAction, pageId, function (err, pages) {
             if (pages.length > 0) {
                 that.setRedirect(req, redirect);
                 that.setErrorMessage(req, "Delete all child pages.");
-                next(err, req, res);
+                next(err);
             } else {
-                dbAction.authorizedRemove(pageId, function (err, result) {
-                    if (result) {
+                var aboveSiblings;
+                async.series([
+                    function (n) {
+                        dbAction.authorizedRemove(pageId, n);
+                    },
+                    function (n) {
+                        PageManager.getAboveSiblings(dbAction, page, function (err, pages) {
+                            if (pages) {
+                                aboveSiblings = pages;
+                            }
+                            n(err, pages);
+                        });
+                    },
+                    function (n) {
+                        if (!aboveSiblings || aboveSiblings.length == 0) {
+                            return n(null, true);
+                        }
+
+                        var dbAction1 = DBActions.getInstance(req, PAGE_SCHEMA);
+                        var decrementPageOrder = function (page, n) {
+                            var order = page.order;
+                            --order;
+                            dbAction1.update({
+                                pageId: page.pageId,
+                                order: order
+                            }, n);
+                        };
+
+                        async.each(aboveSiblings, decrementPageOrder, n);
+                    }
+                ], function (err, result) {
+                    if (!err) {
                         that.setRedirect(req, redirect);
                         that.setSuccessMessage(req, "Page deleted successfully.");
                     }
-                    next(err, req, res);
+                    next(err);
                 });
             }
         });
-
     })
-
 }
 
 function updatePageOrderAction(req, res, next) {
@@ -218,7 +248,7 @@ function updatePageOrderAction(req, res, next) {
         dbAction = DBActions.getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY);
     var postParams = that.getPluginHelper().getPostParams(req);
     if (!postParams) {
-        return next(null, req, res);
+        return next(null);
     }
     var pageOrder = postParams["pageOrder"];
     pageOrder = pageOrder.split(",");
@@ -230,7 +260,7 @@ function updatePageOrderAction(req, res, next) {
             that.setRedirect(req, redirect);
             that.setSuccessMessage(req, "Pages re-ordered successfully.");
         }
-        next(err, req, res);
+        next(err);
     });
 
     var asyncProcess = function () {
@@ -263,22 +293,22 @@ function addPageAction(req, res, next) {
 
     dbAction.get("findByPageId", ppId, function (err, page) {
         if (err) {
-            return next(err, req, res);
+            return next(err);
         }
         if (ppId != 0 && !page) {
             that.setErrorMessage(req, "Parent page not exists");
-            return next(err, req, res);
+            return next(err);
         }
         pageForm.PageForm(req, DBActions, function (err, formObj) {
             if (err) {
-                return next(err, req, res);
+                return next(err);
             }
 
-            req.query[that.getPluginId()] = {redirect: "/" + params.page + "/" + that.getPluginId() + "/view", parentPageId: ppId };
+            req.query[that.getPluginId()] = {redirect: that.getRedirectPath(req, ["view"]), parentPageId: ppId };
             req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US", "add");
             params.action = "edit";
             req.attrs.showToolbar = false;
-            next(err, req, res);
+            next(err);
         });
     });
 }
@@ -298,7 +328,7 @@ function getPagesListJSON(req, res, next) {
     var that = this;
     PageManager.viewAll(that.getDBActionsLib().getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY), function (err, models) {
         if (err) {
-            return  next(err, req, res);
+            return  next(err);
         }
         var siteRoot = {title: "Site Root", key: "0", expand: true, icon: false, children: []}, json = [siteRoot], pagesJSON = {
             0: siteRoot
@@ -324,7 +354,7 @@ function getPagesListJSON(req, res, next) {
             }
         });
         that.setSend(req, JSON.stringify(json));
-        next(err, req, res);
+        next(err);
     });
 }
 
@@ -346,15 +376,16 @@ function shufflePageData(page, layout) {
 }
 function updatePageAction(req, res, next) {
     var that = this, db = that.getDB(),
-        DBActions = that.getDBActionsLib(), dbAction = DBActions.getInstance(req, PAGE_SCHEMA);
+        DBActions = that.getDBActionsLib(),
+        dbAction = DBActions.getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY);
 
     pageForm.PageForm(req, DBActions, function (err, formObj) {
         if (err) {
-            return next(err, req, res);
+            return next(err);
         }
         that.ValidateForm(req, formObj, function (err, result) {
             if (err) {
-                return next(err, req, res);
+                return next(err);
             }
             if (!result.hasErrors) {
                 var post = that.getPluginHelper().getPostParams(req);
@@ -365,13 +396,13 @@ function updatePageAction(req, res, next) {
                         var msg = "Page " + (post.pageId ? "updated" : "added" ) + " successfully."
                         that.setSuccessMessage(req, msg);
                     }
-                    next(err, req, res);
+                    next(err);
                 };
 
                 that.getDBActionsLib().getInstance(req, "Layout").get("findByLayoutId", post.layout,
                     function (err, layout) {
                         if (err) {
-                            return next(err, req, res);
+                            return next(err);
                         }
                         if (!post.pageId) { //save a new model called
                             //initiate the page data as per layout
@@ -380,13 +411,20 @@ function updatePageAction(req, res, next) {
                             placeHolders.forEach(function (name) {
                                 data[name] = [];
                             });
-                            DBActions.authorizedPopulateModelAndSave(req, PAGE_SCHEMA,
-                                {localizedName: {en_US: req.body[that.getPluginId()].name}, data: data,
-                                    rolePermissions: PAGE_PERMISSION_SCHEMA_ENTRY}, {layoutId: "layout",
-                                    themeId: "theme"},
-                                PAGE_PERMISSION_SCHEMA,
-                                updateOrSave);
+                            //get children by parentPageId
+                            var parentPageId = that.getPluginHelper().getPostParam(req, "parentPageId");
+                            PageManager.getChildrenCount(dbAction, parentPageId, function (err, count) {
+                                if (err) {
+                                    return next(err);
+                                }
 
+                                DBActions.authorizedPopulateModelAndSave(req, PAGE_SCHEMA,
+                                    {localizedName: {en_US: req.body[that.getPluginId()].name}, data: data,
+                                        rolePermissions: PAGE_PERMISSION_SCHEMA_ENTRY, order: count},
+                                    {layoutId: "layout", themeId: "theme"},
+                                    PAGE_PERMISSION_SCHEMA,
+                                    updateOrSave);
+                            });
                         } else {
                             post.isHidden = post.isHidden || false;
                             var friendlyURL = post.friendlyURL;
@@ -394,9 +432,9 @@ function updatePageAction(req, res, next) {
                                 post.friendlyURL = "/" + friendlyURL;
                             }
 
-
                             that.getDBActionsLib().getInstance(req, PAGE_SCHEMA).get("findByPageId", post.pageId,
                                 function (err, page) {
+                                    page = page.toObject();
                                     var updateObj = {localizedName: {en_US: req.body[that.getPluginId()].name}};
                                     //update plugins from old layout to new layout
                                     if (page.layoutId != post.layout) {
@@ -420,7 +458,7 @@ function updatePageAction(req, res, next) {
                         req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US");
                         req.params.action = "edit";
                     }
-                    next(err, req, res);
+                    next(err);
                 });
             }
 
@@ -436,29 +474,49 @@ function editPageAction(req, res, next) {
         dbAction = DBActions.getAuthInstance(req, PAGE_SCHEMA, PAGE_PERMISSION_SCHEMA_ENTRY);
     if (!pageId) {
         that.setInfoMessage(req, "Page not exists");
-        return  next(null, req, res);
+        return  next(null);
     }
-    dbAction.authorizedGet("findByPageId", pageId, function (err, page) {
-        if (err) {
-            return next(err, req, res);
+    var page, pv;
+    async.waterfall([
+        function (n) {
+            dbAction.authorizedGet("findByPageId", pageId, n);
+        },
+        function (p, n) {
+            page = p.toObject();
+            pageForm.PageForm(req, DBActions, n);
+        },
+        function (formObj, n) {
+            formObj.fields.forEach(function (el) {
+                if (el.type != "hidden") {
+                    el.disabled = true;
+                }
+            });
+            req.query[that.getPluginId()] = utils.cloneExtend(page, {redirect: that.getRedirectPath(req, ["view"]),
+                name: page.localizedName["en_US"], theme: page.themeId, layout: page.layoutId});
+            req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US", "add");
+            req.attrs.pageId = pageId;
+            params.action = "edit";
+            req.attrs.showToolbar = true;
+            n(null, true);
+        },
+        function (flag, n) {
+            pv = new that.PermissionValidator(req, PAGE_PERMISSION_SCHEMA_ENTRY, PAGE_SCHEMA)
+            var actions = ["UPDATE", "PERMISSION", "DELETE"];
+            pv.checkPermissionForActions(actions, pageId, function(err, perms){
+                !err && (req.attrs.actionsPermission = perms);
+                n(err, !err);
+            });
+        },
+        function (flag, n) {
+            var pv = new that.PermissionValidator(req, PAGE_PERMISSION_SCHEMA, "")
+            pv.hasPermissionWithoutModelId("ADD", function(err, perm){
+                req.attrs.actionsPermission = req.attrs.actionsPermission || {};
+                req.attrs.actionsPermission.ADD = perm;
+                n(null, true);
+            });
         }
-        pageForm.PageForm(req, DBActions, function (err, formObj) {
-            if (!err) {
-
-                formObj.fields.forEach(function (el) {
-                    if (el.type != "hidden") {
-                        el.disabled = true;
-                    }
-                });
-                req.query[that.getPluginId()] = utils.cloneExtend(page, {redirect: "/" + params.page + "/" + that.getPluginId() + "/view",
-                    name: page.localizedName["en_US"], theme: page.themeId, layout: page.layoutId});
-                req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US", "add");
-                req.attrs.pageId = pageId;
-                params.action = "edit";
-                req.attrs.showToolbar = true;
-            }
-            next(err, req, res);
-        });
+    ], function (err, result) {
+        next(err);
     });
 }
 
@@ -469,8 +527,17 @@ PageManageController.prototype.render = function (req, res, next) {
 
     view = view || "view";
     var ret = {};
-    var that = this, formObj = pageForm.updatePageOrderForm, DynamicForm = that.getFormBuilder().DynamicForm;
-    req.query[that.getPluginId()] = {redirect: "/" + req.params.page + "/" + that.getPluginId() + "/view" };
+    var that = this, formObj = pageForm.updatePageOrderForm(), DynamicForm = that.getFormBuilder().DynamicForm;
+    req.query[that.getPluginId()] = {redirect: that.getRedirectPath(req, ["view"])};
     ret.updatePageOrderForm = DynamicForm(req, formObj, "en_US");
-    next(null, [ view, ret ]);
+
+    req.pluginRender.setView(view).setLocals(ret);
+
+    var pv = new that.PermissionValidator(req, PAGE_PERMISSION_SCHEMA, "");
+    pv.hasPermissionWithoutModelId("ADD", function (err, perm) {
+        if (!err) {
+            req.pluginRender.addLocal("hasAdd", perm.isAuthorized)
+        }
+        next(err);
+    });
 };

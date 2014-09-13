@@ -4,6 +4,16 @@ var newPassword = {
     name: "newPassword",
     rules: [ "required", 'notEqualTo:oldPassword'  ]
 };
+
+/**
+ * New field when user logged in by oauth & updates password, in this case oldPassword doesn't exists
+ */
+var newPassword2 = {
+    label: "New password",
+    type: "password",
+    name: "newPassword",
+    rules: [ "required"  ]
+};
 var confirmNewPassword = {
     label: "Confirm new password",
     type: "password",
@@ -28,13 +38,21 @@ var userId = {
 };
 
 
-module.exports = {
-    form: {
-        id: "securityFM",
-        method: "post",
-        action: "updateUserSecurityDetails",
-        legendText: "Edit user address & contact"
-    },
-    fields: [ userId, oldPassword, newPassword, confirmNewPassword,
-        update ]
-};
+module.exports = function (hasOldPassword) {
+    var fields = [ userId, oldPassword, newPassword, confirmNewPassword,
+        update ];
+
+    if(!hasOldPassword) {
+        fields = [ userId, newPassword2, confirmNewPassword, update ];
+    }
+
+    return {
+        form: {
+            id: "securityFM",
+            method: "post",
+            action: "updateUserSecurityDetails",
+            legendText: "Update password"
+        },
+        fields: fields
+    };
+}

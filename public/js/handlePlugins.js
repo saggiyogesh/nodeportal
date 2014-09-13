@@ -66,7 +66,7 @@ define(["_", "util", "modal"], function () {
         var tgt = $(e.currentTarget), id = tgt.data("id");
         e.preventDefault();
         var options = {
-            url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/show/" + id + "/" + Rocket.PageValues.getPageId(),
+            url: Rocket.Props.getAppSettingsUrl() + "/managePlugin/show/" + id + "/" + Rocket.PageValues.getPageId(),
             data: {redirect: location.href,
                 mode: "exclusive"},
             success: function (responseData) {

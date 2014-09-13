@@ -9,13 +9,13 @@ var mongoose = require('mongoose')
 
 var userSchema = new Schema({
     userId: { type: Number, unique: true},
-    userName: { type: String, index: true },
+    userName: { type: String, unique: true},
     firstName: String,
     middleName: String,
     lastName: String,
     passwordEnc: String,
-    emailId: { type: String, index: true },
-    phoneNo: { type: String, index: true },
+    emailId: { type: String, unique: true },
+    phoneNo: { type: String},
     dob: { type: Date},
     gender: {type: String, default: ""},
     roles: [],
@@ -27,16 +27,27 @@ var userSchema = new Schema({
      * properties of profilePic:
      *      gravatar {String} gravatar hash
      *      uploaded {Boolean} if image is uploaded by user
+     *      url {URL} Profile picture url of OAuth login account
      */
     profilePic: {type: Object, default: {}},
     address: {},
     telNos: {},
-    notifications: {type: Object, default: {}}
+    notifications: {type: Object, default: {}},
+    /**
+     * This will save the unique id provided by oauth login.
+     * properties:
+     *      accountName {String}: oauth account name (like google, facebook etc)
+     *      data {Object}: oauth user data fetched after login
+     * @see AppProperties.ENABLED_LOGIN_ACCOUNTS
+     */
+    oauthInfo: {}
 });
 
 userSchema.pre('save', function (next) {
     if (this.isNew) {
         this.createDate = Date.now();
+        //auto creating username from emailId
+        this.userName = this.userName || this.emailId;
     }
     this.updateDate = Date.now();
     next();

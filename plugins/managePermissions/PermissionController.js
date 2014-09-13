@@ -88,29 +88,30 @@ function updatePermissionsAction(req, res, next) {
         dbAction.get("findByPermissionSchemaKey", permissionSchemaKey, function (err, model) {
             if (!err) {
                 model = model.toObject();
-                var permissionSchemaKey =  model.permissionSchemaKey;
+                var permissionSchemaKey = model.permissionSchemaKey;
                 delete  model._id;
                 delete model.permissionSchemaKey
                 Debug._li(">> ", model, true);
                 model.rolePermissions = rolePermissions;
-                var perm = dbAction.hasPermission("PERMISSION");
-                if (perm && perm.isAuthorized) {
-                    dbAction.update(model, function (err, result) {
-                        if (result) {
-                            Debug._l(">> up " + result);
-                            PermissionsCache.updateCacheItem(permissionSchemaKey, "", model);
-                            that.setRedirect(req, redirect);
-                        }
-                        next(err, req, res);
-                    });
-                }
-                else {
-                    err = dbAction.getPermissionError("PERMISSION");
-                    next(err, req, res);
-                }
+                dbAction.hasPermissionWithoutModelId("PERMISSION", function(err, perm){
+                    if (perm && perm.isAuthorized) {
+                        dbAction.update(model, function (err, result) {
+                            if (result) {
+                                Debug._l(">> up " + result);
+                                PermissionsCache.updateCacheItem(permissionSchemaKey, "", model);
+                                that.setRedirect(req, redirect);
+                            }
+                            next(err);
+                        });
+                    }
+                    else {
+                        err = dbAction.getPermissionError("PERMISSION");
+                        next(err);
+                    }
+                });
             }
             else
-                next(err, req, res);
+                next(err);
         });
 
     }
@@ -127,7 +128,7 @@ function updatePermissionsAction(req, res, next) {
 //            that.setSuccessMessage(req, msg);
                 PermissionsCache.updateCacheItem(permissionSchemaKey, modelId, modelObj);
             }
-            next(err, req, res);
+            next(err);
         });
     }
 }
@@ -158,24 +159,25 @@ function getPermissions(req, res, next) {
                 dbAction = that.getDBActionsLib().getAuthInstance(req, SETTINGS_INSTANCE_SCHEMA, permissionSchemaKey);
                 req.params.name = SETTINGS_INSTANCE_SCHEMA;
                 req.params.modelPermissionSchema = permissionSchemaKey;
-                var err;
-                var perm = dbAction.hasPermission("PERMISSION");
-                if (perm && perm.isAuthorized) {
-                    var pm = PermissionsCache.getCacheItem(permissionSchemaKey),
-                        actionsValue = pm.getActionsValue();
-                    var roles = ["", Roles.getUserRole()], actions = Object.keys(actionsValue);
+                dbAction.hasPermissionWithoutModelId("PERMISSION", function (err, perm) {
+                    if (perm && perm.isAuthorized) {
+                        var pm = PermissionsCache.getCacheItem(permissionSchemaKey),
+                            actionsValue = pm.getActionsValue();
+                        var roles = ["", Roles.getUserRole()], actions = Object.keys(actionsValue);
 
-                    req.attrs.hasAuth = true;
-                    req.attrs.roles = roles;
-                    req.attrs.actions = actions;
-                    req.attrs.actionsValue = actionsValue;
-                    req.attrs.permissions = pm.getPermissions();
-                    req.attrs.guestRoleId = Roles.getGuestRole().roleId;
-                    req.attrs.isSettingsPlugin = true;
-                } else {
-                    err = dbAction.getPermissionError("PERMISSION");
-                }
-                return next(err, req, res);
+                        req.attrs.hasAuth = true;
+                        req.attrs.roles = roles;
+                        req.attrs.actions = actions;
+                        req.attrs.actionsValue = actionsValue;
+                        req.attrs.permissions = pm.getPermissions();
+                        req.attrs.guestRoleId = Roles.getGuestRole().roleId;
+                        req.attrs.isSettingsPlugin = true;
+                    } else {
+                        err = dbAction.getPermissionError("PERMISSION");
+                    }
+                    return next(err);
+                });
+                return;
             }
 
             dbAction.hasPermission("PERMISSION", modelId, function (err, perm) {
@@ -191,7 +193,7 @@ function getPermissions(req, res, next) {
                     req.attrs.permissions = pm.getPermissions();
                     req.attrs.guestRoleId = Roles.getGuestRole().roleId;
                 }
-                next(err, req, res);
+                next(err);
             });
         } catch (e) {
             next(e, req, res);
@@ -199,6 +201,6 @@ function getPermissions(req, res, next) {
     }
     else {
         that.setErrorMessage(req, "Missing parameters");
-        next(null, req, res);
+        next(null);
     }
 }

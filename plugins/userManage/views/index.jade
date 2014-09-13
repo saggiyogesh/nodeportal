@@ -1,52 +1,55 @@
+include appMixins
+
 H4 Manage your account
 hr
 div(id="#{namespace}_user")
-:script
-    require(["tabs", "pluginURL"], function(){
-        new Rocket.Tabs({
-            containerId: "#{namespace}_user",
-            appendHash: true,
-            tabDirection: "left",
-            items:[{
-                    header: "Profile",
-                    ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:profileForm", null, "exclusive")
-                },
-                {
-                    header: "Security",
-                    ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:securityForm", null, "exclusive"),
-                    ajaxSuccess: function(res){
-                        $("##{namespace}_securityFM ##{namespace}_userId").val(Rocket.User.getUserId())
-                    }
-                },
-                {
-                    header: "Contact",
-                    ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:contactForm", null, "exclusive"),
-                    ajaxSuccess: function(res){
-                        $("##{namespace}_contactFM ##{namespace}_userId").val(Rocket.User.getUserId())
-                    }
-                },
-                {
-                    header: "Notifications",
-                    ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:notificationsForm", null, "exclusive"),
-                    ajaxSuccess: function(res){
-                        $("##{namespace}_notificationsFM ##{namespace}_userId").val(Rocket.User.getUserId())
-                    }
-                },
-                {
-                    header: "Roles",
-                    ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:roles", null, "exclusive")
-                }]
++BottomScript(locals)
+    script.
+        require(["tabs", "pluginURL"], function(){
+            new Rocket.Tabs({
+                containerId: "#{namespace}_user",
+                appendHash: true,
+                tabDirection: "left",
+                items:[{
+                        header: "Profile",
+                        ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:profileForm", null, "exclusive")
+                    },
+                    {
+                        header: "Security",
+                        ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:securityForm", null, "exclusive"),
+                        ajaxSuccess: function(res){
+                            $("##{namespace}_securityFM ##{namespace}_userId").val(Rocket.User.getUserId())
+                        }
+                    },
+                    {
+                        header: "Contact",
+                        ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:contactForm", null, "exclusive"),
+                        ajaxSuccess: function(res){
+                            $("##{namespace}_contactFM ##{namespace}_userId").val(Rocket.User.getUserId())
+                        }
+                    },
+                    {
+                        header: "Notifications",
+                        ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:notificationsForm", null, "exclusive"),
+                        ajaxSuccess: function(res){
+                            $("##{namespace}_notificationsFM ##{namespace}_userId").val(Rocket.User.getUserId())
+                        }
+                    },
+                    {
+                        header: "Roles",
+                        ajax: Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:roles", null, "exclusive")
+                    }]
+            });
+
+            $("##{namespace}_user").on("submit", "form", function(e){
+                e.preventDefault();
+                console.log(e)
+                var fm = this;
+                var pane = $(this).closest('.tab-pane')
+                Rocket.Util.submitFormAsync(fm, function(r){
+                     pane.html(r);
+                },{mode:"exclusive"});
+
+            });
+
         });
-
-        $("##{namespace}_user").on("submit", "form", function(e){
-            e.preventDefault();
-            console.log(e)
-            var fm = this;
-            var pane = $(this).closest('.tab-pane')
-            Rocket.Util.submitFormAsync(fm, function(r){
-                 pane.html(r);
-            },{mode:"exclusive"});
-
-        });
-
-    });

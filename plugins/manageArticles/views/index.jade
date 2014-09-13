@@ -1,9 +1,8 @@
+include appMixins
+
 !{viewLib.Messages(req , namespace)}
 
-- var pv = new viewLib.PermissionValidator(req, "model.articleSchema", "");
-- var hasAdd = pv.hasPermission("ADD").isAuthorized == true;
-
-style
+style.
     .show-all-articles {
         margin-top: 30px;
     }
@@ -23,7 +22,8 @@ style
 
 .show-all-articles
     #listTableContentBox
-    :script
-        require(["manageArticles"], function(){
-            Rocket.trigger({type:"manageArticle:index:load", target:this});
-        });
+    +BottomScript(locals)
+        script.
+            require(["manageArticles"], function(){
+                Rocket.trigger({type:"manageArticle:index:load", target:this});
+            });

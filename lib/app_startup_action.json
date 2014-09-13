@@ -2,11 +2,13 @@
     "lib/StartUpActions/InitDBConnection",
     "lib/StartUpActions/InitModelEvents",
     "lib/StartUpActions/SetupApp",
-    "lib/StartUpActions/ConfigurePageRoutes",
     "lib/StartUpActions/LoadPlugins",
     "lib/StartUpActions/SetupThemes",
     "lib/StartUpActions/CreateResourceDirs",
-    "lib/StartUpActions/TestEmail",
     "lib/StartUpActions/AppEnvConfiguration",
+    "lib/StartUpActions/ErrorHandler",
+    "lib/StartUpActions/InitMultipleLogin",
+    "lib/StartUpActions/TestEmail",
+    "lib/StartUpActions/TestData",
     "lib/StartUpActions/BindPort"
 ]

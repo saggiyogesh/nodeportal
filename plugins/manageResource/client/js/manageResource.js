@@ -1,4 +1,5 @@
-define(["fileuploader", "pluginURL", "actionButton"], function () {
+define(["util", "uploader", "pluginURL", "actionButton"], function () {
+    var ns = "manageResource", util = Rocket.Util;
     var folderId = 0, resourceModels = [], urls = {},
         path = [
             {name: "Home", resourceId: 0, type: 'folder'}
@@ -10,11 +11,11 @@ define(["fileuploader", "pluginURL", "actionButton"], function () {
     var TREE_LI_TMPL = _.template("<li><a class='tree-node folder' id='<%=folderId%>' href='javascript:;'><i class='icon-folder-close'></i> <%=name%></a></li>");
     var TREE_UP_LI_TMPL = _.template("<li><a class='tree-node-up' id='<%=parentFolderId%>' ><i></i> Up</a></li>");
     var BREADCRUMB_FOLDER_TMPL = _.template("<a id='<%=resourceId%>' href='javascript:;'><%=name%></a>");
-    var uploadErrContainer = $("#upload_error"), errMsgHolder = uploadErrContainer.find("#error_message"),
+    var errorMsgContainer = $("#manageResource_errorFlash"),
         resourceView = $(".resource-view"), resourcesList = resourceView.find("#list"),
         resourceDetail = resourceView.find('#detail'), resourceTree = $(".resource-tree"),
         resourceTreeList = resourceTree.find("ul"), breadcrumbs = $('#breadcrumbs'),
-        successMsgContainer = $('#successMsg'), uploadFileList;
+        successMsgContainer = $('#manageResource_successFlash'), uploadFileList, uploader;
 
     var modelName = "Resource", permissionSchemaKey = "model.resourceSchema.Resource";
 
@@ -54,63 +55,28 @@ define(["fileuploader", "pluginURL", "actionButton"], function () {
 
 
     function showErrMsg(message) {
-        uploadErrContainer.removeClass("ui-helper-hidden");
-        errMsgHolder.html(message);
+        util.showErrorFlash(message);
     }
 
     function resetErrMsg() {
-        uploadErrContainer.addClass("ui-helper-hidden");
+        errorMsgContainer.addClass("hide");
     }
 
     function showSuccessMsg(message) {
-        successMsgContainer.removeClass("ui-helper-hidden");
-        successMsgContainer.find('span').html(message);
+        util.showSuccessFlash(message);
     }
 
     function resetSuccessMsg() {
-        successMsgContainer.addClass("ui-helper-hidden");
-    }
-
-    function resetUploadFileList() {
-        if (!uploadFileList) {
-            uploadFileList = $('#uploader ul.qq-upload-list');
-        }
-        uploadFileList.html("");
+        successMsgContainer.addClass("hide");
     }
 
     function resetAllMsgs() {
         resetSuccessMsg();
         resetErrMsg();
-        resetUploadFileList();
     }
 
-    function initUploader(url) {
-        //create ajax uploader
-        var el = document.getElementById('uploader');
-        if(!el){
-            return;
-        }
-        new qq.FileUploader({
-            element: el,
-            // path to server-side upload script
-            action: url + "/",
-            params: {type: "ajaxUpload"},
-            showMessage: showErrMsg,
-            onSubmit: function (id, fileName) {
-                this.params.folderId = folderId; // to set folderId for each request
-                resetAllMsgs();
-            },
-            onComplete: function (id, fileName, responseJSON) {
-                renderItemsByFolderId(responseJSON.folderId || folderId);
-                if (getCurrentItem().type !== FOLDER_TYPE) {
-                    upWalk();
-                }
-            },
-            allowedExtensions: ["aac", "avi", "bmp", "chm", "css", "default", "dll", "doc", "fla", "gif", "htm" , "html",
-                "ini", "jar", "jpeg", "jpg", "js", "lasso", "mdb", "mov", "mp3", ",mpg",
-                "pdf", "php", "ppt", "py", "rb", "real", "reg", "rtf", "sql", "swf", "txt",
-                "vbs", "wav", "wma", "xls", "xml", "xsl", "zip", "jar", "war", "png"]
-        });
+    function uploadSuccess() {
+        renderItemsByFolderId(folderId);
     }
 
     //update breadcrumb
@@ -238,7 +204,11 @@ define(["fileuploader", "pluginURL", "actionButton"], function () {
             resourcesList.show();
         });
 
-        initUploader(getURL("uploadResource"));
+        //handle upload button click
+        $("#manageResource_UploadButton").click(function () {
+            uploader.open();
+            uploader.setData({"folderId": folderId});
+        });
 
 //        getURL("uploadResource", initUploader);
         urls["view"] = getURL("view", true);
@@ -299,32 +269,36 @@ define(["fileuploader", "pluginURL", "actionButton"], function () {
 
             var actions = [
                 {
-                    text: type ? "View" : "Download", onClick: function (e) {
-                    if (type) {
-                        renderItemsByFolderId(dataId);
+                    text: type ? "View" : "Download",
+                    onClick: function (e) {
+                        if (type) {
+                            renderItemsByFolderId(dataId);
 
-                    } else {
-                        download(dataId);
-                    }
-                },
+                        } else {
+                            download(dataId);
+                        }
+                    },
                     permissionAction: "VIEW"
                 },
                 {
-                    text: "Permission", data: {id: dataId}, onClick: function (e) {
-                    openPermissions(dataId);
-                },
+                    text: "Permission", data: {id: dataId},
+                    onClick: function (e) {
+                        openPermissions(dataId);
+                    },
                     permissionAction: "PERMISSION"
                 },
                 {
-                    text: "Rename", data: {id: dataId}, onClick: function (e) {
-                    rename(dataId, true);
-                },
+                    text: "Rename", data: {id: dataId},
+                    onClick: function (e) {
+                        rename(dataId, true);
+                    },
                     permissionAction: "UPDATE"
                 },
                 {
-                    text: "Delete", onClick: function (e) {
-                    remove(dataId, type);
-                },
+                    text: "Delete",
+                    onClick: function (e) {
+                        remove(dataId, type);
+                    },
                     permissionAction: "DELETE"
                 }
             ];
@@ -416,71 +390,82 @@ define(["fileuploader", "pluginURL", "actionButton"], function () {
 
     function remove(id, type, next) {
         resetAllMsgs();
-        var c = confirm('Are you sure to delete this ?');
-        if (c == true) {
-            var url = urls["delete"] + '/' + id + '/' + type;
-            var options = {
-                url: url,
-                success: function (data) {
-                    if (data.success == true) {
-                        showSuccessMsg("Deleted successfully.");
-                        if (next && _.isFunction(next))   next();
-                        renderItemsByFolderId(folderId);
-                    }
-                    else if (data.error) {
-                        showErrMsg(data.error);
-                    }
+        Rocket.confirm({
+            message: 'Are you sure to delete this ?',
+            callback: function (c) {
+                if (c == true) {
+                    var url = urls["delete"] + '/' + id + '/' + type;
+                    var options = {
+                        url: url,
+                        success: function (data) {
+                            if (data.success == true) {
+                                showSuccessMsg("Deleted successfully.");
+                                if (next && _.isFunction(next))   next();
+                                renderItemsByFolderId(folderId);
+                            }
+                            else if (data.error) {
+                                showErrMsg(data.error);
+                            }
+                        }
+                    };
+                    Rocket.ajax(options);
                 }
-            };
-            Rocket.ajax(options);
-        }
+            }
+        });
     }
 
 
     function rename(id, renderFolder, next) {
         resetAllMsgs();
-        var name = $.trim(prompt("Enter new name"));
-        if (name) {
-            var url = urls["rename"] + '/' + name + '/' + id + '/' + folderId;
-            var options = {
-                url: url,
-                success: function (data) {
-                    if (data.success == true) {
-                        showSuccessMsg("Renamed successfully.");
-                        if (next && _.isFunction(next))   next(name);
-                        renderFolder && renderItemsByFolderId(folderId);
-                    }
-                    else if (data.error) {
-                        showErrMsg(data.error);
-                    }
+        Rocket.prompt({
+            message: 'Enter new folder name.',
+            callback: function (name) {
+                if (name) {
+                    var url = urls["rename"] + '/' + name + '/' + id + '/' + folderId;
+                    var options = {
+                        url: url,
+                        success: function (data) {
+                            if (data.success == true) {
+                                showSuccessMsg("Renamed successfully.");
+                                if (next && _.isFunction(next))   next(name);
+                                renderFolder && renderItemsByFolderId(folderId);
+                            }
+                            else if (data.error) {
+                                showErrMsg(data.error);
+                            }
+                        }
+                    };
+                    Rocket.ajax(options);
+                    return name;
                 }
-            };
-            Rocket.ajax(options);
-            return name;
-        }
+            }
+        });
     }
 
 
     function addFolder(parentFolderId, reload) {
         resetAllMsgs();
-        var name = $.trim(prompt("Enter new folder name"));
-        if (name) {
-            var url = urls["addFolder"] + '/' + name + '/' + parentFolderId;
-            var options = {
-                url: url,
-                success: function (data) {
-                    if (reload && data.success == true) {
-                        showSuccessMsg("Folder added successfully.");
-                        renderItemsByFolderId(folderId);
-                    }
-                    else if (data.error) {
-                        showErrMsg(data.error);
-                    }
+        Rocket.prompt({
+            message: 'Enter new folder name.',
+            callback: function (name) {
+                if (name) {
+                    var url = urls["addFolder"] + '/' + name + '/' + parentFolderId;
+                    var options = {
+                        url: url,
+                        success: function (data) {
+                            if (reload && data.success == true) {
+                                showSuccessMsg("Folder added successfully.");
+                                renderItemsByFolderId(folderId);
+                            }
+                            else if (data.error) {
+                                showErrMsg(data.error);
+                            }
+                        }
+                    };
+                    Rocket.ajax(options);
                 }
-            };
-            Rocket.ajax(options);
-        }
-
+            }
+        });
     }
 
     //add folder
@@ -494,5 +479,10 @@ define(["fileuploader", "pluginURL", "actionButton"], function () {
     //init
     renderItemsByFolderId(folderId);
     updateBreadcrumb();
+    uploader = new Rocket.Uploader({
+        uploaderId: ns + "_uploader",
+        url: getURL("uploadResource"),
+        onSuccess: uploadSuccess
+    });
 
 });

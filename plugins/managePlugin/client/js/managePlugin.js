@@ -71,7 +71,7 @@ define(["pluginURL"], function () {
                     type = "settings";
                 }
                 var options = {
-                    url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePermissions/" + type + "/"
+                    url: Rocket.Props.getAppSettingsUrl() + "/managePermissions/" + type + "/"
                         + instanceId + "/" + ns,
                     data: {mode: "exclusive"},
                     success: function (response) {

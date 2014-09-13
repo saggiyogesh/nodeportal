@@ -1,0 +1,16 @@
+doctype html
+html(lang=locale)
+    head
+        include head
+    body
+        include header
+        .container.settings
+            include pluginMenu
+            .row
+                !=layoutHTMLTMPL
+
+        include scripts
+        !=bottomIncludes
+        include settings_bottom
+
+   

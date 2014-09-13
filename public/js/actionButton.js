@@ -141,6 +141,7 @@ define(["util", "_", "bootstrap", "plugin"], function () {
                 dataHtml.push(h);
             });
             action.dataAttrs = dataHtml.join(" ");
+            action.className = action.text.toLowerCase();
 
             var tmpl = liTmplCompiled(_.extend(_.clone(blankObj), action));
             if(that.getPermission(action.permissionAction)){

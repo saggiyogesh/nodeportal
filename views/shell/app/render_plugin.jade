@@ -1,2 +1,5 @@
-script
-	Rocket.Plugin.onLoad({id:'#{pluginId}'});
+include appMixins
+
++BottomScript(locals)
+    script.
+        Rocket.Plugin.onLoad({id:'#{pluginId}'});

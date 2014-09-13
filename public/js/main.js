@@ -6,7 +6,6 @@
     var modules = {
         bootstrap: "bootstrap.min",
         jqueryui: "jquery-ui.min",
-        contextMenu: "jquery.contextMenu-custom",
         cookie: "jquery.cookie",
         dataTable: "jquery.dataTables",
         dynaTree: "jquery.dynatree.min",
@@ -16,7 +15,8 @@
         json: "json2",
         _: "underscore.min",
         autosize: "jquery.autosize.min",
-        editable: "bootstrap-editable.min"
+        editable: "bootstrap-editable.min",
+        bootbox: "bootbox.min"
 
     };
 

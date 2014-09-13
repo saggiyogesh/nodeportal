@@ -1,3 +1,5 @@
+include appMixins
+
 <script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
 !{viewLib.Messages(req , namespace)}
 
@@ -13,10 +15,12 @@
         .tab-pane.fade#version
             .span8
                 #versionTableContentBox
-        :script
-            require(["manageArticles"], function(){
-               Rocket.trigger({type:"manageArticle:edit:load", target:this, data:{id:'#{req.params.id}'}});
-            });
+
+        +BottomScript(locals)
+            script.
+                require(["manageArticles"], function(){
+                   Rocket.trigger({type:"manageArticle:edit:load", target:this, data:{id:'#{req.params.id}'}});
+                });
 
 
 

@@ -58,20 +58,24 @@ define(["pluginURL"], function () {
     //Attach events to nodes
     //handle create event
     createButton.click(function (e) {
-        var name = $.trim(prompt("Enter new layout name"));
-        if (name) {
-            io({
-                url: getURL("newLayout") + "/" + name,
-                callback: function (isSuccess, message, response) {
-                    if (isSuccess) {
-                        showSuccessMsg(message);
-                    }
-                    else {
-                        showErrorMsg(message);
-                    }
+        Rocket.prompt({
+            message: 'Enter new layout name.',
+            callback: function (name) {
+                if (name) {
+                    io({
+                        url: getURL("newLayout") + "/" + name,
+                        callback: function (isSuccess, message, response) {
+                            if (isSuccess) {
+                                showSuccessMsg(message);
+                            }
+                            else {
+                                showErrorMsg(message);
+                            }
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
     });
 
     //handle layout select

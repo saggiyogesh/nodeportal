@@ -122,6 +122,7 @@ exports.PageForm = function (req, DBActions, next) {
 
         var theme = fields[5];
         themes.forEach(function (t) {
+            t = t.toObject();
             theme.options.push([t.name, t.themeId]);
         });
 
@@ -130,6 +131,7 @@ exports.PageForm = function (req, DBActions, next) {
 
             var layout = fields[6];
             layouts.forEach(function (l) {
+                l = l.toObject();
                 layout.options.push([l.name, l.layoutId]);
             });
 
@@ -157,14 +159,19 @@ var cancelPO = {
     type: "cancel",
     value: "Cancel"
 };
-exports.updatePageOrderForm = {
+var pageOrderFormObj = {
     form: {
         id: "update_order_fm",
         method: "post",
         action: "updatePageOrder"
     },
     fields: [ parentPageId, redirect, pageOrder, updatePO, cancelPO ]
-}
+};
+
+exports.updatePageOrderForm = function () {
+    return utils.clone(pageOrderFormObj );
+};
+
 
 exports.customValidations = {
     checkFriendlyURL: {ruleFunction: checkFriendlyURL, msgs: {en_US: "Friendly url already exists."}},

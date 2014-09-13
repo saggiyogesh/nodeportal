@@ -1,12 +1,11 @@
+include appMixins
+
 .page-edit
-    !{viewLib.Messages(req , namespace)}
+    != viewLib.Messages(req , namespace)
     - if(req.attrs.showToolbar){
-        - var pageId = req.attrs.pageId, pv = new viewLib.PermissionValidator(req, "model.pageSchema.Page", "Page");
-        - var hasEdit =  pv.hasPermission("UPDATE", pageId).isAuthorized == true;
-        - var hasPerm =  pv.hasPermission("PERMISSION", pageId).isAuthorized == true;
-        - var hasDelete =  pv.hasPermission("DELETE", pageId).isAuthorized == true;
-        - var pv = new viewLib.PermissionValidator(req, "model.pageSchema", "");
-        - var hasAdd = pv.hasPermission("ADD").isAuthorized == true;
+        - var aP = req.attrs.actionsPermission, hasEdit  = aP.UPDATE.isAuthorized;
+        - var hasPerm  = aP.PERMISSION.isAuthorized, hasDelete  = aP.DELETE.isAuthorized;
+        - var hasAdd  = aP.ADD.isAuthorized;
 
         .btn-group#managePage_Actions
             if hasAdd
@@ -28,7 +27,9 @@
 
     - }
 
-    br
-    !{req.attrs.pageForm}
-    script
-        Rocket.trigger({type:"managePage:edit:load", target:this, data:{id:'managePage_Actions', pageId: '#{req.attrs.pageId}'}});
+    != req.attrs.pageForm
+    +BottomScript(locals)
+        script.
+            require(["events"],function(){
+                Rocket.trigger({type:"managePage:edit:load", target:this, data:{id:'managePage_Actions', pageId: '#{req.attrs.pageId}'}});
+            });

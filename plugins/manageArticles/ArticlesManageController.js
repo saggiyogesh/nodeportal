@@ -47,7 +47,6 @@ function handleDisplayArticleSettingsUpdate(event) {
     var schemaName = event.schemaName, modelId = event.modelId, modelData = event.modelData,
         that = this, app = that.getApp();
     var displayArticlePluginId = "displayArticle", ns = modelData.pluginNamespace;
-    Debug._l(">>> " + schemaName);
     if (utils.contains(ns, displayArticlePluginId)) {
         var pageId = modelData.pageId, locations, id, articleId;
         var dbAction = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_SCHEMA);
@@ -136,7 +135,7 @@ function getArticleVersions(req, res, next) {
         dbActionVersion = DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA);
     ArticleManager.getLatestArticleById(id, dbAction, function (err, latestArticle) {
         if (err) {
-            return next(err, req, res);
+            return next(err);
         }
         var json = [];
         if (latestArticle) {
@@ -151,7 +150,7 @@ function getArticleVersions(req, res, next) {
                     Debug._li("", json)
                     that.setJSON(req, {"values": json});
                 }
-                next(err, req, res);
+                next(err);
             });
         }
         else {
@@ -162,7 +161,6 @@ function getArticleVersions(req, res, next) {
     });
 }
 
-var str;
 function previewArticleAction(req, res, next) {
     var that = this, DBActionsLib = that.getDBActionsLib(), params = req.params,
         id = params.id, ns = that.getNamespace(req), version = params.version;
@@ -176,30 +174,31 @@ function previewArticleAction(req, res, next) {
         //check number validity of id
         if (isNaN(id)) {
             setErrMsg();
-            return next(null, req, res);
+            return next(null);
         }
         if (version) {
             that.setErrorMessage(req, "Wrong article version number.");
             that.setRedirect(req, redirect);
-            return next(null, req, res);
+            return next(null);
         }
         var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY);
         ArticleManager.getLatestArticleById(id, dbAction, function (err, latestArticle) {
             if (err) {
-                return next(err, req, res);
+                return next(err);
             }
             if (!latestArticle) {
                 return next(dbAction.getPermissionError("VIEW"), req, res);
             }
-            var html = defaultView(req.app, {article: latestArticle, req: req});
-            params.action = "preview";
-            req.attrs.preview = html;
-            return next(null, req, res);
+            defaultView({article: latestArticle, req: req}, function (err, html) {
+                params.action = "preview";
+                req.attrs.preview = html;
+                next(null);
+            });
         });
     }
     else {
         setErrMsg();
-        return next(null, req, res);
+        return next(null);
     }
 }
 
@@ -219,7 +218,7 @@ function removeArticleAction(req, res, next) {
                 that.setRedirect(req, redirect);
                 that.setSuccessMessage(req, "Article(s) deleted successfully.");
             }
-            next(err, req, res);
+            next(err);
         });
         var asyncProcess = function () {
             var self = this, i = self.i, ids = self.vals;
@@ -281,7 +280,7 @@ function getArticlesAction(req, res, next) {
             });
             that.setJSON(req, ret);
         }
-        next(err, req, res);
+        next(err);
     });
 }
 
@@ -292,21 +291,21 @@ function updateArticleAction(req, res, next) {
 
     that.ValidateForm(req, articleForms.getArticleEditForm(), function (err, result) {
         if (err) {
-            return next(err, req, res);
+            return next(err);
         }
 
         if (!result.hasErrors) {
             var post = PluginHelper.getPostParams(req),
                 afterSave = function (err, article) {
                     if (err) {
-                        return  next(err, req, res);
+                        return  next(err);
                     }
                     else {
                         var redirect = PluginHelper.getPostParam(req, "redirect");
                         that.setRedirect(req, redirect);
                         var msg = "Article " + (post.id ? "updated" : "added" ) + " successfully.";
                         that.setSuccessMessage(req, msg);
-                        next(err, req, res);
+                        next(err);
                     }
                 },
                 save = function (id, version, oldArticleId) {
@@ -357,7 +356,7 @@ function updateArticleAction(req, res, next) {
             that.setErrorMessage(req, "entered-invalid-data");
             req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US");
             req.params.action = "edit";
-            next(err, req, res);
+            next(err);
         }
     });
 }
@@ -370,30 +369,43 @@ function editArticleAction(req, res, next) {
     if (id) {
         //process edit
 
-        var redirect = "/" + params.page + "/" + ns;
+        var redirect = that.getRedirectPath(req);
         //check number validity of id
         if (parseInt(id).toString() == "NaN") {
             that.setErrorMessage(req, "Wrong article Id");
             that.setRedirect(req, redirect);
-            return next(null, req, res);
+            return next(null);
         }
 
         var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY);
         ArticleManager.getLatestArticleById(id, dbAction, function (err, latestArticle) {
             if (err) {
-                return next(err, req, res);
+                return next(err);
             }
             req.query[ns] = utils.cloneExtend(latestArticle, {redirect: redirect,
                 title: latestArticle.localizedTitle["en_US"], content: latestArticle.localizedContent["en_US"] });
             params.action = "edit";
             req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US", "add");
-            next(err, req, res);
+            next(err);
         });
 
     }
     else {
-        req.query[ns] = {redirect: "/" + params.page + "/" + ns };
+        req.query[ns] = {redirect: that.getRedirectPath(req) };
         req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US", "add");
-        next(null, req, res);
+        next(null);
     }
 }
+
+ArticlesManageController.prototype.render = function (req, res, next) {
+    var that = this, ret = {};
+
+    var pv = new that.PermissionValidator(req, ARTICLE_PERMISSION_SCHEMA, "");
+    pv.hasPermissionWithoutModelId("ADD", function (err, perm) {
+        if (!err) {
+            ret.hasAdd = perm.isAuthorized;
+            req.pluginRender.setLocals(ret).setView(req.params.action);
+        }
+        next(err);
+    });
+};

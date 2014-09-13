@@ -1,7 +1,9 @@
+include appMixins
+
 .row-fluid
     .span6
-        !{viewLib.Messages(req , namespace)}
-        !{req.attrs.profileForm}
+        != viewLib.Messages(req , namespace)
+        != req.attrs.profileForm
     .span3
         .profile-pic
             .well.fade.in
@@ -14,9 +16,8 @@
 
 
 
-
-:script
-    require(["userManage"], function(){
-        Rocket.trigger({type:"userManage:profileForm:load", target:this});
-
-    });
++BottomScript(locals)
+    script.
+        require(["userManage"], function(){
+            Rocket.trigger({type:"userManage:profileForm:load", target:this});
+        });

@@ -1,3 +1,5 @@
+include appMixins
+
 - var fileIconsUrl = "/images/fileicons/";
 - var viewParams = {route: 'thumb'}, dims = req.attrs.thumbDimension;
 -if(req.attrs.resourceModel.length > 0)
@@ -7,7 +9,7 @@
                 div(class="thumbnail #{resource.type == 'folder' ? 'resource-item folder' : 'resource-item' }", id="#{resource.resourceId}")
                     - var type = ResourceManageUtil.getIconImage(req, resource);
                     button(id="actionButton_#{resource.resourceId}", class="action-button")
-                    img(src="#{type == "image" ? viewLib.createURL(req , viewParams) + '/' + resource.resourceId  : fileIconsUrl + type+'.png'}" )
+                    img(src='#{type == "image" ? viewLib.createURL(req , viewParams) + "/" + resource.resourceId  : fileIconsUrl + type+".png"}' )
                     h5.name.caption #{decodeURI(resource.name)}
 
 -else
@@ -15,9 +17,10 @@
         button(class="close", data-dismiss="alert") x
         H4 No files or folders found.
 
-:script
-    require(["events"], function(){
-       Rocket.trigger({type:"manageResource:resourceViewList:change", target: this, data: !{JSON.stringify(req.attrs.resourceModel)}});
-    });
++BottomScript(locals)
+    script.
+        require(["events"], function(){
+           Rocket.trigger({type:"manageResource:resourceViewList:change", target: this, data: !{JSON.stringify(req.attrs.resourceModel)}});
+        });
 
 

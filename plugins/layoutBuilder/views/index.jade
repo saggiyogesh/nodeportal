@@ -1,4 +1,7 @@
-style(type="text/css")
+include appMixins
+
+!= viewLib.Messages(req , namespace)
+style(type="text/css").
     textarea {
         width: 300px;
         height: 200px;
@@ -11,28 +14,29 @@ mixin addToDropdown(layouts)
             a(href="javascript:;", class=namespace+"-layoutItem", data-id=layout.layoutId)=layout.name
 
 //- Flash messages
-.ui-helper-hidden.alert.alert-error(id=namespace+"_errorFlash", data-autohide="true")
+.hide.alert.alert-error(id=namespace+"_errorFlash", data-autohide="true")
     button(class="close", data-dismiss="alert") x
     span.message
 
-.ui-helper-hidden.alert.alert-success(id=namespace+"_successFlash", data-autohide="true")
+.hide.alert.alert-success(id=namespace+"_successFlash", data-autohide="true")
     button(class="close", data-dismiss="alert") x
     span.message
 
 
 //- Plugin container
 .toolbar.btn-toolbar
-    button(class="btn btn-primary", type="button", id=namespace+"_create", style="margin-bottom: 22px;") Create
+    button(class="btn btn-primary", type="button", id=namespace+"_create") Create
     &nbsp;
     .btn-group
         button(class="btn btn-primary dropdown-toggle",data-toggle="dropdown", id=namespace+"_open", disabled=isDisabled) Open
             span.caret
         ul.dropdown-menu
-            mixin addToDropdown(layouts)
+            +addToDropdown(layouts)
     &nbsp;
-    button(class="btn btn-primary disabled", type="button", id=namespace+"_close", disabled="disabled" ,style="margin-bottom: 22px;") Close
+    button(class="btn btn-primary disabled", type="button", id=namespace+"_close", disabled="disabled") Close
 
     div(id=namespace+"_editForm")
 
-:script
-    require(["layoutBuilder"]);
++BottomScript(locals)
+    script.
+        require(["layoutBuilder"]);

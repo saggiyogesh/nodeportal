@@ -1,4 +1,6 @@
-!{viewLib.Messages(req , namespace)}
+include appMixins
+
+!= viewLib.Messages(req , namespace)
 - var roles = req.attrs.roles, actions = req.attrs.actions, actionsValue = req.attrs.actionsValue;
 - var permissions = req.attrs.permissions, formAction = {route: 'updatePermissions'}, guestRoleId = req.attrs.guestRoleId;
 - var isSettingsPlugin = !!req.attrs.isSettingsPlugin;
@@ -26,9 +28,9 @@
                                 td
                                     - var roleId = role.roleId
                                     - var chkStr = permissions[roleId].indexOf(actionsValue[action]) > -1 ? 'checked' : '';
-                                        //-only VIEW action is enabled for Guest to give permission
-                                        disableStr = (roleId == guestRoleId.toString() && action != "VIEW") ? "disabled" : "";
-                                    !{'<input type="checkbox" name="'+ namespace+'[' + roleId + '___' + action +']"' + chkStr + ' ' + disableStr +'/>'}
+                                    //-only VIEW action is enabled for Guest to give permission
+                                    - disableStr = (roleId == guestRoleId.toString() && action != "VIEW") ? "disabled" : "";
+                                    != '<input type="checkbox" name="'+ namespace+'[' + roleId + '___' + action +']"' + chkStr + ' ' + disableStr +'/>'
 
         .form-actions
             button.btn.btn-primary(type="submit") Save
@@ -37,8 +39,9 @@
                 |&nbsp;
                 button.btn(id='#{namespace +"_cancel"}') Cancel
 
-                :script
-                    require(["util"], function () {
-                        var ns = "#{namespace}";
-                        Rocket.Util.onFormCancel("#{namespace + '_cancel'}");
-                    });
+                +BottomScript(locals)
+                    script.
+                        require(["util"], function () {
+                            var ns = "#{namespace}";
+                            Rocket.Util.onFormCancel("#{namespace + '_cancel'}");
+                        });

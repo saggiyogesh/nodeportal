@@ -10,10 +10,12 @@ define(["tables", "pluginURL"], function () {
     }
 
     function removePlugin(id, type) {
-        var c = confirm('Are you sure to delete this ?');
-        if (c == true) {
-            goTo(getURL("remove") + "/" + id + "/" + type);
-        }
+        Rocket.confirm({
+            message:'Are you sure to delete this ?',
+            callback: function(c){
+                c && goTo(getURL("remove") + "/" + id + "/" + type);
+            }
+        });
     }
 
     //index page load event handler

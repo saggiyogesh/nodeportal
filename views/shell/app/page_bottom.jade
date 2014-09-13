@@ -1,67 +1,70 @@
-:script
-    require(["main", "bootstrap"], function(){
-        Rocket.PageValues = {
-            getPageId: function(){
-                return "#{page.pageId}";
-            },
-            getPageFriendlyURL : function(){
-                return "#{page.friendlyURL}";
-            }
-        };
-        Rocket.Props = {
-            getAppUrl: function(){
-                return "#{props.appURL}"
-            },
-            getPluginIdAndIId: #{getPluginIdAndIId}
-        };
-        Rocket.User ={
-            getUserName : function(){
-                return "#{user.userName}";
-            },
-            getUserFullName : function(){
-                return "#{user.FirstName + '' + user.lastName }";
-            },
-            isSignedIn : function(){
-                return #{req.session.loggedIn};
-            },
-            getUserId: function(){
-                return "#{user.userId}";
-            },
-            getProfilePicURL: function(){
-                return '!{getUserProfilePicURL(user)}' ;
-            },
-            getDefaultProfilePicURL: function(){
-                return '!{getDefaultProfilePicURL()}';
-            }
-        }
-    });
+include appMixins
 
-- if(req.params.plugin)
-    :script
-        require(["plugin"], function(){
-            var currentPlugin = {
-                pluginId : '#{req.params.plugin}'
++BottomScript(locals)
+    script.
+        require(["main", "bootstrap", "pace"], function(main, bootstrap, pace){
+            pace.start();
+            Rocket.PageValues = {
+                getPageId: function(){
+                    return "#{page.pageId}";
+                },
+                getPageFriendlyURL : function(){
+                    return "#{page.friendlyURL}";
+                }
             };
-            if('#{req.params.iId}'){
-                currentPlugin.iId = '#{req.params.iId}';
+            Rocket.Props = {
+                getAppUrl: function(){
+                    return "#{props.appURL}"
+                },
+                getAppSettingsUrl: function(){
+                    return "#{utils.getAppSettingsURL(req)}"
+                },
+                getPluginIdAndIId: #{getPluginIdAndIId}
+            };
+            Rocket.User ={
+                getUserName : function(){
+                    return "#{user.userName}";
+                },
+                getUserFullName : function(){
+                    return "#{user.firstName + '' + user.lastName}";
+                },
+                isSignedIn : function(){
+                    return #{req.session.loggedIn};
+                },
+                getUserId: function(){
+                    return "#{user.userId}";
+                },
+                getProfilePicURL: function(){
+                    return '!{getUserProfilePicURL(user)}' ;
+                },
+                getDefaultProfilePicURL: function(){
+                    return '!{getDefaultProfilePicURL()}';
+                }
             }
-            currentPlugin.namespace = '#{req.params.namespace}';
-            Rocket.Plugin.currentPlugin = currentPlugin;
         });
+- if(req.params.plugin)
+    +BottomScript(locals)
+        script.
+            require(["plugin"], function(){
+                var currentPlugin = {
+                    pluginId : '#{req.params.plugin}'
+                };
+                if('#{req.params.iId}'){
+                    currentPlugin.iId = '#{req.params.iId}';
+                }
+                currentPlugin.namespace = '#{req.params.namespace}';
+                Rocket.Plugin.currentPlugin = currentPlugin;
+            });
 
 
 
 
--if(!req.attrs.isErrorPage && req.session.loggedIn &&  (req.query && req.query.mode != "maximized"))
-    - var permissionValidator = new PermissionValidator(req, "model.pageSchema.Page", "Page");
-    - var hasPageUpdatePermission =  permissionValidator.hasPermission("UPDATE", page.pageId).isAuthorized == true;
-    - var hasPageAddPluginPermission =  permissionValidator.hasPermission("ADD_PLUGIN", page.pageId).isAuthorized == true;
-    - var hasPageRemovePluginPermission =  permissionValidator.hasPermission("REMOVE_PLUGIN", page.pageId).isAuthorized == true;
+-if(req.session.loggedIn &&  (req.query && req.query.mode != "maximized"))
     -if(hasPageUpdatePermission)
-        script
+        script(type='text/javascript').
             require(['layout']);
 
-    -if(page.friendlyURL != "/settings")
-        script
+    -if(isIncludeHandlePlugin)
+        script(type='text/javascript').
             require(['handlePlugins']);
 

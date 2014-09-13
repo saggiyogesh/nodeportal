@@ -1,4 +1,6 @@
-style
+include appMixins
+
+style.
     /*css taken from bootstrap site */
     /* Body and structure
     -------------------------------------------------- */
@@ -241,7 +243,7 @@ mixin renderNav()
     ul.nav.nav-pills
         - each plugin in plugins
             -var isCurPlugin = req.params.plugin == plugin.id;
-            li(class='#{isCurPlugin ? "active" : ""}'): a(href="#{getURL(req, plugin.id)}") #{plugin.name["en_US"]}
+            li(class='#{isCurPlugin ? "active" : ""}', id='#{plugin.id}'): a(href="#{getURL(req, plugin.id)}") #{plugin.name["en_US"]}
             -if(isCurPlugin) pluginName = plugin.name["en_US"]
 
 
@@ -256,63 +258,66 @@ mixin renderNav()
                 !=tools
             .plugin-body
                 .content !{pluginHtml}
+
 if showTools
-    script
-        require(["_", "util", "modal"],function () {
-            settingPermissionsModal = new Rocket.Modal({
-                id: "editPlugin",
-                title: "Manage Permissions",
-                width: 0.7
-            }),
-            settingPermissionsModalBody = settingPermissionsModal.getBody();
+    +BottomScript(locals)
+        script.
+            require(["_", "util", "modal"],function () {
+                settingPermissionsModal = new Rocket.Modal({
+                    id: "editPlugin",
+                    title: "Manage Permissions",
+                    width: 0.7
+                }),
+                settingPermissionsModalBody = settingPermissionsModal.getBody();
 
-            $(".plugin .tools a.edit").click(function (e) {
-                var tgt = $(e.currentTarget), id = tgt.data("id");
-                e.preventDefault();
-                var options = {
-                    url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/settings/" + id ,
-                    data: {redirect: location.href,
-                        mode: "exclusive"},
-                    success: function (responseData) {
-                        if (responseData) {
-                            settingPermissionsModal.show();
-                            settingPermissionsModalBody.html(responseData);
+                $(".plugin .tools a.edit").click(function (e) {
+                    var tgt = $(e.currentTarget), id = tgt.data("id");
+                    e.preventDefault();
+                    var options = {
+                        url: Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/settings/" + id ,
+                        data: {redirect: location.href,
+                            mode: "exclusive"},
+                        success: function (responseData) {
+                            if (responseData) {
+                                settingPermissionsModal.show();
+                                settingPermissionsModalBody.html(responseData);
 
+                            }
                         }
-                    }
-                };
-                Rocket.ajax(options);
+                    };
+                    Rocket.ajax(options);
 
+                });
             });
-        });
 
-:script
-    require([""],function () {
-        // fix sub nav on scroll
-        var $win = $(window)
-            , $nav = $('.subnav')
-            , navTop = $('.subnav').length && $('.subnav').offset().top - 40
-            , isFixed = 0
++BottomScript(locals)
+    script.
+        require([""],function () {
+            // fix sub nav on scroll
+            var $win = $(window)
+                , $nav = $('.subnav')
+                , navTop = $('.subnav').length && $('.subnav').offset().top - 40
+                , isFixed = 0
 
-        processScroll();
+            processScroll();
 
-        // hack sad times - holdover until rewrite for 2.1
-        $nav.on('click', function () {
-            if (!isFixed) setTimeout(function () {
-                $win.scrollTop($win.scrollTop() - 47)
-            }, 10)
-        })
+            // hack sad times - holdover until rewrite for 2.1
+            $nav.on('click', function () {
+                if (!isFixed) setTimeout(function () {
+                    $win.scrollTop($win.scrollTop() - 47)
+                }, 10)
+            })
 
-        $win.on('scroll', processScroll)
+            $win.on('scroll', processScroll)
 
-        function processScroll() {
-            var i, scrollTop = $win.scrollTop()
-            if (scrollTop >= navTop && !isFixed) {
-                isFixed = 1
-                $nav.addClass('subnav-fixed');
-            } else if (scrollTop <= navTop && isFixed) {
-                isFixed = 0
-                $nav.removeClass('subnav-fixed');
+            function processScroll() {
+                var i, scrollTop = $win.scrollTop()
+                if (scrollTop >= navTop && !isFixed) {
+                    isFixed = 1
+                    $nav.addClass('subnav-fixed');
+                } else if (scrollTop <= navTop && isFixed) {
+                    isFixed = 0
+                    $nav.removeClass('subnav-fixed');
+                }
             }
-        }
-    });
+        });

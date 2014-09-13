@@ -1,7 +1,42 @@
+include appMixins
 - if(req.session && req.session.loggedIn )
     | Welcome #{req.session.user.name}
+- else if(req.session.oAuthUser)
+    div#login_oAuthUser
+    +BottomScript(locals)
+        script(type='text/javascript').
+            require(["pluginURL"], function () {
+                  var div = $("#login_oAuthUser");
+                  Rocket.ajax({
+                      url : Rocket.PluginURL.createByNamespace("#{namespace}", "viewFile:registerOAuthUser", null, "exclusive"),
+                      success : function (response) {
+                          div.html(response);
+                      }
+                  });
+                  div.on("submit", "form", function (e) {
+                      e.preventDefault();
+                      console.log(e)
+                      var fm = this;
+                      Rocket.Util.submitFormAsync(fm, function (r) {
+                          div.html(r);
+                      }, {
+                          mode : "exclusive"
+                      });
+                  });
+            });
+
 - else
-    !{viewLib.Messages(req , namespace)}
-    !{loginForm}
+    != viewLib.Messages(req , namespace)
+    != loginForm
     - var params = {route: 'register',  mode :  'maximized' };
     a(href="#{viewLib.createURL(req , params)}") Register
+    br
+    a(href="#{viewLib.getURL(req , 'oauth/google', true, true)}") Google
+    br
+    a(href="#{viewLib.getURL(req , 'oauth/linkedin', true, true)}") Linked In
+    br
+    a(href="#{viewLib.getURL(req , 'oauth/twitter', true, true)}") Twitter
+    br
+    a(href="#{viewLib.getURL(req , 'oauth/facebook', true, true)}") Facebook
+
+

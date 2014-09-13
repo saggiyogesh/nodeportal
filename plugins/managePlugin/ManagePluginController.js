@@ -1,7 +1,6 @@
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController"),
     plugins = require(process.cwd() + "/lib/plugins"),
     PluginInstanceHandler = require(process.cwd() + "/lib/PluginInstanceHandler"),
-    PageRenderer = require(process.cwd() + "/lib/PageRenderer"),
     PLUGIN_INSTANCE_SCHEMA = "PluginInstance",
     URLCreator = require(process.cwd() + "/lib/URLCreator");
 
@@ -44,7 +43,7 @@ function updatePluginTitle(req, res, next) {
                 en_US: body["title.en_US"]
             }
         }
-        next(err, req, res);
+        next(err);
     });
 }
 
@@ -62,13 +61,13 @@ function updatePluginSettings(req, res, next) {
         json.status = "failure";
         if (err || !instance) {
             json.err = err ? err.message : "Invalid plugin instance.";
-            return next(err, req, res);
+            return next(err);
         }
         if (instance) {
             var save = function (err, pluginSettings) {
                 if (err) {
                     json.err = err.message;
-                    next(err, req, res);
+                    next(err);
                 }
                 else if (_.isObject(pluginSettings) && Object.keys(pluginSettings).length > 0) {
                     PluginInstanceHandler.updateSettings_1(req, instance, pluginSettings, function (err, result) {
@@ -78,12 +77,12 @@ function updatePluginSettings(req, res, next) {
                         if (err) {
                             json.err = err.message;
                         }
-                        next(err, req, res);
+                        next(err);
                     });
                 }
                 else {
                     json.status = "success";
-                    next(err, req, res);
+                    next(err);
                 }
             };
 
@@ -107,22 +106,23 @@ function editSettingsPlugin(req, res, next) {
         pluginId = params.pluginId, pageId = params.pageId;
     var permissionSchemaKey = utils.getSettingsPluginPermissionSchemaKey(pluginId);
 
-    var pv = new that.PermissionValidator(req, permissionSchemaKey, ""),
-        perm = pv.hasPermission("PERMISSION");
-    var plugin = plugins.get(pluginId), title = plugin.name.en_US;
-    var managePlugin = {
-        title: title,
-        ns: pluginId,
-        pageId: pageId || 0,
-        instanceId: "",
-        showEditPermission: perm && perm.isAuthorized,
-        showSettingsTab: false,
-        settingsPlugin: true
-    };
-    req.attrs.managePlugin = managePlugin;
+    var pv = new that.PermissionValidator(req, permissionSchemaKey, "");
 
-    next(null, req, res);
+    pv.hasPermissionWithoutModelId("PERMISSION", function (err, perm) {
+        var plugin = plugins.get(pluginId), title = plugin.name.en_US;
+        var managePlugin = {
+            title: title,
+            ns: pluginId,
+            pageId: pageId || 0,
+            instanceId: "",
+            showEditPermission: perm && perm.isAuthorized,
+            showSettingsTab: false,
+            settingsPlugin: true
+        };
+        req.attrs.managePlugin = managePlugin;
 
+        next(null, req, res);
+    });
 }
 
 function editPlugin(req, res, next) {
@@ -134,50 +134,55 @@ function editPlugin(req, res, next) {
         exec = plugin.exec, settingsFn = exec.settings;
     PluginInstanceHandler.getPluginInstance(dbAction, pageId, ns, function (err, instance) {
         if (err || !instance) {
-            return next(err, req, res);
+            return next(err);
         }
         if (instance) {
-            var instanceId = instance.pluginInstanceId.toString(), managePlugin = {
-                title: instance.title,
-                ns: ns,
-                pageId: pageId,
-                instanceId: instanceId,
-                showEditPermission: dbAction.hasPermission("PERMISSION", instanceId).isAuthorized,
-                showSettingsTab: true
-            };
-            req.attrs.managePlugin = managePlugin;
+            var instanceId = instance.pluginInstanceId.toString();
 
-            if (settingsFn && _.isFunction(settingsFn)) {
-                var obj = {
-                    pluginSettings: instance.settings || {}
-
+            dbAction.hasPermission("PERMISSION", instanceId, function (err, perm) {
+                var managePlugin = {
+                    title: instance.title,
+                    ns: ns,
+                    pageId: pageId,
+                    instanceId: instanceId,
+                    showEditPermission: perm.isAuthorized,
+                    showSettingsTab: true
                 };
-                var url = URLCreator.createExclusiveURLFromRequest(that.getPluginHelper()
-                    .cloneRequest(req, that.getPluginId())).setAction("updatePluginSettings");
-                settingsFn(obj, function (err, config) {
-                    var viewPath = utils.realPath(utils.getPluginsPath(), pluginId, "views", config.jade),
-                        opts = {
-                            settings: obj.pluginSettings,
-                            settingsURL: url,
-                            viewOptions: config.viewOptions,
-                            namespace: ns
-                        };
-                    if (config.settingsForm) {
-                        var fm = config.settingsForm;
-                        fm.form.action = url;
-                        fm = that.getFormBuilder().SettingsDynamicForm(req.app, ns, fm, "en_US", obj.pluginSettings, "add");
-                        opts.settingsForm = fm;
-                    }
+                req.attrs.managePlugin = managePlugin;
 
+                if (settingsFn && _.isFunction(settingsFn)) {
+                    var obj = {
+                        pluginSettings: instance.settings || {}
 
-                    var view = PageRenderer.viewParser(req, viewPath, opts);
-                    managePlugin["pluginSettingsView"] = view;
-                    next(err, req, res);
-                });
-            }
-            else {
-                next(err, req, res);
-            }
+                    };
+                    var url = URLCreator.createExclusiveURLFromRequest(that.getPluginHelper()
+                        .cloneRequest(req, that.getPluginId())).setAction("updatePluginSettings");
+                    settingsFn(obj, function (err, config) {
+                        var viewPath = utils.realPath(utils.getPluginsPath(), pluginId, "views", config.jade),
+                            opts = {
+                                settings: obj.pluginSettings,
+                                settingsURL: url,
+                                viewOptions: config.viewOptions,
+                                namespace: ns
+                            };
+                        if (config.settingsForm) {
+                            var fm = config.settingsForm;
+                            fm.form.action = url;
+                            fm = that.getFormBuilder().SettingsDynamicForm(req.app, ns, fm, "en_US", obj.pluginSettings, "add",
+                                req.attrs.PageScript);
+                            opts.settingsForm = fm;
+                        }
+
+                        that.FileUtil.renderJadeTemplate(viewPath, opts, function (err, view) {
+                            !err && (managePlugin["pluginSettingsView"] = view);
+                            next(err);
+                        });
+                    });
+                }
+                else {
+                    next(err);
+                }
+            });
         }
     });
 }

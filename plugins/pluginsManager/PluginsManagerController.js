@@ -34,7 +34,7 @@ function removeFile(app, model){
 function removePluginAction(req, res, next) {
     var that = this, params = req.params, type = params.type, id = params.id, ns = that.getNamespace(req);
     var DBActions = this.getDBActionsLib();
-    var redirect = "/" + params.page + "/" + ns;
+    var redirect = params.page + "/" + ns;
     if (id && type) {
         var dbAction = DBActions.getInstance(req, type);
         async.series({
@@ -56,14 +56,14 @@ function removePluginAction(req, res, next) {
                 var msg = "Plugin uninstalled successfully.";
                 that.setSuccessMessage(req, msg);
                 that.setRedirect(req, redirect);
-                next(err, req, res);
+                next(err);
             }
         });
 
     } else {
         that.setErrorMessage(req, "Invalid parameters");
         that.setRedirect(req, redirect);
-        next(null, req, res);
+        next(null);
     }
 }
 
@@ -108,13 +108,6 @@ function getAllPluginsAction(req, res, next) {
 
             that.setJSON(req, ret);
         }
-        next(err, req, res);
+        next(err);
     })
 }
-
-
-PluginsManagerController.prototype.render = function (req, res, next) {
-    var view = req.params.action;
-    view = view || "index";
-    next(null, [ view, {} ]);
-};

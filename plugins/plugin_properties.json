@@ -11,18 +11,6 @@
         },
         "controller": "LoginController"
     },
-
-    {
-        "id": "error",
-        "name": {
-            "en_US": "Error"
-        },
-        "description": "Error",
-        "group": "Shell",
-        "config": {
-        },
-        "controller": "ErrorController"
-    },
     {
         "id": "userManage",
         "name": {
@@ -83,6 +71,8 @@
         "description": "Manage Permissions",
         "group": "Plugin",
         "config": {
+            "settings": true,
+            "visible": false
         },
         "controller": "PermissionController"
     },
@@ -94,6 +84,8 @@
         "description": "Manage Plugin",
         "group": "Plugin",
         "config": {
+            "settings": true,
+            "visible": false,
             "defaultData": true,
             "defaultDataHandler": "DefaultDataHandler"
         },

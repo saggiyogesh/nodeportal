@@ -1,4 +1,4 @@
-define(["events", "_", "bootstrap", "autosize"], function () {
+define(["events", "_", "bootstrap", "autosize", "bootbox"], function () {
     var onLoadFns = [];
     Rocket.Util = {
         linkAsync: function (params, fn) {
@@ -188,13 +188,13 @@ define(["events", "_", "bootstrap", "autosize"], function () {
          * Jade template should be as
          * for error flash
          *
-         * #<nodeId>.ui-helper-hidden.alert.alert-error
+         * #<nodeId>.hide.alert.alert-error
          *      button(class="close", data-dismiss="alert") x
          *          span.message
          *
          * for success flash
          *
-         * #<nodeId>.ui-helper-hidden.alert.alert-success
+         * #<nodeId>.hide.alert.alert-success
          *      button(class="close", data-dismiss="alert") x
          *          span.message
          *
@@ -209,12 +209,20 @@ define(["events", "_", "bootstrap", "autosize"], function () {
             ns = ns || Rocket.Plugin.currentPlugin.namespace;
             var node = $("#" + ns + "_" + nodeId),
                 msgSpan = node.find("span.message");
-            isShow ? node.removeClass("ui-helper-hidden") : node.addClass("ui-helper-hidden");
-            if (node.data("autohide") == true && !node.hasClass("ui-helper-hidden")) {
+            isShow ? node.removeClass("hide") && node.css("display", "block") : node.addClass("hide");
+            if (node.data("autohide") == true && !node.hasClass("hide")) {
                 node.delay(4000).fadeOut(1000, function () {
-                    $(this).addClass("ui-helper-hidden")
+                    $(this).addClass("hide");
+                    $(msgSpan).html("");
                 });
             }
+
+            //attach close listener to hide the flash message
+            $(node.find(".close")).click(function () {
+                node.addClass('hide').css("display", "none");
+                $(msgSpan).html("");
+            });
+
             if (msg) msgSpan.html(msg);
         },
         /**
@@ -271,9 +279,116 @@ define(["events", "_", "bootstrap", "autosize"], function () {
             $(function () {
                 $("body #" + textAreaId).autosize();
             });
+        },
+        /**
+         * Options:
+         *  message {String} message to be shown in alert popup
+         *  buttonLabel {String} OK button label in alert popup
+         *  callback {Function} Callback called when alert is closed
+         *  okClass {String} Bootstrap class to show icon
+         * @param options {Object}
+         * @returns {*}
+         */
+        alert: function (options) {
+            var message = options.message,
+                buttonLabel = options.buttonLabel,
+                callback = options.callback;
+
+            var args = [message];
+            buttonLabel && args.push(buttonLabel);
+            callback && args.push(callback);
+
+            bootbox.setIcons(null);
+            options.okClass && bootbox.setIcons({
+                "OK": options.okClass
+            });
+            return bootbox.alert.apply(bootbox, args);
+        },
+        /**
+         * Options:
+         *  message {String} message to be shown in confirm popup
+         *  confirmButtonLabel {String} Confirm button label in confirm popup
+         *  cancelButtonLabel {String} Cancel button label in confirm popup
+         *  callback {Function} Callback called when confirm is closed, true or false is passed to callback
+         *  confirmClass {String} Bootstrap class to show icon on confirm button
+         *  cancelClass {String} Bootstrap class to show icon on cancel button
+         * @param options {Object}
+         * @returns {*}
+         */
+        confirm: function (options) {
+            var message = options.message,
+                cancelButtonLabel = options.cancelButtonLabel,
+                confirmButtonLabel = options.confirmButtonLabel,
+                callback = options.callback,
+                icons = {
+                    OK: null,
+                    CANCEL: null,
+                    CONFIRM: null
+                };
+
+            bootbox.setIcons(null);
+
+            if (options.confirmClass) {
+                icons.CONFIRM = options.confirmClass;
+            }
+            if (options.cancelClass) {
+                icons.CANCEL = options.cancelClass;
+            }
+            bootbox.setIcons(icons);
+
+            var args = [message];
+            cancelButtonLabel && args.push(cancelButtonLabel);
+            confirmButtonLabel && args.push(confirmButtonLabel);
+            callback && args.push(callback);
+            return bootbox.confirm.apply(bootbox, args);
+        },
+        /**
+         * Options:
+         *  message {String} message to be shown in prompt popup
+         *  confirmButtonLabel {String} Confirm button label in confirm popup
+         *  cancelButtonLabel {String} Cancel button label in confirm popup
+         *  callback {Function} Callback called when confirm is closed, true or false is passed to callback
+         *  defaultValue {String} Default value shown in prompt
+         *  confirmClass {String} Bootstrap class to show icon on confirm button
+         *  cancelClass {String} Bootstrap class to show icon on cancel button
+         * @param options {Object}
+         * @returns {*}
+         */
+        prompt: function (options) {
+            var message = options.message,
+                cancelButtonLabel = options.cancelButtonLabel,
+                confirmButtonLabel = options.confirmButtonLabel,
+                callback = options.callback,
+                defaultValue = options.defaultValue,
+                icons = {
+                    OK: null,
+                    CANCEL: null,
+                    CONFIRM: null
+                };
+
+            bootbox.setIcons(null);
+
+            if (options.confirmClass) {
+                icons.CONFIRM = options.confirmClass;
+            }
+            if (options.cancelClass) {
+                icons.CANCEL = options.cancelClass;
+            }
+            bootbox.setIcons(icons);
+
+            var args = [message];
+            cancelButtonLabel && args.push(cancelButtonLabel);
+            confirmButtonLabel && args.push(confirmButtonLabel);
+            callback && args.push(callback);
+            defaultValue && args.push(defaultValue);
+            return bootbox.prompt.apply(bootbox, args);
         }
     };
 
     Rocket.ajax = Rocket.Util.ajax;
     Rocket.io = Rocket.Util.io;
+    Rocket.alert = Rocket.Util.alert;
+    Rocket.confirm = Rocket.Util.confirm;
+    Rocket.prompt = Rocket.Util.prompt;
+
 });

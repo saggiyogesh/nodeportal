@@ -2,8 +2,8 @@
  * plugin to manage users
  */
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController.js");
-var settingsPageURL = require(process.cwd() + "/lib/AppProperties").get("SETTINGS_PAGE_URL");
-var contactForm = require("./contactForm"), securityForm = require("./securityForm"),
+var settingsPageURL = utils.getAppSettingsRoute();
+var contactForm = require("./contactForm"),
     notificationsForm = require("./notificationsForm");
 var PasswordUtil = require(utils.getLibPath() + "/PasswordUtil")
 
@@ -72,24 +72,25 @@ function updateUserNotificationsAction(req, res, next) {
         notifications: postData
     }, function (err, r) {
         if (err) {
-            return next(err, req, res);
+            return next(err);
         }
         setNotificationsForm(that, req, null, function (err) {
-            if(!err){
+            if (!err) {
                 that.setSuccessMessage(req, "Notifications updated successfully");
             }
-            next(err, req, res);
+            next(err);
         })
     });
 
 }
 
 function updateUserSecurityDetailsAction(req, res, next) {
+    var securityForm = require("./securityForm")(req.session.user.passwordEnc);
     var formObj = utils.clone(securityForm), that = this;
     req.params.action = "securityForm";
     that.ValidateForm(req, formObj, function (err, result) {
         if (err) {
-            next(err, req, res);
+            next(err);
             return;
         }
         if (!result.hasErrors) {
@@ -115,16 +116,17 @@ function updateUserSecurityDetailsAction(req, res, next) {
                 }
             ], function (err, result) {
                 if (result) {
+                    req.session.user.passwordEnc = hash;
                     that.setSuccessMessage(req, "Security details updated successfully");
                 }
-                setSecurityForm(that, req);
-                next(null, req, res);
+                setSecurityForm(that, req, "add");
+                next(null);
             });
         }
         else {
             that.setErrorMessage(req, "entered-invalid-data");
             setSecurityForm(that, req);
-            next(null, req, res);
+            next(null);
         }
     });
 
@@ -137,16 +139,16 @@ function updateUserContactDetailsAction(req, res, next) {
 
     var c = function (err) {
         if (err) {
-            return   next(err, req, res);
+            return   next(err);
         }
         setContactForm(that, req, null, function (err, r) {
-            next(err, req, res);
+            next(err);
         });
     };
 
     that.ValidateForm(req, formObj, function (err, result) {
         if (err) {
-            next(err, req, res);
+            next(err);
             return;
         }
         if (!result.hasErrors) {
@@ -196,7 +198,7 @@ function removeUploadedPicAction(req, res, next) {
         if (r) {
             that.setSuccess(req);
         }
-        next(err, req, res);
+        next(err);
     })
 
 }
@@ -212,7 +214,7 @@ function getProfilePicAction(req, res, next) {
         if (!err) {
             that.setSend(req, data);
         }
-        next(err, req, res);
+        next(err);
     });
 }
 
@@ -221,8 +223,8 @@ function uploadProfilePicAction(req, res, next) {
         dbAction = DBActions.getInstance(req, USER_SCHEMA),
         FileUtil = that.FileUtil;
 
-    var file = req.files.files[0],
-        fileName = file.name, tmpPath = file.path;
+    var file = req.attrs.file,
+        fileName = file.originalname, tmpPath = file.path;
 
     var userId = req.session.user.userId,
         folder = utils.getUserProfilePicDirPath() + "/" + userId,
@@ -276,12 +278,12 @@ function uploadProfilePicAction(req, res, next) {
         if (!err) {
             req.session.user.profilePic = profilePic;
         }
-        next(err, req, res);
+        next(err);
     });
 }
 
 function setProfileForm(that, req, mode) {
-    req.query[that.getPluginId()] = utils.cloneExtend(req.session.user, {redirect: settingsPageURL, email: req.session.user.emailId });
+    req.query[that.getPluginId()] = utils.cloneExtend(req.session.user, {redirect: that.getRedirectPath(req), email: req.session.user.emailId });
 
     var profileForm = that.getFormBuilder().DynamicForm(req, utils.clone(forms.ProfileForm), "en_US", mode);
 
@@ -289,6 +291,7 @@ function setProfileForm(that, req, mode) {
 }
 
 function setSecurityForm(that, req, mode) {
+    var securityForm = require("./securityForm")(req.session.user.passwordEnc);
     var fm = that.getFormBuilder().DynamicForm(req, utils.clone(securityForm), "en_US", mode);
     req.attrs.securityForm = fm;
 }
@@ -330,26 +333,26 @@ function setNotificationsForm(that, req, mode, next) {
 UserManageController.prototype.profileFormAction = function (req, res, next) {
     var that = this;
     setProfileForm(that, req, "add");
-    next(null, req, res);
+    next(null);
 };
 
 UserManageController.prototype.contactFormAction = function (req, res, next) {
     var that = this;
     setContactForm(that, req, "add", function (err, r) {
-        next(err, req, res);
+        next(err);
     });
 };
 
 UserManageController.prototype.securityFormAction = function (req, res, next) {
     var that = this;
     setSecurityForm(that, req, "add");
-    next(null, req, res);
+    next(null);
 };
 
 UserManageController.prototype.notificationsFormAction = function (req, res, next) {
     var that = this;
     setNotificationsForm(that, req, "add", function (err, r) {
-        next(err, req, res);
+        next(err);
     });
 };
 
@@ -359,17 +362,16 @@ UserManageController.prototype.rolesAction = function (req, res, next) {
     var roleDBAction = that.getDBActionsLib().getInstance(req, "Role");
     var roleIds = req.session.user.roles;
     var roles = [];
-    async.map(roleIds, function(roleId, n){
-        roleDBAction.get("findByRoleId", roleId, function(err, role){
-            if(role){
+    async.map(roleIds, function (roleId, n) {
+        roleDBAction.get("findByRoleId", roleId, function (err, role) {
+            if (role) {
                 roles.push(role.toObject());
             }
             n(err);
         });
-    }, function(err, r){
+    }, function (err, r) {
         req.attrs.roles = roles;
-        Debug._li(">> ", roles, true)
-        next(err, req, res);
+        next(err);
     })
 };
 function updateUserProfileAction(req, res, next) {
@@ -378,7 +380,7 @@ function updateUserProfileAction(req, res, next) {
 
     that.ValidateForm(req, formObj, function (err, result) {
         if (err) {
-            next(err, req, res);
+            next(err);
             return;
         }
         if (!result.hasErrors) {
@@ -386,7 +388,7 @@ function updateUserProfileAction(req, res, next) {
                 dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
             that.getDBActionsLib().populateModelAndUpdate(req, USER_SCHEMA, {}, {emailId: "email"}, function (err, result) {
                 if (err) {
-                    return next(err, req, res);
+                    return next(err);
                 }
                 dbAction.get("findByEmailId", req.session.user.emailId, function (err, user) {
                     if (user) {
@@ -395,25 +397,15 @@ function updateUserProfileAction(req, res, next) {
                     }
 //                    that.setRedirect(req, redirect);
                     setProfileForm(that, req);
-                    next(err, req, res);
+                    next(err);
                 });
             });
         }
         else {
             setProfileForm(that, req);
             that.setErrorMessage(req, "entered-invalid-data");
-            next(err, req, res);
+            next(err);
         }
     });
 
 }
-
-
-//UserManageController.prototype.render = function (req, res, next) {
-//    var view = "view";
-//    var ret = {};
-//    req.query[this.getPluginId()] = utils.cloneExtend(req.session.user, {redirect: settingsPageURL, email: req.session.user.emailId });
-//
-//    ret.profileForm = this.getFormBuilder().DynamicForm(req, forms.ProfileForm, "en_US", "add");
-//    next(null, [ view, ret ]);
-//};

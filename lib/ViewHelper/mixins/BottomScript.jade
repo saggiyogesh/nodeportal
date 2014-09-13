@@ -1,0 +1,7 @@
+//- req {Object} Request object
+    opts {Object} Options passed. Will be rendered in generated scipt code
+
+mixin BottomScript(opts)
+    - var req = opts.req;
+    - req.attrs.PageScript.addPageBottomCode(block, opts)
+

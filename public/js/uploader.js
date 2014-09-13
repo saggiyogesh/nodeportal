@@ -66,6 +66,9 @@ define(["util", "_", "dynaTree", "fileUpload", "modal"], function () {
         that._onSuccess = options.onSuccess;
         delete options.onSuccess;
 
+        that._onError = options.onError;
+        delete options.onError;
+
         that._always = options.always;
         delete options.always;
 
@@ -116,7 +119,7 @@ define(["util", "_", "dynaTree", "fileUpload", "modal"], function () {
         options.always = that._handleAlways();
 
         //setting up model as drop zone
-        options.dropZone = $("#" + that.uploaderId);
+//        options.dropZone = $("#" + that.uploaderId);
 
         $('#' + that.uploaderId).fileupload(options);
 
@@ -176,6 +179,14 @@ define(["util", "_", "dynaTree", "fileUpload", "modal"], function () {
         return function (e, data) {
             console.log(e);
             console.log(data)
+
+            //handle error text from server
+            var responseJSON = data.jqXHR.responseJSON;
+            if (data.textStatus === "error" || responseJSON.status === "error") {
+                var errMsg = responseJSON.message;
+                data.files[0].error = errMsg;
+            }
+            
             if (that.deleteFormData) {
                 //empty the form hidden data elements after request
                 that._clearFormData();
@@ -185,6 +196,10 @@ define(["util", "_", "dynaTree", "fileUpload", "modal"], function () {
             }
             if (that._onSuccess && data.textStatus === "success") {
                 that._onSuccess(data.result);
+            }
+
+            if (that._onError && data.textStatus === "error") {
+                that._onError(data.result);
             }
 
         };

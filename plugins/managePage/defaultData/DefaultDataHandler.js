@@ -37,12 +37,12 @@ exports.Page = function (app, data) {
                     defaultLayoutId = results.defaultLayout.layoutId, userId = results.user.userId,
                     userName = results.user.userName;
 
-                var home = data.home, settings = data.settings, test = data.test;
-                home.themeId = settings.themeId = test.themeId = themeId;
+                var home = data.home, test = data.test;
+                home.themeId = test.themeId = themeId;
                 home.layoutId = defaultLayoutId;
-                settings.layoutId = test.layoutId = oneColLayoutId;
-                home.userId = settings.userId = test.userId = userId;
-                home.userName = settings.userName = test.userName = userName;
+                test.layoutId = oneColLayoutId;
+                home.userId = test.userId = userId;
+                home.userName = test.userName = userName;
 
                 DBActions.getSimpleInstance(app, "Page").multipleSave(_.values(data), next);
             });

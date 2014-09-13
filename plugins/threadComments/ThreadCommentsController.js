@@ -7,7 +7,8 @@ var ThreadCommentsController = module.exports = function (id, app) {
     var that = this;
     that.listenLoadEvent(function (params) {
         that.post({
-            route: '/initThread/:linkedModelFinderParam?/:linkedModelName?/:linkedModelFinderField?/:linkedPermissionSchemaKey', action: initThreadAction
+            route: '/initThread/:linkedModelFinderParam?/:linkedModelName?/:linkedModelFinderField?/:linkedPermissionSchemaKey',
+            action: initThreadAction
         });
         that.post({
             route: '/postComment', action: postCommentAction
@@ -64,12 +65,12 @@ function editCommentAction(req, res, next) {
             if (result) {
                 that.setSuccess(req);
             }
-            next(err, req, res);
+            next(err);
         });
     }
     else {
         that.setErrorMessage(req, "Parameter Missing");
-        next(null, req, res);
+        next(null);
     }
 }
 
@@ -114,12 +115,12 @@ function removeCommentAction(req, res, next) {
             if (result) {
                 that.setSuccess(req);
             }
-            next(err, req, res);
+            next(err);
         });
     }
     else {
         that.setErrorMessage(req, "Parameter Missing");
-        next(null, req, res);
+        next(null);
     }
 }
 
@@ -157,12 +158,12 @@ function getCommentsAction(req, res, next) {
             }
         ], function (err, r) {
             that.setSend(req, JSON.stringify(json));
-            next(err, req, res);
+            next(err);
         });
     }
     else {
         that.setErrorMessage(req, "Parameter Missing");
-        next(null, req, res);
+        next(null);
     }
 }
 
@@ -246,16 +247,19 @@ function postCommentAction(req, res, next) {
 
                                     var m = new Mailer.MailMessage(from, to, subject);
                                     var tmpl = that.realPath() + "/tmpl/commentsMail.jade";
-                                    m.renderBodyFromJadeTemplate(that.getApp(), tmpl, {
+                                    m.setBcc(emailUsers);
+                                    m.renderBodyFromJadeTemplate(tmpl, {
                                         userFullName: req.session.user.fullName.trim() + " wrote:",
                                         commentContent: content,
                                         commentDate: that.DateUtil.formatArticleDate(commentDate),
                                         commentURL: post.url
-                                    }).setBcc(emailUsers);
-
-                                    Mailer.sendMail(m, function (err, success) {
+                                    }, function (err) {
                                         if (!err) {
-                                            Debug._l("Comments mail delivered successfully..")
+                                            Mailer.sendMail(m, function (err, success) {
+                                                if (!err) {
+                                                    Debug._l("Comments mail delivered successfully..")
+                                                }
+                                            });
                                         }
                                     });
                                 }
@@ -263,15 +267,22 @@ function postCommentAction(req, res, next) {
                         }
                     });
                 });
+            },
+            function(n){
+                var pv = new that.PermissionValidator(req, thread.linkedPermissionSchemaKey, thread.linkedModelName);
+                var actions = ["ADD_DISCUSSION", "EDIT_DISCUSSION", "DELETE_DISCUSSION"];
+                pv.checkPermissionForActions(actions, thread.linkedModelPK, function(err, perms){
+                    !err && (req.attrs.actionsPermission = perms);
+                    n(err, !err);
+                });
             }
         ], function (err, result) {
-            if (result) {
+            if (!err && result) {
 //                var comments = result[1];
 //                that.setJSON(req, comments);
-                var pv = new that.PermissionValidator(req, thread.linkedPermissionSchemaKey, thread.linkedModelName);
-                var hasAdd = pv.hasPermission("ADD_DISCUSSION", thread.linkedModelPK).isAuthorized == true,
-                    hasEdit = pv.hasPermission("EDIT_DISCUSSION", thread.linkedModelPK).isAuthorized == true,
-                    hasDelete = pv.hasPermission("DELETE_DISCUSSION", thread.linkedModelPK).isAuthorized == true;
+                var aP = req.attrs.actionsPermission;
+                var hasAdd = aP.ADD_DISCUSSION.isAuthorized, hasEdit = aP.EDIT_DISCUSSION.isAuthorized,
+                    hasDelete = aP.DELETE_DISCUSSION.isAuthorized;
                 var data = {
                     auth: {
                         hasAdd: hasAdd,
@@ -282,11 +293,11 @@ function postCommentAction(req, res, next) {
 
                 that.setSuccess(req, null, data);
             }
-            next(err, req, res);
+            next(err);
         });
     } else {
         that.setErrorMessage(req, "Parameter Missing");
-        next(null, req, res);
+        next(null);
     }
 
 }
@@ -308,7 +319,7 @@ function initThreadAction(req, res, next) {
         var thread, model;
 
         async.series([
-            function (next) {
+            function (n) {
                 //find model obj
                 var getModel = function (err, m) {
                     if (m) {
@@ -317,7 +328,7 @@ function initThreadAction(req, res, next) {
                     else {
                         err = new Error("Invalid linked model.");
                     }
-                    next(err, m);
+                    n(err, m);
                 };
 
                 if (linkedModelFinderField) {
@@ -328,16 +339,16 @@ function initThreadAction(req, res, next) {
                     linkedModelDBAction.getByDefaultFinderMethod(linkedModelFinderParam, getModel);
                 }
             },
-            function (next) {
+            function (n) {
                 //find thread
                 threadDBAction.get("findByLinkedModelIdAndLinkedModelName", [linkedModelFinderParam, linkedModelName], function (err, t) {
                     if (t) {
                         thread = t.toObject();
                     }
-                    next(err, t);
+                    n(err, t);
                 });
             },
-            function (next) {
+            function (n) {
                 if (!thread) {
                     //create thread
                     var pk = model[DBActions.getModelIdKey(linkedModelName)];
@@ -349,25 +360,26 @@ function initThreadAction(req, res, next) {
                         linkedModelFinderField: linkedModelFinderField,
                         linkedModelPK: pk
                     };
-                    threadDBAction.save(thread, next);
+                    threadDBAction.save(thread, n);
                 }
                 else {
-                    next(null, true);
+                    n(null, true);
                 }
             },
-            function (next) {
-                //populating permission cache
+            function (n) {
                 var pv = new that.PermissionValidator(req, thread.linkedPermissionSchemaKey, thread.linkedModelName);
-                pv.hasPermission("ADD_DISCUSSION", thread.linkedModelPK, function () {
-                    next(null, true);
+                var actions = ["ADD_DISCUSSION", "EDIT_DISCUSSION", "DELETE_DISCUSSION", "VIEW"];
+                pv.checkPermissionForActions(actions, thread.linkedModelPK, function(err, perms){
+                    !err && (req.attrs.actionsPermission = perms);
+                    n(err, !err);
                 });
             }
         ], function (err, result) {
 //            if (err) {
-//                next(err, req, res);
+//                next(err);
 //            }
 //            else {
-//                next(err, req, res);
+//                next(err);
 //            }
 
             if (model && thread) {
@@ -375,12 +387,12 @@ function initThreadAction(req, res, next) {
                 req.attrs.thread = thread;
             }
 
-            next(err, req, res);
+            next(err);
         });
     }
     else {
         that.setErrorMessage(req, "Parameter Missing");
-        next(null, req, res);
+        next(null);
     }
 
 }

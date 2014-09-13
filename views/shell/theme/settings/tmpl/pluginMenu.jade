@@ -1,0 +1,11 @@
+- var pluginName = "";
+mixin renderNav()
+    ul.nav.nav-pills
+        - each plugin in plugins
+            - var isCurPlugin = (req.params.plugin == plugin.id);
+            li(class='#{isCurPlugin ? "active" : ""}', id='#{plugin.id}'): a(href="#{getURL(req, plugin.id)}") #{plugin.name["en_US"]}
+            -  if(isCurPlugin) pluginName = plugin.name["en_US"]
+
+- if(plugins.length > 0)
+    .subnav
+        +renderNav()

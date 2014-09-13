@@ -1,0 +1,17 @@
+//- Default message tmpl. To be included by alerts mixins
+    opts {Object}. Options object passed to alerts mixins
+    [showDismiss] {Boolean}. To show the dismiss button. Default true
+    [autoHide] {Boolean}. If true alert will hide after 4000 millies. Default false.
+    [classNames] {Array}. Css classes to be added to alert
+    [id] {String}. Id of alert
+    message {String}. alert message.
+
+mixin Alert(opts)
+    - var autoHide = opts.autoHide || false, classNames = opts.classNames || [];
+    - var message = opts.message;
+    - _.isUndefined(opts.showDismiss) && (opts.showDismiss = true);
+    .alert(id=opts.id, data-autohide='#{autoHide}', class='#{classNames.join(" ")}')
+        - if(opts.showDismiss)
+            button(class="close", data-dismiss="alert") x
+        span.message
+            != opts.message

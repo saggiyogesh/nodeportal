@@ -2,8 +2,8 @@
  * Manages resources image and docs
  */
 var RESOURCES_PATH = "resources", RESOURCE_SCHEMA = "Resource",
-    RESOURCE_PERMISSION_SCHEMA_ENTRY = "model.resourceSchema.Resource";
-RESOURCE_PERMISSION_SCHEMA = "model.resourceSchema";
+    RESOURCE_PERMISSION_SCHEMA_ENTRY = "model.resourceSchema.Resource",
+    RESOURCE_PERMISSION_SCHEMA = "model.resourceSchema";
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController");
 var ResourceManageUtil = require("./ResourceManageUtil"),
     ImageUtil = require(process.cwd() + "/lib/file/images/ImageUtil"),
@@ -68,12 +68,12 @@ function remove(that, resourceId, isFile, req, res, next) {
     DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY).authorizedRemove(resourceId, function (err, result) {
         if (err) {
             that.setJSON(req, {error: err.message});
-            next(null, req, res);
+            next(null);
             return;
         }
 
         that.setJSON(req, {success: true, resourceId: resourceId});
-        next(null, req, res);
+        next(null);
         if (isFile) {
             process.nextTick(function () {
                 var dirPath = realPath(resourceFolderPath, resourceId);
@@ -108,13 +108,13 @@ function deleteAction(req, res, next) {
             DBActions.getInstance(req, RESOURCE_SCHEMA).get("findByFolderId", resourceId, function (err, models) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
-                    next(null, req, res);
+                    next(null);
                     return;
                 }
 
                 if (models.length > 0) {
                     that.setJSON(req, {error: "Folder not empty."});
-                    next(null, req, res);
+                    next(null);
                     return;
                 }
                 remove(that, resourceId, false, req, res, next);
@@ -138,7 +138,7 @@ function renameAction(req, res, next) {
         dbAction.get("findByResourceId", resourceId, function (err, model) {
             if (err) {
                 that.setJSON(req, {error: err.message});
-                next(null, req, res);
+                next(null);
                 return;
             }
 
@@ -148,7 +148,7 @@ function renameAction(req, res, next) {
             dbAction.getByQuery(query, function (err, models) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
-                    next(null, req, res);
+                    next(null);
                     return;
                 }
 
@@ -161,17 +161,17 @@ function renameAction(req, res, next) {
                     dbAction.authorizedUpdate(param, function (err, model) {
                         if (err) {
                             that.setJSON(req, {error: err.message});
-                            next(null, req, res);
+                            next(null);
                             return;
                         }
 
                         that.setJSON(req, {success: true, resourceId: resourceId});
-                        next(null, req, res);
+                        next(null);
                     });
                 }
                 else {
                     that.setJSON(req, {error: "Duplicate name: " + decodeURI(newName)});
-                    next(null, req, res);
+                    next(null);
                     return;
                 }
 
@@ -179,7 +179,7 @@ function renameAction(req, res, next) {
         });
     } else {
         that.setJSON(req, {error: "Invalid name"});
-        next(null, req, res);
+        next(null);
     }
 }
 
@@ -194,14 +194,14 @@ function addFolderAction(req, res, next) {
 
         dbAction.get("findByNameAndFolderId", [name, parentFolderId], function (err, model) {
             if (err) {
-                next(null, req, res);
+                next(null);
                 return;
             }
 
             //already same item exists in the folder
             if (model) {
                 that.setJSON(req, {error: "Duplicate name: " + decodeURI(name)});
-                next(null, req, res);
+                next(null);
                 return;
             }
 
@@ -215,18 +215,18 @@ function addFolderAction(req, res, next) {
             dbAction.authorizedSave(model, function (err, model) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
-                    next(null, req, res);
+                    next(null);
                     return;
                 }
 
                 that.setJSON(req, {success: true, folderId: parentFolderId});
-                next(null, req, res);
+                next(null);
             });
         });
     }
     else {
         that.setJSON(req, {error: "Invalid folder name"});
-        next(null, req, res);
+        next(null);
     }
 
 }
@@ -258,7 +258,7 @@ function viewResourcesAction(req, res, next) {
                 if (!err) {
                     that.setSend(req, data);
                 }
-                next(err, req, res);
+                next(err);
             });
         }
 
@@ -300,7 +300,7 @@ function viewResourcesAction(req, res, next) {
                     return;
                 }
                 else {
-                    return next(new Error("Invalid image dimensions"), req, res);
+                    return next(new Error("Invalid image dimensions"));
                 }
             } else {
                 var path = realPath(resourceFolderPath, resourceId, resourceId);
@@ -330,7 +330,7 @@ function viewResourcesAction(req, res, next) {
             else {
                 err = new Error("No resource exists");
                 that.set404StatusCode(res);
-                next(err, req, res);
+                next(err);
             }
         });
     }
@@ -343,10 +343,10 @@ function viewResourcesAction(req, res, next) {
                     that.setSend(req, FileUtil.readFile(path));
                 }
 
-                next(null, req, res);
+                next(null);
             });
         } else {
-            next(null, req, res);
+            next(null);
         }
     }
 }
@@ -362,11 +362,11 @@ function getResourcesByFolderId(req, res, next) {
 
     dbAction.authorizedGetByQuery(query, function (err, models) {
         if (err) {
-            return next(null, req, res);
+            return next(null);
         }
         req.attrs.resourceModel = models;
         req.params.action = "getResources";
-        next(err, req, res);
+        next(err);
     });
 }
 
@@ -376,74 +376,73 @@ function uploadResourceAction(req, res, next) {
         realPath = FileUtil.realPath, DBActions = that.getDBActionsLib();
 
     var resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH),
-        db = that.getDB(), folderId = req.query.folderId;
+        db = that.getDB();
+    var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA),
+        file = req.attrs.file,
+        postParams = that.getPluginHelper().getPostParams(req),
+        folderId = postParams.folderId,
+        fileName = file.originalname, tmpPath = file.path;
+    var FILE_EXISTS_ERROR = "FILE EXISTS ERROR";
 
-    //save info in db
-    //check existance of resource in folder
-    var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA);
-    dbAction.get("findByNameAndFolderId", [file.name, folderId], function (err, model) {
-        //Debug._li("model: >> ", model, false);
-        if (err) {
-            next(null, req, res);
-            return;
-        }
-
-        //already same item exists in the folder
-        if (model) {
-            that.setJSON(req, {error: "File already exists: " + decodeURI(file.name)});
-            next(null, req, res);
-            return;
-        }
-
-        //save the new item
-        var model = {
-            name: file.name,
-            type: file.type.split(".")[1],
-            size: file.size,
-            folderId: folderId,
-            rolePermissions: RESOURCE_PERMISSION_SCHEMA_ENTRY
-        };
-
-        if (model.size == 0) {
-            try {
-                var stat = FileUtil.stat(file.path);
-                model.size = stat.size;
-            } catch (e) {
-                Debug._l(e)
+    async.waterfall([
+        function (n) {
+            //check existance of resource in folder
+            dbAction.get("findByNameAndFolderId", [fileName, folderId], n);
+        },
+        function (model, n) {
+            if (model) {
+                //raise already exists error
+                n(new Error(FILE_EXISTS_ERROR + " : " + decodeURI(fileName)));
             }
-        }
-        dbAction.authorizedSave(model, function (err, model) {
-            if (err) {
-                that.setJSON(req, {error: err.message});
-                next(null, req, res);
-                return;
-            }
+            else {
+                //save the new item
+                var model = {
+                    name: file.originalname,
+                    type: file.mimetype.split("/")[1],
+                    size: file.size,
+                    folderId: folderId,
+                    rolePermissions: RESOURCE_PERMISSION_SCHEMA_ENTRY
+                };
 
-            //save to resources folder only after it is persisted in DB
-
-            var dirPath = realPath(resourceFolderPath, model.resourceId);
-            FileUtil.createDir(dirPath, function (err) {
-                var ret = {};
-                if (err) {
-                    ret.error = err.message;
-                    that.setJSON(req, ret);
-                    next(err, req, res);
-                    return;
-                }
-                var destFilePath = realPath(dirPath, model.resourceId);
-                FileUtil.copyFile(file.path, destFilePath, function (err) {
-                    if (!err) {
-                        ret = {success: true, folderId: folderId};
-                        //createThumb(dirPath, model, that.getAppProperty("THUMB_DIMENSION"),
-                        //  that.getAppProperty("DEFAULT_THUMB_NAME"), dbAction);
-                        updateDimension(destFilePath, model, dbAction);
+                if (model.size == 0) {
+                    try {
+                        var stat = FileUtil.stat(file.path);
+                        model.size = stat.size;
+                    } catch (e) {
+                        Debug._l(e)
                     }
-                    if (err) ret.error = err.message;
-                    that.setJSON(req, ret);
-                    next(err, req, res);
+                }
+
+                dbAction.authorizedSave(model, n);
+            }
+        },
+        function (done, n) {
+            dbAction.get("findByNameAndFolderId", [fileName, folderId], n);
+        },
+        function (model, n) {
+            if (!model) {
+                n(new Error("Model not created."))
+            }
+            else {
+                //save to resources folder only after it is persisted in DB
+                var dirPath = realPath(resourceFolderPath, model.resourceId);
+                FileUtil.createDir(dirPath, function (err) {
+                    n(err, dirPath, model);
                 });
+            }
+        },
+        function (dirPath, model, n) {
+            var destFilePath = realPath(dirPath, model.resourceId);
+            FileUtil.copyFile(file.path, destFilePath, function (err) {
+                !err && updateDimension(destFilePath, model, dbAction);
+                n(err);
             });
-        });
+        }
+    ], function (err, result) {
+        if (err) {
+            that.setError(req, err);
+        }
+        next(err);
     });
 }
 
@@ -494,11 +493,17 @@ function createThumb(dirPath, model, dimesion, thumbName, dbAction, extras, File
  }*/
 
 ResourceManageController.prototype.render = function (req, res, next) {
-    var view = req.params.action;
-    view = view || "index";
+    var that = this;
     var ret = {
         ResourceManageUtil: ResourceManageUtil
     };
-    next(null, [ view, ret ]);
+    var pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA, "");
+    pv.hasPermissionWithoutModelId("ADD", function (err, perm) {
+        if (!err) {
+            ret.hasAdd = perm.isAuthorized;
+            req.pluginRender.setView(req.params.action).setLocals(ret);
+        }
+        next(err);
+    });
 };
 

@@ -51,11 +51,11 @@ function uploadThemeFile(req, res, next) {
         themeHome = getViewsHome(req.app),
         fileUtil = that.FileUtil;
 
-    var file = req.files.files[0],
+    var file = req.attrs.file,
         postParams = that.getPluginHelper().getPostParams(req),
         themeId = postParams.themeId,
         folderName = postParams.folderName,
-        fileName = file.name, tmpPath = file.path;
+        fileName = file.originalname, tmpPath = file.path;
 
 //    Debug._li("", file, true);
 //    Debug._li("post", req.body, true);
@@ -64,13 +64,13 @@ function uploadThemeFile(req, res, next) {
         dbAction.get("findByThemeId", themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
-                return next(null, req, res);
+                return next(null);
             }
             if (theme) {
                 var filePath = themeHome + "/" + theme.path + "/" + folderName + "/" + fileName;
                 fileUtil.copyFile(tmpPath, filePath, function (err) {
                     //err ? that.setError(req, err) : that.setSuccess(req, "");
-                    next(null, req, res);
+                    next(null);
                 });
 
             }
@@ -91,7 +91,7 @@ function newFile(req, res, next) {
         dbAction.get("findByThemeId", themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
-                return next(null, req, res);
+                return next(null);
             }
 
             var filePath = themeHome + "/" + theme.path + "/" + folderName + "/" + fileName;
@@ -104,7 +104,7 @@ function newFile(req, res, next) {
                     require(utils.getLibPath() + "/ThemeUtil").
                         setThemeFile(folderName, utils.normalize(theme.name), fileName);
                 }
-                next(null, req, res);
+                next(null);
             });
         });
     }
@@ -120,7 +120,7 @@ function deleteFile(req, res, next) {
         dbAction.get("findByThemeId", themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
-                return next(null, req, res);
+                return next(null);
             }
             var filePath = themeHome + "/" + theme.path + "/" + folderName + "/" + fileName;
             fileUtil.removeFile(filePath, function (err) {
@@ -134,7 +134,7 @@ function deleteFile(req, res, next) {
                     }
                     that.setSuccess(req, "File deleted successfully.");
                 }
-                next(null, req, res);
+                next(null);
             });
         });
     }
@@ -150,7 +150,7 @@ function updateFile(req, res, next) {
         dbAction.get("findByThemeId", themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
-                return next(null, req, res);
+                return next(null);
             }
             var filePath = themeHome + "/" + theme.path + "/" + folderName + "/" + fileName;
             try {
@@ -161,13 +161,13 @@ function updateFile(req, res, next) {
                     else {
                         that.setSuccess(req);
                     }
-                    next(null, req, res);
+                    next(null);
                 });
             }
             catch (e) {
                 e.header = 404;
                 that.setError(req, e);
-                next(null, req, res);
+                next(null);
             }
         });
 
@@ -184,25 +184,25 @@ function getFile(req, res, next) {
         dbAction.get("findByThemeId", themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
-                return next(null, req, res);
+                return next(null);
             }
             var filePath = themeHome + "/" + theme.path + "/" + folderName + "/" + fileName;
             try {
                 fileUtil.readFile(filePath, null, function (err, data) {
                     if (err) {
                         that.setError(req, err);
-                        return next(null, req, res);
+                        return next(null);
                     }
                     if (data) {
                         that.setSend(req, data);
-                        return next(null, req, res);
+                        return next(null);
                     }
                 });
             }
             catch (e) {
                 e.header = 404;
                 that.setError(req, e);
-                return next(null, req, res);
+                return next(null);
             }
 
         });
@@ -225,16 +225,16 @@ function openTheme(req, res, next) {
                     });
                     that.setSuccess(req, "Theme " + theme.name + " opened for edit.",
                         {id: themeId, name: theme.name, files: dirFiles});
-                    next(null, req, res);
+                    next(null);
                 }
                 catch (e) {
                     that.setError(req, e);
-                    return next(null, req, res);
+                    return next(null);
                 }
             }
             if (err) {
                 that.setError(req, err);
-                next(null, req, res);
+                next(null);
             }
         });
     }
@@ -269,18 +269,18 @@ function createTheme(req, res, next) {
         dbAction.get("findByName", name, function (err, theme) {
             if (err) {
                 that.setError(req, err);
-                return next(null, req, res);
+                return next(null);
             }
             if (theme) {
                 that.setError(req, new Error("Theme already exists"));
-                next(null, req, res);
+                next(null);
             }
             else {
                 //copy default theme to new theme
                 that.FileUtil.copyDir(defaultThemePath, newThemePath, function (err) {
                     if (err) {
                         that.setError(req, err);
-                        return next(null, req, res);
+                        return next(null);
                     }
                     dbAction.save({name: name, path: path}, function (err, result) {
                         if (!err && result) {
@@ -290,7 +290,7 @@ function createTheme(req, res, next) {
                         if (err) {
                             that.setError(req, err);
                         }
-                        return next(null, req, res);
+                        return next(null);
 
                     });
                 });
@@ -301,7 +301,7 @@ function createTheme(req, res, next) {
     }
     else {
         that.setError(req, new Error("Theme name is invalid"));
-        next(null, req, res);
+        next(null);
     }
 }
 
@@ -321,7 +321,8 @@ ThemeBuilderPluginController.prototype.render = function (req, res, next) {
                 ret.themes = themes;
                 ret.isDisabled = false;
             }
-            next(null, [ view, ret ]);
+            req.pluginRender.setView(view).setLocals(ret);
+            next(null);
         }
         else {
             next(err);

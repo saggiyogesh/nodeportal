@@ -1,13 +1,15 @@
+include appMixins
+
 .displayArticle
-    !{viewLib.Messages(req , namespace)}
-    !{req.attrs.articleHTML}
+    != viewLib.Messages(req , namespace)
+    != req.attrs.articleHTML
 
 
 -if(settings.enableComments)
     .article-comments
         div(id="#{namespace}_comments")
-        script
-            setTimeout(function(){
+        +BottomScript(locals)
+            script.
                 require(["threadComments"], function(){
                     new Rocket.ThreadComments({
                         linkedModelId:'#{settings.id}',
@@ -17,8 +19,3 @@
                         linkedPermissionSchemaKey: 'model.articleSchema.Article'
                     });
                 });
-            }, 100)
-
-
-
-

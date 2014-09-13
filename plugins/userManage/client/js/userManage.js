@@ -10,14 +10,13 @@ define(["uploader", "pluginURL", "events"], function () {
 
         setImage(Rocket.User.getProfilePicURL());
 
-
         var uploader = new Rocket.Uploader({
             acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
             uploaderId: ns + "_uploader",
             url: Rocket.PluginURL.createByNamespace(ns, "uploadProfilePic", null),
             onSuccess: function (response) {
                 if (response.files[0].name) {
-                    setImage(Rocket.PluginURL.createByNamespace(ns, ["profilePic", Rocket.User.userId], null, null, true))
+                    setImage(Rocket.PluginURL.createByNamespace(ns, ["profilePic", Rocket.User.getUserId()], null, null, true))
                 }
             }
         });

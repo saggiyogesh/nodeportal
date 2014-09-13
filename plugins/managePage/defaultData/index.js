@@ -14,21 +14,6 @@ var homePage = {
     rolePermissions: {}
 };
 
-var settingsPage = {
-    pageId: "c",
-    layoutId: 0,
-    themeId: 0,
-    friendlyURL: '/settings',
-    localizedName: {"en_US": "Settings"},
-    data: {
-        col1HTMLTMPL: [ ]
-    },
-    isHidden: true,
-    userId: 0,
-    userName: "",
-    rolePermissions: {}
-};
-
 var testPage = {
     pageId: "c",
     layoutId: 0,
@@ -38,6 +23,7 @@ var testPage = {
     data: {
         col1HTMLTMPL: [ ]
     },
+    order:1,
     isHidden: true,
     userId: 0,
     userName: "",
@@ -45,7 +31,6 @@ var testPage = {
 };
 module.exports = {Page: {
     home: homePage,
-    settings: settingsPage,
     test: testPage
 }, deps: ['Theme', 'Layout', 'User']};
 

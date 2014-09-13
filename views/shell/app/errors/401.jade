@@ -1,0 +1,10 @@
+div.hero-unit.center.plugin
+    h1 401 Unauthorized Access.
+    br
+    -if(req.session.loggedIn)
+        p You don't have sufficient roles
+    -else
+        p Please login to portal to access this page.
+    a(href=req.attrs.homeURL, class="btn btn-large btn-info")
+        i.icon-home.icon-white
+        | Home

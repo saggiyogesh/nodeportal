@@ -1,0 +1,62 @@
+if req.attrs.showTools
+    script.
+        require(["_", "util", "modal"], function () {
+               settingPermissionsModal = new Rocket.Modal({
+                       id : "editPlugin",
+                       title : "Manage Permissions",
+                       width : 0.7
+                   }),
+               settingPermissionsModalBody = settingPermissionsModal.getBody();
+               $(".plugin .tools a.edit").click(function (e) {
+                   var tgt = $(e.currentTarget),
+                   id = tgt.data("id");
+                   e.preventDefault();
+                   var options = {
+                       url : Rocket.Util.getOrigin() + Rocket.PageValues.getPageFriendlyURL() + "/managePlugin/settings/" + id,
+                       data : {
+                           redirect : location.href,
+                           mode : "exclusive"
+                       },
+                       success : function (responseData) {
+                           if (responseData) {
+                               settingPermissionsModal.show();
+                               settingPermissionsModalBody.html(responseData);
+                           }
+                       }
+                   };
+                   Rocket.ajax(options);
+               });
+           });
+
+
+
+script.
+    require([""],function () {
+        // fix sub nav on scroll
+        var $win = $(window)
+            , $nav = $('.subnav')
+            , navTop = $('.subnav').length && $('.subnav').offset().top - 40
+            , isFixed = 0
+
+        processScroll();
+
+        // hack sad times - holdover until rewrite for 2.1
+        $nav.on('click', function () {
+            if (!isFixed) setTimeout(function () {
+                $win.scrollTop($win.scrollTop() - 47)
+            }, 10)
+        })
+
+        $win.on('scroll', processScroll)
+
+        function processScroll() {
+            var i, scrollTop = $win.scrollTop()
+            if (scrollTop >= navTop && !isFixed) {
+                isFixed = 1
+                $nav.addClass('subnav-fixed');
+            } else if (scrollTop <= navTop && isFixed) {
+                isFixed = 0
+                $nav.removeClass('subnav-fixed');
+            }
+        }
+    });

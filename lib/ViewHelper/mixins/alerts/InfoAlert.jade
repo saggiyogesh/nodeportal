@@ -1,0 +1,11 @@
+//- opts {Object} Options passed. Will be rendered in generated scipt code
+    Following are keys of opts:
+    [showAlert] {Boolean}. To show the dismiss button. Default true
+    [autoHide] {Boolean}. If true alert will hide after 4000 millies. Default false.
+    [classNames] {Array}. Css classes to be added to alert
+    [id] {String}. Id of alert
+include Alert
+mixin InfoAlert(opts)
+    - opts.classNames = opts.classNames || [];
+    - opts.classNames.push("alert-info");
+    +Alert(opts)
