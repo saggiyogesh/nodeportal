@@ -1,0 +1,4 @@
+Requirements to run tests:
+- run selenium standalone server
+- run redis server
+- server url is localhost:8081, must be edited to test any other server.
