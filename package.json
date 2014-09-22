@@ -10,7 +10,10 @@
         "url": "https://github.com/saggiyogesh/nodeportal.git"
     },
     "dependencies": {
-        "express": "4.x",
+        "loopback": "2.2.0",
+        "loopback-datasource-juggler":"2.9.0",
+        "loopback-connector-mysql":"1.4.7",
+        "loopback-connector-mongodb":"1.4.4",
         "morgan": "1.3.0",
         "serve-favicon": "2.1.1",
         "body-parser": "1.7.0",
