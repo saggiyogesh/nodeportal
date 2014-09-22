@@ -1,6 +1,7 @@
 [
-    "lib/StartUpActions/InitDBConnection",
     "lib/StartUpActions/InitModelEvents",
+    "lib/StartUpActions/InitDSAndServices",
+    "lib/StartUpActions/TestDS",
     "lib/StartUpActions/SetupApp",
     "lib/StartUpActions/LoadPlugins",
     "lib/StartUpActions/SetupThemes",
