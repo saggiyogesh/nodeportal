@@ -1,0 +1,6 @@
+<%= name %>.<%= finderName%> = function <%= finderName%>(<%= finderArgs%> next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.<%= finderMethod%>(<%= finderFilter%>, next);
+};
+
+
