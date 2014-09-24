@@ -1,32 +1,22 @@
 module.exports = {
-    name: "Article",
+    name: "PluginInstance",
     base: "PersistedModel",
     properties: {
-        articleId: { type: Number, id: true},
-        id: Number, //this id is used as for many versions of same article, this id will be same
-        localizedTitle: String,
-        localizedContent: String,
-        displayDate: Date,
-        expiryDate: Date,
-        version: Number,
-        createDate: {type: Date, default: Date.now()},
-        updateDate: {type: Date, default: Date.now()},
-        isExpired: { type: Boolean, "default": false },
+        pluginInstanceId: { type: Number, id: true},
+        pluginNamespace: { type: String, required: true},
+        pageId: { type: Number, required: true},
+        title: String,
+        settings: String,
 
-//    compulsory fields for permissions
+        //    compulsory fields for permissions
         userId: Number,
         userName: String,
         rolePermissions: {}
     },
     finders: {
-        getById: {
-            arguments: ["id"],
-            query: {where: {id: "_id"} },
-            method: "find"
-        },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} },
+        getByPluginNamespaceAndPageId: {
+            arguments: ["pluginNamespace", "pageId"],
+            query: {where: {pluginNamespace: "_pluginNamespace", pageId: "_pageId"} },
             method: "find"
         }
     }

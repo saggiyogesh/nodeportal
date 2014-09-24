@@ -1,42 +1,19 @@
 module.exports = {
-    name: "Theme",
+    name: "Thread",
     base: "PersistedModel",
     properties: {
-        themeId: { type: Number, id: true},
-        name: { type: String, required: true, index: {unique: true} },
-        type: {type: String, default: "page"}, //settings or page
-        path: String
+        threadId: { type: Number, id: true},
+        linkedModelId: { type: Number, required: true},
+        linkedModelName: { type: String, required: true},
+        linkedModelFinderField: { type: String, required: true},
+        linkedPermissionSchemaKey: { type: String, required: true},
+        linkedModelPK: { type: Number, required: true}
     },
     finders: {
-        getDefault: {
-            arguments: [],
-            query: {where: {name: "Default", type: "page"} },
+        getByLinkedModelIdAndLinkedModelName: {
+            arguments: ["linkedModelId", "linkedModelName"],
+            query: {where: { linkedModelId: "_linkedModelId", linkedModelName: "_linkedModelName"} },
             method: "findOne"
-        },
-        getByName: {
-            arguments: ["name"],
-            query: {where: {name: "_name", type: "page"} },
-            method: "findOne"
-        },
-        getAllExceptDefault: {
-            arguments: [],
-            query: {where: { name: { neq: "2-col-70-30" }, type: "page"}},
-            method: "find"
-        },
-        getAll: {
-            arguments: [],
-            query: {},
-            method: "find"
-        },
-        getDefaultSettingsTheme: {
-            arguments: [],
-            query: {where: { name: "Settings", type: "page"}},
-            method: "find"
-        },
-        getAllPageType: {
-            arguments: [],
-            query: {where: { type: "page"}},
-            method: "find"
         }
     }
 };

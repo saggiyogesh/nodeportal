@@ -1,22 +1,40 @@
 module.exports = {
-    name: "Article",
+    name: "User",
     base: "PersistedModel",
     properties: {
-        articleId: { type: Number, id: true},
-        id: Number, //this id is used as for many versions of same article, this id will be same
-        localizedTitle: String,
-        localizedContent: String,
-        displayDate: Date,
-        expiryDate: Date,
-        version: Number,
+        userId: { type: Number, id: true},
+        userName: { type: String, required: true, index: {unique: true}},
+        firstName: { type: String, required: true},
+        middleName: String,
+        lastName: { type: String, required: true},
+        passwordEnc: { type: String, required: true},
+        emailId: { type: String, required: true, index: {unique: true}},
+        phoneNo: { type: String},
+        dob: { type: Date},
+        gender: {type: String, default: ""},
+        roles: String,
+        active: Boolean,
         createDate: {type: Date, default: Date.now()},
         updateDate: {type: Date, default: Date.now()},
-        isExpired: { type: Boolean, "default": false },
-
-//    compulsory fields for permissions
-        userId: Number,
-        userName: String,
-        rolePermissions: {}
+        "default": { type: Boolean, default: false },
+        /**
+         * properties of profilePic:
+         *      gravatar {String} gravatar hash
+         *      uploaded {Boolean} if image is uploaded by user
+         *      url {URL} Profile picture url of OAuth login account
+         */
+        profilePic: {type: Object, default: {}},
+        address: String,
+        telNos: String,
+        notifications: {type: Object, default: {}},
+        /**
+         * This will save the unique id provided by oauth login.
+         * properties:
+         *      accountName {String}: oauth account name (like google, facebook etc)
+         *      data {Object}: oauth user data fetched after login
+         * @see AppProperties.ENABLED_LOGIN_ACCOUNTS
+         */
+        oauthInfo: String
     },
     finders: {
         getById: {

@@ -1,21 +1,17 @@
 module.exports = {
-    name: "Role",
+    name: "SchemaPermissions",
     base: "PersistedModel",
     properties: {
-        roleId: { type: Number, id: true},
-        name: { type: String, required: true, index: {unique: true} },
-        description: String
+        schemaPermissionsId: { type: Number, id: true},
+        permissionSchemaKey: { type: String, required: true, index: {unique: true}},  //schema key defined in permissions definition file
+        actionsValue: String, //  saving action value for parsed permissions, bit value of each action
+        rolePermissions: String
     },
     finders: {
-        getByName: {
-            arguments: ["name"],
-            query: {where: {name: "_name"} },
+        getByPermissionSchemaKey: {
+            arguments: ["permissionSchemaKey"],
+            query: {where: {permissionSchemaKey: "_permissionSchemaKey"} },
             method: "findOne"
-        },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} },
-            method: "find"
         }
     }
 };

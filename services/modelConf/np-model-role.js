@@ -1,28 +1,16 @@
 module.exports = {
-    name: "Article",
+    name: "Role",
     base: "PersistedModel",
     properties: {
-        articleId: { type: Number, id: true},
-        id: Number, //this id is used as for many versions of same article, this id will be same
-        localizedTitle: String,
-        localizedContent: String,
-        displayDate: Date,
-        expiryDate: Date,
-        version: Number,
-        createDate: {type: Date, default: Date.now()},
-        updateDate: {type: Date, default: Date.now()},
-        isExpired: { type: Boolean, "default": false },
-
-//    compulsory fields for permissions
-        userId: Number,
-        userName: String,
-        rolePermissions: {}
+        roleId: { type: Number, id: true},
+        name: { type: String, required: true, index: {unique: true} },
+        description: String
     },
     finders: {
-        getById: {
-            arguments: ["id"],
-            query: {where: {id: "_id"} },
-            method: "find"
+        getByName: {
+            arguments: ["name"],
+            query: {where: {name: "_name"} },
+            method: "findOne"
         },
         getByIdAndVersion: {
             arguments: ["id", "version"],

@@ -1,17 +1,14 @@
 module.exports = {
-    name: "Article",
+    name: "Comment",
     base: "PersistedModel",
     properties: {
-        articleId: { type: Number, id: true},
-        id: Number, //this id is used as for many versions of same article, this id will be same
-        localizedTitle: String,
-        localizedContent: String,
-        displayDate: Date, default: Date.now(),
-        expiryDate: Date, default: Date.now(),
-        version: Number,
-        createDate: Date,
-        updateDate: Date,
-        isExpired: { type: Boolean, "default": false },
+        commentId: { type: Number, unique: true},
+        threadId: Number,
+        parentCommentId: { type: Number, "default": 0 },
+        authorId: Number,
+        content: String,
+        createDate: {type: Date, default: Date.now()},
+        updateDate: {type: Date, default: Date.now()},
 
 //    compulsory fields for permissions
         userId: Number,
@@ -22,14 +19,12 @@ module.exports = {
         getById: {
             arguments: ["id"],
             query: {where: {id: "_id"} },
-            method: "find",
-            pagination: true
+            method: "find"
         },
         getByIdAndVersion: {
-            arguments: ["id","version"],
+            arguments: ["id", "version"],
             query: {where: {id: "_id", version: "_version"} },
-            method: "find",
-            pagination: true
+            method: "find"
         }
     }
 };

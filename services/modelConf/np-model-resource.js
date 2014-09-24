@@ -1,32 +1,32 @@
 module.exports = {
-    name: "Article",
+    name: "Resource",
     base: "PersistedModel",
     properties: {
-        articleId: { type: Number, id: true},
-        id: Number, //this id is used as for many versions of same article, this id will be same
-        localizedTitle: String,
-        localizedContent: String,
-        displayDate: Date,
-        expiryDate: Date,
-        version: Number,
+        resourceId: { type: Number, id: true},
+        name: {type: String, required: true},
+        type: {type: String, required: true},
+        size: { type: Number, "default": 0 },
         createDate: {type: Date, default: Date.now()},
         updateDate: {type: Date, default: Date.now()},
-        isExpired: { type: Boolean, "default": false },
+        folderId: { type: Number, "default": 0 },
+        description: String,
+        dimensions: String,
+        extras: String,
 
-//    compulsory fields for permissions
+        //compulsory fields for permissions
         userId: Number,
         userName: String,
         rolePermissions: {}
     },
     finders: {
-        getById: {
-            arguments: ["id"],
-            query: {where: {id: "_id"} },
+        getByNameAndFolderId: {
+            arguments: ["name", "folderId"],
+            query: {where: { name: "_name", folderId: "_folderId"} },
             method: "find"
         },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} },
+        getByFolderId: {
+            arguments: ["folderId"],
+            query: {where: {folderId: "folderId"} },
             method: "find"
         }
     }
