@@ -18,13 +18,11 @@ module.exports = {
     finders: {
         getById: {
             arguments: ["id"],
-            query: {where: {id: "_id"} },
-            method: "find"
+            query: {where: {id: "_id"} }
         },
         getByIdAndVersion: {
             arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} },
-            method: "find"
+            query: {where: {id: "_id", version: "_version"} }
         }
     }
 };

@@ -11,23 +11,22 @@ module.exports = {
         folderId: { type: Number, "default": 0 },
         description: String,
         dimensions: String,
-        extras: String,
+        extras: Object,
 
         //compulsory fields for permissions
         userId: Number,
         userName: String,
-        rolePermissions: {}
+        rolePermissions: Object
     },
     finders: {
         getByNameAndFolderId: {
             arguments: ["name", "folderId"],
-            query: {where: { name: "_name", folderId: "_folderId"} },
-            method: "find"
+            query: {where: { name: "_name", folderId: "_folderId"} }
         },
         getByFolderId: {
             arguments: ["folderId"],
-            query: {where: {folderId: "folderId"} },
-            method: "find"
+            query: {where: {folderId: "folderId"} }
         }
-    }
+    },
+    auth: true
 };

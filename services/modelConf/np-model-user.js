@@ -12,7 +12,7 @@ module.exports = {
         phoneNo: { type: String},
         dob: { type: Date},
         gender: {type: String, default: ""},
-        roles: String,
+        roles: Array,
         active: Boolean,
         createDate: {type: Date, default: Date.now()},
         updateDate: {type: Date, default: Date.now()},
@@ -24,8 +24,8 @@ module.exports = {
          *      url {URL} Profile picture url of OAuth login account
          */
         profilePic: {type: Object, default: {}},
-        address: String,
-        telNos: String,
+        address: Object,
+        telNos: Object,
         notifications: {type: Object, default: {}},
         /**
          * This will save the unique id provided by oauth login.
@@ -34,18 +34,27 @@ module.exports = {
          *      data {Object}: oauth user data fetched after login
          * @see AppProperties.ENABLED_LOGIN_ACCOUNTS
          */
-        oauthInfo: String
+        oauthInfo: Object
     },
     finders: {
-        getById: {
-            arguments: ["id"],
-            query: {where: {id: "_id"} },
-            method: "find"
+        getByUserName: {
+            arguments: ["userName"],
+            query: {where: {"userName": "_userName"} },
+            method: "findOne"
         },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} },
-            method: "find"
+        getByEmailId: {
+            arguments: ["emailId"],
+            query: {where: {"emailId": "_emailId"} },
+            method: "findOne"
+        },
+        getByPhoneNo: {
+            arguments: ["phoneNo"],
+            query: {where: {"phoneNo": "_phoneNo"} },
+            method: "findOne"
+        },
+        getDefaultUser: {
+            query: {where: {"default": true} },
+            method: "findOne"
         }
     }
 };

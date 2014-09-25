@@ -5,19 +5,18 @@ module.exports = {
         pluginInstanceId: { type: Number, id: true},
         pluginNamespace: { type: String, required: true},
         pageId: { type: Number, required: true},
-        title: String,
-        settings: String,
+        title: Object,
+        settings: Object,
 
         //    compulsory fields for permissions
         userId: Number,
         userName: String,
-        rolePermissions: {}
+        rolePermissions: Object
     },
     finders: {
         getByPluginNamespaceAndPageId: {
             arguments: ["pluginNamespace", "pageId"],
-            query: {where: {pluginNamespace: "_pluginNamespace", pageId: "_pageId"} },
-            method: "find"
+            query: {where: {pluginNamespace: "_pluginNamespace", pageId: "_pageId"} }
         }
     }
 };

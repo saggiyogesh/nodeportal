@@ -4,8 +4,8 @@ module.exports = {
     properties: {
         schemaPermissionsId: { type: Number, id: true},
         permissionSchemaKey: { type: String, required: true, index: {unique: true}},  //schema key defined in permissions definition file
-        actionsValue: String, //  saving action value for parsed permissions, bit value of each action
-        rolePermissions: String
+        actionsValue: Object, //  saving action value for parsed permissions, bit value of each action
+        rolePermissions: Object
     },
     finders: {
         getByPermissionSchemaKey: {

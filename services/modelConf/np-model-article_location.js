@@ -10,18 +10,15 @@ module.exports = {
     finders: {
         getById: {
             arguments: ["id"], // default []
-            query: {where: {id: "_id"} }, // _model is placeholder to replace the model in code text
-            method: "find" // options : findOne || find ,  default find
+            query: {where: {id: "_id"} }
         },
         getByPageIdAndNamespace: {
             arguments: ["pageId", "namespace"],
-            query: {where: {pageId: "_pageId", namespace: "_namespace"} },
-            method: "find"
+            query: {where: {pageId: "_pageId", namespace: "_namespace"} }
         },
         getByPageIdAndNamespaceAndId: {
             arguments: ["pageId", "namespace", "id"],
-            query: {where: {pageId: "_pageId", namespace: "_namespace", id: "_id"} },
-            method: "find"
+            query: {where: {pageId: "_pageId", namespace: "_namespace", id: "_id"} }
         }
     }
 };

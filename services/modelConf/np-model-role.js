@@ -7,15 +7,20 @@ module.exports = {
         description: String
     },
     finders: {
-        getByName: {
-            arguments: ["name"],
-            query: {where: {name: "_name"} },
+        getGuestRole: {
+            query: {where: {name: "Guest"} },
             method: "findOne"
         },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} },
-            method: "find"
+        getAdministratorRole: {
+            query: {where: {name: "Administrator"} },
+            method: "findOne"
+        },
+        getAll: {
+        },
+        getByName: {
+            arguments: ["name"],
+            query: { where: {name: "_name"}},
+            method: "findOne"
         }
     }
 };
