@@ -1,8 +1,7 @@
 /**
  * Module dependencies.
  */
-var express = require('express');
-var app = module.exports = express();
+var app = module.exports = require('loopback')();
 
 require("./lib/BootstrapApp")(app);
 
