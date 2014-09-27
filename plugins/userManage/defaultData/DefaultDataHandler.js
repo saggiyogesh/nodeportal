@@ -8,17 +8,17 @@ var async = require('async');
  */
 exports.User = function (app, data) {
     var PasswordUtil = require(utils.getLibPath() + "/PasswordUtil");
-    var DBActions = require(utils.getLibPath() + "/DBActions");
-    var roleDBAction = DBActions.getSimpleInstance(app, "Role");
-    var userDBAction = DBActions.getSimpleInstance(app, "User");
+
+    var RoleService = app.getService("Role");
+    var UserService = app.getService("User");
 
     return function (next) {
         async.parallel({
                 guestRole: function (cb) {
-                    roleDBAction.get("getGuestRole", null, cb);
+                    RoleService.getGuestRole(cb);
                 },
                 adminRole: function (cb) {
-                    roleDBAction.get("getAdministratorRole", null, cb);
+                    RoleService.getAdministratorRole(cb);
                 }
             },
             function (err, results) {
@@ -26,7 +26,7 @@ exports.User = function (app, data) {
                     data.admin.roles = [results.adminRole.roleId];
                     data.admin.passwordEnc = PasswordUtil.encryptSync("admin");
                     data.guest.roles = [results.guestRole.roleId];
-                    userDBAction.multipleSave(_.values(data), next);
+                    UserService.multipleSave(_.values(data), next);
                 }
             });
     };

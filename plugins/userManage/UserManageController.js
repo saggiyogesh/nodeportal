@@ -66,8 +66,7 @@ function updateUserNotificationsAction(req, res, next) {
     var postData = utils.clone(that.getPluginHelper().getPostParams(req));
     delete postData.userId;
 
-    var dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-    dbAction.update({
+    req.app.getService(USER_SCHEMA).update({
         userId: userId,
         notifications: postData
     }, function (err, r) {
@@ -108,8 +107,7 @@ function updateUserSecurityDetailsAction(req, res, next) {
                 },
                 function (n) {
                     var userId = that.getPluginHelper().getPostParam(req, "userId");
-                    var dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-                    dbAction.update({
+                    req.app.getService(USER_SCHEMA).update({
                         userId: userId,
                         passwordEnc: hash
                     }, n);
@@ -161,8 +159,7 @@ function updateUserContactDetailsAction(req, res, next) {
             delete postData.telNo;
             delete postData.altTelNo;
 
-            var dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-            dbAction.update({
+            req.app.getService(USER_SCHEMA).update({
                 userId: userId,
                 address: postData,
                 telNos: {
@@ -186,12 +183,10 @@ function updateUserContactDetailsAction(req, res, next) {
 }
 
 function removeUploadedPicAction(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, USER_SCHEMA),
-        FileUtil = that.FileUtil;
+    var that = this;
     var profilePic = req.session.user.profilePic;
     profilePic.uploaded = false;
-    dbAction.update({
+    req.app.getService(USER_SCHEMA).update({
         userId: req.session.user.userId,
         profilePic: profilePic
     }, function (err, r) {
@@ -203,9 +198,7 @@ function removeUploadedPicAction(req, res, next) {
 
 }
 function getProfilePicAction(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-//        dbAction = DBActions.getInstance(req, USER_SCHEMA),
-        FileUtil = that.FileUtil;
+    var that = this, params = req.params, FileUtil = that.FileUtil;
 
     var userId = params.id,
         file = utils.getUserProfilePicDirPath() + "/" + userId + "/" + userId;
@@ -219,9 +212,8 @@ function getProfilePicAction(req, res, next) {
 }
 
 function uploadProfilePicAction(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, USER_SCHEMA),
-        FileUtil = that.FileUtil;
+    var that = this, FileUtil = that.FileUtil,
+        UserService = that.getService(USER_SCHEMA);
 
     var file = req.attrs.file,
         fileName = file.originalname, tmpPath = file.path;
@@ -255,7 +247,7 @@ function uploadProfilePicAction(req, res, next) {
 //        },
         function (n) {
             //get user from db
-            dbAction.get("findByUserId", userId, function (err, u) {
+            UserService.findById(userId, function (err, u) {
                 if (u) {
                     user = u.toObject();
                 }
@@ -272,7 +264,7 @@ function uploadProfilePicAction(req, res, next) {
             profilePic = user.profilePic || {};
             profilePic.uploaded = true;
             o.profilePic = profilePic;
-            dbAction.update(o, n);
+            UserService.update(o, n);
         }
     ], function (err, results) {
         if (!err) {
@@ -297,8 +289,7 @@ function setSecurityForm(that, req, mode) {
 }
 
 function setContactForm(that, req, mode, next) {
-    var dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-    dbAction.getByDefaultFinderMethod(req.session.user.userId, function (err, user) {
+    that.getService(USER_SCHEMA).findById(req.session.user.userId, function (err, user) {
         if (user) {
             user = user.toObject();
             var o = user.address;
@@ -312,8 +303,7 @@ function setContactForm(that, req, mode, next) {
 }
 
 function setNotificationsForm(that, req, mode, next) {
-    var dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-    dbAction.getByDefaultFinderMethod(req.session.user.userId, function (err, user) {
+    that.getService(USER_SCHEMA).findById(req.session.user.userId, function (err, user) {
         if (user) {
             user = user.toObject();
             req.query[that.getPluginId()] = user.notifications;
@@ -358,12 +348,11 @@ UserManageController.prototype.notificationsFormAction = function (req, res, nex
 
 
 UserManageController.prototype.rolesAction = function (req, res, next) {
-    var that = this;
-    var roleDBAction = that.getDBActionsLib().getInstance(req, "Role");
+    var that = this, RoleService = that.getService("Role");
     var roleIds = req.session.user.roles;
     var roles = [];
     async.map(roleIds, function (roleId, n) {
-        roleDBAction.get("findByRoleId", roleId, function (err, role) {
+        RoleService.findById(roleId, function (err, role) {
             if (role) {
                 roles.push(role.toObject());
             }

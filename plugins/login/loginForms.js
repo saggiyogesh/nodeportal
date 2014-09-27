@@ -1,8 +1,7 @@
 var USER_SCHEMA = "User";
 
 function checkUserName(req, model, val, next) {
-    var db = this.db, dbAction = require(utils.getLibPath() + "/DBActions").getInstanceFromDB(db, USER_SCHEMA);
-    dbAction.get("findByUserName", val, function (err, user) {
+    req.app.getService(USER_SCHEMA).getByUserName(val, function (err, user) {
         if (!err) {
             if (user) {
                 next(err, false); //i.e validations fails as user with same user name already exists
@@ -17,8 +16,7 @@ function checkUserName(req, model, val, next) {
 }
 
 function checkEmail(req, model, val, next) {
-    var db = this.db, dbAction = require(utils.getLibPath() + "/DBActions").getInstanceFromDB(db, USER_SCHEMA);
-    dbAction.get("findByEmailId", val, function (err, user) {
+    req.app.getService(USER_SCHEMA).getByEmailId(val, function (err, user) {
         if (!err) {
             if (user) {
                 next(err, false); //i.e validations fails as user with same email id already exists

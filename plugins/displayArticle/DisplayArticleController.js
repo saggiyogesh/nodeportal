@@ -12,7 +12,6 @@ var DisplayArticleController = module.exports = function (id, app) {
 util.inherits(DisplayArticleController, BasePluginController);
 
 function getArticle(req, that, next) {
-    var DBActionsLib = that.getDBActionsLib();
     that.getSettings(req, function (err, settings) {
         settings = settings || {};
         var id = settings.id,
@@ -29,9 +28,11 @@ function getArticle(req, that, next) {
                 return next();
             }
 
-            var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA);
-            var query = dbAction.getQuery(true).where("id", id);
-            dbAction.authorizedGetByQuery(query, function (err, latestArticle) {
+            var ArticleService = that.getService(ARTICLE_SCHEMA),
+                ArticleAuthService = ArticleService.Auth;
+
+            ArticleAuthService.getById(id, req.session.roles, function (err, latestArticle) {
+
                 if (err) return next(err);
 
                 var html, DateUtil = that.DateUtil;
@@ -52,7 +53,7 @@ function getArticle(req, that, next) {
                         return;
                     }
 
-                    defaultView({article: latestArticle, req: req}, function(err, html){
+                    defaultView({article: latestArticle, req: req}, function (err, html) {
                         req.attrs.articleHTML = html;
                         next();
                     });
@@ -62,8 +63,7 @@ function getArticle(req, that, next) {
                     setErrMsg("Wrong article Id");
                     next();
                 }
-
-            });
+            })
         }
         else {
             that.setInfoMessage(req, "Article not selected.");

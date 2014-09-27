@@ -32,5 +32,5 @@ var testPage = {
 module.exports = {Page: {
     home: homePage,
     test: testPage
-}, deps: ['Theme', 'Layout', 'User']};
+}, deps: ['Theme', 'Layout', 'User', 'Role']};
 

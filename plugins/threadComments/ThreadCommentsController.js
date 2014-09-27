@@ -31,17 +31,16 @@ var ThreadCommentsController = module.exports = function (id, app) {
 util.inherits(ThreadCommentsController, BasePluginController);
 
 function editCommentAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        post = req.body;
+    var that = this, post = req.body;
     var content = post.value.trim(), commentId = post.pk;
     if (content && commentId) {
-        var commentDBAction = DBActions.getInstance(req, COMMENT_SCHEMA);
-        var threadDBAction = DBActions.getInstance(req, THREAD_SCHEMA);
+        var CommentService = that.getService(COMMENT_SCHEMA);
+        var ThreadService = that.getService(THREAD_SCHEMA);
         var thread;
         async.series([
             function (n) {
                 //get thread
-                threadDBAction.get("findByThreadId", post.threadId, function (err, t) {
+                ThreadService.get("findByThreadId", post.threadId, function (err, t) {
                     if (t) {
                         thread = t;
                     }
@@ -55,7 +54,7 @@ function editCommentAction(req, res, next) {
                 pv.hasPermission("EDIT_DISCUSSION", thread.linkedModelPK, n);
             },
             function (n) {
-                commentDBAction.update({
+                CommentService.update({
                     commentId: commentId,
                     content: sanitize(content).xss(),
                     updateDate: Date.now()

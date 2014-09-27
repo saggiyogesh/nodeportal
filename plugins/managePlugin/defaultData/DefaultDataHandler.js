@@ -7,18 +7,17 @@ var async = require('async');
  * @returns {Function}
  */
 exports.PluginInstance = function (app, data) {
-    var DBActions = require(utils.getLibPath() + "/DBActions");
-    var pluginDBAction = DBActions.getSimpleInstance(app, "PluginInstance");
-    var userDBAction = DBActions.getSimpleInstance(app, "User");
-    var pageDBAction = DBActions.getSimpleInstance(app, "Page");
+    var PluginService = app.getService("PluginInstance");
+    var UserService = app.getService("User");
+    var PageService = app.getService("Page");
 
     return function (next) {
         async.parallel({
                 homePage: function (cb) {
-                    pageDBAction.get("findByFriendlyURL", '/home', cb);
+                    PageService.getByFriendlyURL('/home', cb);
                 },
                 admin: function (cb) {
-                    userDBAction.get("findByEmailId", "admin@nodeportal.com", cb);
+                    UserService.getByEmailId("admin@nodeportal.com", cb);
                 }
             },
             function (err, results) {
@@ -33,7 +32,7 @@ exports.PluginInstance = function (app, data) {
                     login.userId = displayArt.userId = userId;
                     login.userName = displayArt.userName = userName;
 
-                    pluginDBAction.multipleSave(_.values(data), next);
+                    PluginService.multipleSave(_.values(data), next);
                 }
             });
     };

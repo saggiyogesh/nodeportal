@@ -10,24 +10,28 @@ var async = require('async');
  * @returns {Function}
  */
 exports.Page = function (app, data) {
-    var DBActions = require(utils.getLibPath() + "/DBActions");
-    var themeDBAction = DBActions.getSimpleInstance(app, "Theme");
-    var layoutDBAction = DBActions.getSimpleInstance(app, "Layout");
-    var userDBAction = DBActions.getSimpleInstance(app, "User");
+    var ThemeService = app.getService("Theme");
+    var LayoutService = app.getService("Layout");
+    var UserService = app.getService("User");
+    var PageService = app.getService("Page");
+    var RoleService = app.getService("Role");
 
     return function (next) {
         async.parallel({
                 theme: function (cb) {
-                    themeDBAction.get("getDefault", null, cb);
+                    ThemeService.getDefault(cb);
                 },
                 defaultLayout: function (cb) {
-                    layoutDBAction.get("getDefault", null, cb);
+                    LayoutService.getDefault(cb);
                 },
                 oneColLayout: function (cb) {
-                    layoutDBAction.get("getOneCol", null, cb);
+                    LayoutService.getOneCol(cb);
                 },
                 user: function (cb) {
-                    userDBAction.get("findByEmailId", "admin@nodeportal.com", cb);
+                    UserService.getByEmailId("admin@nodeportal.com", cb);
+                },
+                role: function (cb) {
+                    RoleService.getAll(cb);
                 }
             },
             function (err, results) {
@@ -44,7 +48,19 @@ exports.Page = function (app, data) {
                 home.userId = test.userId = userId;
                 home.userName = test.userName = userName;
 
-                DBActions.getSimpleInstance(app, "Page").multipleSave(_.values(data), next);
+                //getting all role id & creates empty role permissions object
+                var roles = _.map(results.role, function (role) {
+                    return role.roleId;
+                });
+
+                var rP = {};
+                roles.forEach(function (rID) {
+                    rP[rID] = [];
+                });
+                home.rolePermissions = rP;
+                test.rolePermissions = rP;
+
+                PageService.multipleSave(_.values(data), next);
             });
     };
 };

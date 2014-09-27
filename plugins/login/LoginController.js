@@ -57,36 +57,34 @@ function getGravatar(req, that) {
     utils.tick(function () {
         var emailId = that.getPluginHelper().getPostParam(req, "email"),
             gravatar = require('gravatar'),
-            DBActions = that.getDBActionsLib(),
-            dbAction = DBActions.getInstance(req, USER_SCHEMA),
             sessionUser = req.session.user,
             userId, profilePic = sessionUser.profilePic || {}, hash;
         async.series([
-            function (n) {
-                //get user
-                dbAction.get("findByEmailId", emailId, function (err, m) {
-                    if (m && m.userId) {
-                        userId = m.userId;
-                    }
-                    n(err);
-                });
-            },
-            function (n) {
-                //checking  gravatar url
-                var url = gravatar.url(emailId);
-                hash = url.split("/").pop();
-                n(null);
-            },
-            function (n) {
-                //saving gravatar hash
-                profilePic.gravatar = hash;
-                profilePic.uploaded = false;
-                dbAction.update({
-                    userId: userId,
-                    profilePic: profilePic
-                }, n);
-            }
-        ],
+                function (n) {
+                    //get user
+                    dbAction.get("findByEmailId", emailId, function (err, m) {
+                        if (m && m.userId) {
+                            userId = m.userId;
+                        }
+                        n(err);
+                    });
+                },
+                function (n) {
+                    //checking  gravatar url
+                    var url = gravatar.url(emailId);
+                    hash = url.split("/").pop();
+                    n(null);
+                },
+                function (n) {
+                    //saving gravatar hash
+                    profilePic.gravatar = hash;
+                    profilePic.uploaded = false;
+                    dbAction.update({
+                        userId: userId,
+                        profilePic: profilePic
+                    }, n);
+                }
+            ],
             function (err, results) {
                 if (!err) {
                     sessionUser.profilePic = profilePic;
@@ -98,13 +96,14 @@ function getGravatar(req, that) {
 }
 
 var oauthRegister = function (req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(), dbAction = DBActions.getInstance(req, USER_SCHEMA), dbUser,
+    var that = this,
+        UserService = that.getService(USER_SCHEMA), dbUser,
         email = that.getPluginHelper().getPostParam(req, "email"),
         hasFormError;
     req.params.action = "registerOAuthUser";
 
     //get user form email typed by user
-    dbAction.get("findByEmailId", email, function (err, u) {
+    UserService.getByEmailId(email, function (err, u) {
         if (err) {
             return next(err);
         }
@@ -142,7 +141,7 @@ var oauthRegister = function (req, res, next) {
                         oAuthInfo = {};
                     oAuthInfo[oAuthUser.provider] = req.session.oAuthUser;
 
-                    dbAction.save({
+                    UserService.save({
                         emailId: email,
                         firstName: oAuthUser.firstName,
                         lastName: oAuthUser.lastName,
@@ -152,7 +151,7 @@ var oauthRegister = function (req, res, next) {
                 },
                 function (n) {
                     //get current saved user from db
-                    dbAction.get("findByEmailId", email, function (err, u) {
+                    UserService.getByEmailId(email, function (err, u) {
                         if (u) {
                             dbUser = u.toObject();
                         }
@@ -198,7 +197,7 @@ var doRegister = function (req, res, next) {
                     return next(err);
                 }
                 var userRole = require(utils.getLibPath() + "/permissions/Roles").getUserRole();
-                that.getDBActionsLib().populateModelAndSave(req, USER_SCHEMA, {roles: [userRole.roleId ],
+                that.getService(USER_SCHEMA).populateModelAndSave(postParams, {roles: [userRole.roleId ],
                         passwordEnc: hash}, {emailId: "email"},
                     function (err) {
                         loginProcess(req, res, next, postParams)(err);
@@ -285,8 +284,7 @@ function oauthSuccessRedirect(req, dbUser, next, err, res) {
     });
 }
 LoginController.prototype.registerOAuthUserAction = function (req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, USER_SCHEMA);
+    var that = this, UserService = that.getService(USER_SCHEMA);
 
     var oAuthUser = getUserInfoFromOAuthUser(req);
     if (oAuthUser) {
@@ -299,7 +297,7 @@ LoginController.prototype.registerOAuthUserAction = function (req, res, next) {
             function (n) {
                 //get user by email
                 if (email) {
-                    dbAction.get("findByEmailId", email, function (err, u) {
+                    UserService.getByEmailId(email, function (err, u) {
                         if (u) {
                             dbUser = u.toObject();
                         }
@@ -316,7 +314,7 @@ LoginController.prototype.registerOAuthUserAction = function (req, res, next) {
                     //update oauth data to user collection
                     var oauthInfo = dbUser.oauthInfo || {};
                     oauthInfo[provider] = req.session.oAuthUser;
-                    dbAction.update({
+                    UserService.update({
                         userId: dbUser.userId,
                         oauthInfo: oauthInfo
                     }, n);
@@ -358,9 +356,7 @@ LoginController.prototype.render = function (req, res, next) {
     var params = this.parseParams(req);
     var page = 0;
     var view = "index";
-    var ret = {
-
-    };
+    var ret = {};
 
     if (params.params.action === "registerOAuthUser") {
         view = params.params.action

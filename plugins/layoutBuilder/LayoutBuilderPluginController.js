@@ -37,8 +37,8 @@ function getDefaultLayoutPath(app) {
 }
 
 function createLayout(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, LAYOUT_SCHEMA),
+    var that = this, params = req.params,
+        LayoutService = that.getService(LAYOUT_SCHEMA),
         app = req.app,
         layoutHome = getLayoutHome(app),
         name = params.name;
@@ -47,8 +47,7 @@ function createLayout(req, res, next) {
         var fileName = utils.normalize(name) , path = "layouts/" + fileName,
             defaultLayoutPath = getDefaultLayoutPath(app),
             newLayoutPath = layoutHome + "/" + fileName + ".jade";
-        console.log("gdfsgf g???? "+fileName)
-        dbAction.get("findByName", name, function (err, layout) {
+        LayoutService.getByName(name, function (err, layout) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -59,7 +58,7 @@ function createLayout(req, res, next) {
             }
             else {
                 that.FileUtil.copyFile(defaultLayoutPath, newLayoutPath, function (err) {
-                    dbAction.save({name: name, path: path, placeHolderNames: DEFAULT_PLACEHOLDERS},
+                    LayoutService.save({name: name, path: path, placeHolderNames: DEFAULT_PLACEHOLDERS},
                         function (err, result) {
                             if (!err && result) {
                                 that.setSuccess(req, "Layout created successfully.");
@@ -81,15 +80,15 @@ function createLayout(req, res, next) {
 }
 
 function openLayout(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, LAYOUT_SCHEMA),
+    var that = this, params = req.params,
+        LayoutService = that.getService(LAYOUT_SCHEMA),
         app = req.app,
         layoutHome = getLayoutHome(app),
         layoutId = params.id,
         fileUtil = that.FileUtil;
 
     if (layoutId) {
-        dbAction.get("findByLayoutId", layoutId, function (err, layout) {
+        LayoutService.findById(layoutId, function (err, layout) {
             if (err) {
                 return next(err);
             }
@@ -121,7 +120,7 @@ function openLayout(req, res, next) {
 
 function updateLayoutAction(req, res, next) {
     var that = this, db = that.getDB(),
-        DBActions = that.getDBActionsLib(), dbAction = DBActions.getInstance(req, LAYOUT_SCHEMA),
+        LayoutService = that.getService(LAYOUT_SCHEMA),
         fileUtil = that.FileUtil, formObj = utils.clone(Forms.EditForm);
 
     that.ValidateForm(req, formObj, function (err, result) {
@@ -130,8 +129,9 @@ function updateLayoutAction(req, res, next) {
         }
         var pluginHelper = that.getPluginHelper();
         if (!result.hasErrors) {
+            var postParams = pluginHelper.getPostParams(req);
             var redirect = pluginHelper.getPostParam(req, "redirect");
-            DBActions.populateModelAndUpdate(req, LAYOUT_SCHEMA,
+            LayoutService.populateModelAndUpdate(postParams,
                 {placeHolderNames: pluginHelper.getPostParam(req, "placeholders").split(",")}, {},
                 function (err, result) {
                     if (err) {
@@ -139,10 +139,9 @@ function updateLayoutAction(req, res, next) {
                     }
                     if (result) {
                         fileUtil.writeFile(getViewsHome(req.app) + "/layouts/" +
-                            utils.normalize(pluginHelper.getPostParam(req, "layoutName")) + ".jade",
+                                utils.normalize(pluginHelper.getPostParam(req, "layoutName")) + ".jade",
                             pluginHelper.getPostParam(req, "template"), "utf8",
                             function (err) {
-                                var redirect = pluginHelper.getPostParam(req, "redirect");
                                 that.setRedirect(req, redirect);
                                 var msg = "Layout updated successfully.";
                                 that.setSuccessMessage(req, msg);
@@ -166,9 +165,9 @@ function updateLayoutAction(req, res, next) {
 LayoutBuilderPluginController.prototype.render = function (req, res, next) {
     var view = req.params.action;
     view = view || "index";
-    var DBActions = this.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, LAYOUT_SCHEMA);
-    dbAction.get("getAllExceptDefaults", null, function (err, layouts) {
+    var LayoutService = that.getService(LAYOUT_SCHEMA);
+
+    LayoutService.getAllExceptDefaults(function (err, layouts) {
         var ret = {
             layouts: [],
             isDisabled: true
