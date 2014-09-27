@@ -4,7 +4,7 @@
     "description": "Portal based cms written in node.js",
     "version": "0.2.3",
     "homepage": "nodeportal.com",
-    "keywords": ["cms", "node", "nodejs", "portal", "mongodb", "express", "mongoose", "twitter-bootstrap", "ckeditor", "easy", "fast"],
+    "keywords": ["cms", "node", "nodejs", "portal", "loopback", "mongoose", "twitter-bootstrap", "ckeditor", "easy", "fast"],
     "repository": {
         "type": "git",
         "url": "https://github.com/saggiyogesh/nodeportal.git"
