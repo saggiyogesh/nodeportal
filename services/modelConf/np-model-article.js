@@ -21,7 +21,8 @@ module.exports = {
     finders: {
         getById: {
             arguments: ["id"],
-            query: {where: {id: "_id"} }
+            query: {where: {id: "_id"} },
+            method: "findOne"
         },
         getByIdAndVersion: {
             arguments: ["id", "version"],

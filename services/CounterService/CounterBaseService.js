@@ -2,17 +2,17 @@
 // not modified directly
 var loopback = require("loopback"),
     DAOExtras = require(utils.getLibPath() + "/ServicesHelper/DAOExtras"),
-    config = require(utils.getRootPath() + "/<%= path %>");
+    config = require(utils.getRootPath() + "/services/modelConf/np-model-counter.js");
 
-var <%= name %> = loopback.createModel(config);
+var Counter = loopback.createModel(config);
 
-DAOExtras(<%= name %>);
+DAOExtras(Counter);
 
 //create finders form finders property
-<%=finders%>
+
 
 
 //TODO build finders with paging, different ways for nosql & sql dbs
 
 
-module.exports = <%= name %>;
+module.exports = Counter;

@@ -3,10 +3,14 @@
 // this file is created initially and extending the BaseService Class
 // on updating model conf file this file will not generate again
 
-var <%= name %>BaseService = require("./<%= name %>BaseService"),
-    <%= name %>ServiceAuth = require("./<%= name %>ServiceAuth");
+var <%= name %>BaseService = require("./<%= name %>BaseService");
+
+<% if (auth) { %>
+var <%= name %>ServiceAuth = require("./<%= name %>ServiceAuth");
 
 <%= name %>BaseService.Auth = <%= name %>ServiceAuth;
+<% } %>
+
 
 
 
