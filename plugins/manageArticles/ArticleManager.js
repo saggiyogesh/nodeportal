@@ -2,29 +2,27 @@ var Article_Schema = "Article", Article_Version_Schema = "ArticleVersion",
     columns = ["", "id", "localizedTitle.en_US", "createDate", "displayDate"],
     direction = {"asc": 1, "desc": -1 };
 
+
+//TODO remove this file. merge all the methods in AMC
 function getQuery(dbAction, id) {
     return dbAction.getQuery(true).where("id", id);
 }
 
-var getLatestArticleById = exports.getLatestArticleById = function (id, dbAction, next) {
-    dbAction.authorizedGetByQuery(getQuery(dbAction, id), next);
+var getLatestArticleById = exports.getLatestArticleById = function (id, roles, articleAuthService, next) {
+    articleAuthService.getById(id, roles, next);
 };
 
-exports.getArticlesCount = function (dbAction, next) {
-    var query = dbAction.getQuery().desc('version');
-    dbAction.authorizedCount(query, next);
-};
-
+//TODO with paging
 exports.getArticles = function (dbAction, queryParams, next) {
     var sortCol = queryParams["iSortCol_0"], sortDir = queryParams["sSortDir_0"],
         start = queryParams["iDisplayStart"], length = queryParams["iDisplayLength"],
         searchKeyword = queryParams["sSearch"];
 
     //same query can't be used for count & search
-    if(sortDir == "desc"){
+    if (sortDir == "desc") {
         sortDir = "-";
     }
-    else{
+    else {
         sortDir = "";
     }
 
@@ -59,18 +57,6 @@ exports.getArticles = function (dbAction, queryParams, next) {
 
 };
 
-
-exports.hasArticle = function (id, dbAction, next) {
-    dbAction.getByQuery(getQuery(dbAction, id), next);
-};
-
-exports.removeArticle = function (id, dbAction, next) {
-    dbAction.authorizedRemoveByQuery(getQuery(dbAction, id), next);
-};
-
-exports.removeArticleVersions = function (id, dbActionVersion, next) {
-    dbActionVersion.authorizedRemoveByQuery(getQuery(dbActionVersion, id), next);
-};
 
 exports.moveArticleToArticleVersion = function (id, dbAction, dbActionVersion, next) {
     getLatestArticleById(id, dbAction, function (err, curArticle) {

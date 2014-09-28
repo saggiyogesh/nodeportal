@@ -1,6 +1,5 @@
 var BasePluginController = require(process.cwd() + "/lib/BasePluginController"),
     PluginInstanceHandler = require(process.cwd() + "/lib/PluginInstanceHandler"),
-    Permissions = require(process.cwd() + "/lib/permissions/Permissions"),
     PLUGIN_PERMISSION_SCHEMA_KEY = PluginInstanceHandler.permissionSchemaKey;
 var PermissionController = module.exports = function (id, app) {
     BasePluginController.call(this, id, app);

@@ -49,13 +49,13 @@ function handleDisplayArticleSettingsUpdate(event) {
     var displayArticlePluginId = "displayArticle", ns = modelData.pluginNamespace;
     if (utils.contains(ns, displayArticlePluginId)) {
         var pageId = modelData.pageId, locations, id, articleId;
-        var dbAction = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_SCHEMA);
-        var dbActionPlugin = that.getDBActionsLib().getInstanceFromDB(that.getDB(), PLUGIN_INSTANCE_SCHEMA);
-        var dbActionAL = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_LOCATION_SCHEMA);
+        var ArticleService = app.getService(ARTICLE_SCHEMA),
+            PluginInstanceService = app.getService(PLUGIN_INSTANCE_SCHEMA),
+            ArticleLocationService = app.getService(ARTICLE_LOCATION_SCHEMA);
         async.series([
             function (n) {
                 //get plugin instance model
-                dbActionPlugin.get("findByPluginInstanceId", modelData.pluginInstanceId, function (err, plugin) {
+                PluginInstanceService.findById(modelData.pluginInstanceId, function (err, plugin) {
                     if (plugin) {
                         if (plugin.settings) {
                             id = plugin.settings.id;
@@ -70,7 +70,7 @@ function handleDisplayArticleSettingsUpdate(event) {
             },
             function (n) {
                 //get article
-                dbAction.get("findById", id, function (err, art) {
+                ArticleService.getById(id, function (err, art) {
                     if (art) {
                         Debug._l(">> " + art)
 
@@ -84,12 +84,13 @@ function handleDisplayArticleSettingsUpdate(event) {
             },
             function (n) {
                 //check for already configured model & remove it.
-                var q = dbActionAL.getQuery(true);
-                q.where("pageId", pageId).where("namespace", ns);
-                dbActionAL.removeByQuery(q, n);
+                ArticleLocationService.deleteAll({
+                    pageId: pageId,
+                    namespace: ns
+                }, n);
             },
             function (n) {
-                dbActionAL.save({
+                ArticleLocationService.save({
                     namespace: ns,
                     pageId: pageId,
                     id: id
@@ -109,13 +110,14 @@ function handleDisplayArticleRemove(event) {
     Debug._l(">>> " + schemaName);
     if (utils.contains(ns, displayArticlePluginId)) {
         var pageId = modelData.pageId, locations, id, articleId;
-        var dbActionAL = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_LOCATION_SCHEMA);
+        var ArticleLocationService = app.getService(ARTICLE_LOCATION_SCHEMA);
         async.series([
             function (n) {
                 //check for already configured model & remove it.
-                var q = dbActionAL.getQuery(true);
-                q.where("pageId", pageId).where("namespace", ns);
-                dbActionAL.removeByQuery(q, n);
+                ArticleLocationService.deleteAll({
+                    pageId: pageId,
+                    namespace: ns
+                }, n);
             }
         ], function (err, result) {
             Debug._l(err);
@@ -129,11 +131,12 @@ function incrementVersion(version) {
 }
 
 function getArticleVersions(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
+    var that = this, params = req.params,
         id = params.id, ns = that.getNamespace(req), redirect = "/" + params.page + "/" + ns;
-    var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY),
-        dbActionVersion = DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA);
-    ArticleManager.getLatestArticleById(id, dbAction, function (err, latestArticle) {
+    var ArticleService = app.getService(ARTICLE_SCHEMA),
+        ArticleVersionService = app.getService(ARTICLE_VERSION_SCHEMA);
+
+    ArticleService.Auth.getById(id, req.session.roles, function (err, latestArticle) {
         if (err) {
             return next(err);
         }
@@ -141,7 +144,8 @@ function getArticleVersions(req, res, next) {
         if (latestArticle) {
             Debug._l(">> " + latestArticle.localizedTitle["en_US"] + " : " + that.DateUtil.formatArticleDate(latestArticle.createDate))
             json.push([latestArticle.version, that.DateUtil.formatArticleDate(latestArticle.createDate)]);
-            dbActionVersion.get("findById", id, function (err, articleVersions) {
+
+            ArticleVersionService.getById(id, function (err, articleVersions) {
                 if (articleVersions) {
                     articleVersions.forEach(function (articleVersion) {
                         json.push([articleVersion.version, that.DateUtil.formatArticleDate(articleVersion.createDate)])
@@ -162,7 +166,7 @@ function getArticleVersions(req, res, next) {
 }
 
 function previewArticleAction(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), params = req.params,
+    var that = this, params = req.params,
         id = params.id, ns = that.getNamespace(req), version = params.version;
 
     var redirect = "/" + params.page + "/" + ns,
@@ -181,13 +185,14 @@ function previewArticleAction(req, res, next) {
             that.setRedirect(req, redirect);
             return next(null);
         }
-        var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY);
-        ArticleManager.getLatestArticleById(id, dbAction, function (err, latestArticle) {
+        var ArticleService = app.getService(ARTICLE_SCHEMA);
+
+        ArticleService.Auth.getById(id, function (err, latestArticle) {
             if (err) {
                 return next(err);
             }
             if (!latestArticle) {
-                return next(dbAction.getPermissionError("VIEW"), req, res);
+                return new that.PermissionError(null, req.session.user.userName, "VIEW");
             }
             defaultView({article: latestArticle, req: req}, function (err, html) {
                 params.action = "preview";
@@ -203,23 +208,28 @@ function previewArticleAction(req, res, next) {
 }
 
 function removeArticleAction(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
+
+    var that = this, db = that.getDB(), params = req.params,
         idStr = params.id, ns = that.getNamespace(req);
     if (idStr) {
-        var redirect = "/" + params.page + "/" + ns;
-        var ids = idStr.split("~"),
-            dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY),
-            dbActionVersion = DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA),
-            dbActionAL = that.getDBActionsLib().getInstanceFromDB(that.getDB(), ARTICLE_LOCATION_SCHEMA);
+        var redirect = "/" + params.page + "/" + ns, ids = idStr.split("~")
 
-        var AsyncIterator = that.AsyncIterator;
-        var asycI = new AsyncIterator(ids, function (err, result) {
+        var ArticleService = app.getService(ARTICLE_SCHEMA),
+            PluginInstanceService = app.getService(PLUGIN_INSTANCE_SCHEMA),
+            ArticleLocationService = app.getService(ARTICLE_LOCATION_SCHEMA);
+
+        async.each(ids, function (id, n) {
+
+
+        }, function (err, result) {
             if (!err && result) {
                 that.setRedirect(req, redirect);
                 that.setSuccessMessage(req, "Article(s) deleted successfully.");
             }
             next(err);
-        });
+        })
+
+        var AsyncIterator = that.AsyncIterator;
         var asyncProcess = function () {
             var self = this, i = self.i, ids = self.vals;
             var query = dbAction.getQuery();

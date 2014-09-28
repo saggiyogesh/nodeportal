@@ -23,10 +23,6 @@ module.exports = {
             arguments: ["id"],
             query: {where: {id: "_id"} },
             method: "findOne"
-        },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} }
         }
     },
     auth: true

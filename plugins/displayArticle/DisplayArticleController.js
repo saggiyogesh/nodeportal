@@ -44,7 +44,7 @@ function getArticle(req, that, next) {
                         return;
                     }
                     else if (expiryDate && (DateUtil.datePassed(expiryDate) || DateUtil.equalToToday(expiryDate))) {
-                        dbAction.update({articleId: latestArticle.articleId, isExpired: true}, function (err, result) {
+                        ArticleAuthService.update({articleId: latestArticle.articleId, isExpired: true}, function (err, result) {
                             if (!err) {
                                 setExpiryMsg();
                             }

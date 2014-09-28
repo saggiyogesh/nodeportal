@@ -9,6 +9,18 @@ var ArticleVersion = loopback.createModel(config);
 DAOExtras(ArticleVersion);
 
 //create finders form finders property
+ArticleVersion.getById = function getById(id, next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.find({"where":{"id":id}}, next);
+};
+
+
+ArticleVersion.getByIdAndVersion = function getByIdAndVersion(id,version, next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.findOne({"where":{"id":id,"version":version}}, next);
+};
+
+
 
 
 

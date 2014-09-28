@@ -11,13 +11,7 @@ DAOExtras(Article);
 //create finders form finders property
 Article.getById = function getById(id, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"id":id}}, next);
-};
-
-
-Article.getByIdAndVersion = function getByIdAndVersion(id,version, next) {   // arguments are defined in arguments property
-    //find or findOne will have argument from query
-    this.find({"where":{"id":id,"version":version}}, next);
+    this.findOne({"where":{"id":id}}, next);
 };
 
 

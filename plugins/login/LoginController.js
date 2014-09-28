@@ -58,11 +58,12 @@ function getGravatar(req, that) {
         var emailId = that.getPluginHelper().getPostParam(req, "email"),
             gravatar = require('gravatar'),
             sessionUser = req.session.user,
+            UserService = that.getService(USER_SCHEMA)
             userId, profilePic = sessionUser.profilePic || {}, hash;
         async.series([
                 function (n) {
                     //get user
-                    dbAction.get("findByEmailId", emailId, function (err, m) {
+                    UserService.getByEmailId(emailId, function (err, m) {
                         if (m && m.userId) {
                             userId = m.userId;
                         }
@@ -79,7 +80,7 @@ function getGravatar(req, that) {
                     //saving gravatar hash
                     profilePic.gravatar = hash;
                     profilePic.uploaded = false;
-                    dbAction.update({
+                    UserService.update({
                         userId: userId,
                         profilePic: profilePic
                     }, n);
