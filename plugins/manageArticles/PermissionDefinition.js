@@ -10,7 +10,7 @@ module.exports = {
         },
         "model.articleSchema": {
             permissions: ["ADD"], //will handle add folder and upload a file
-            user: ["VIEW"]
+            user: ["ADD"] //user role will have add permission
         }
     }
 };
