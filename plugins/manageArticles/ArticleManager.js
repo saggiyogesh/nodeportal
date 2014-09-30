@@ -4,9 +4,11 @@ var Article_Schema = "Article", Article_Version_Schema = "ArticleVersion",
 
 
 //TODO remove this file. merge all the methods in AMC
-function getQuery(dbAction, id) {
-    return dbAction.getQuery(true).where("id", id);
-}
+
+
+//function getQuery(dbAction, id) {
+//    return dbAction.getQuery(true).where("id", id);
+//}
 
 var getLatestArticleById = exports.getLatestArticleById = function (id, roles, articleAuthService, next) {
     articleAuthService.getById(id, roles, next);

@@ -107,7 +107,6 @@ function handleDisplayArticleRemove(event) {
     var schemaName = event.schemaName, modelId = event.modelId, modelData = event.modelData,
         that = this, app = that.getApp();
     var displayArticlePluginId = "displayArticle", ns = modelData.pluginNamespace;
-    Debug._l(">>> " + schemaName);
     if (utils.contains(ns, displayArticlePluginId)) {
         var pageId = modelData.pageId, locations, id, articleId;
         var ArticleLocationService = app.getService(ARTICLE_LOCATION_SCHEMA);
@@ -133,35 +132,17 @@ function incrementVersion(version) {
 function getArticleVersions(req, res, next) {
     var that = this, params = req.params,
         id = params.id, ns = that.getNamespace(req), redirect = "/" + params.page + "/" + ns;
-    var ArticleService = app.getService(ARTICLE_SCHEMA),
-        ArticleVersionService = app.getService(ARTICLE_VERSION_SCHEMA);
+    var ArticleServiceAuth = app.getService(ARTICLE_SCHEMA).Auth;
 
-    ArticleService.Auth.getById(id, req.session.roles, function (err, latestArticle) {
+    ArticleServiceAuth.getArticleVersions(id, req.session.roles, function (err, json) {
         if (err) {
-            return next(err);
-        }
-        var json = [];
-        if (latestArticle) {
-            Debug._l(">> " + latestArticle.localizedTitle["en_US"] + " : " + that.DateUtil.formatArticleDate(latestArticle.createDate))
-            json.push([latestArticle.version, that.DateUtil.formatArticleDate(latestArticle.createDate)]);
-
-            ArticleVersionService.getById(id, function (err, articleVersions) {
-                if (articleVersions) {
-                    articleVersions.forEach(function (articleVersion) {
-                        json.push([articleVersion.version, that.DateUtil.formatArticleDate(articleVersion.createDate)])
-                        Debug._l(">> " + articleVersion.localizedTitle["en_US"] + " : " + that.DateUtil.formatArticleDate(latestArticle.createDate))
-                    });
-                    Debug._li("", json)
-                    that.setJSON(req, {"values": json});
-                }
-                next(err);
-            });
-        }
-        else {
-            that.setErrorMessage(req, "Wrong id.");
             that.setRedirect(req, redirect);
-            return next(null, req, res);
         }
+        else{
+            that.setJSON(req, json);
+            Debug._li("", json)
+        }
+        next(err);
     });
 }
 
@@ -209,16 +190,22 @@ function previewArticleAction(req, res, next) {
 
 function removeArticleAction(req, res, next) {
 
-    var that = this, db = that.getDB(), params = req.params,
+    var that = this, app = req.app, params = req.params,
         idStr = params.id, ns = that.getNamespace(req);
     if (idStr) {
-        var redirect = "/" + params.page + "/" + ns, ids = idStr.split("~")
+        var redirect = "/" + params.page + "/" + ns, ids = idStr.split("~");
 
         var ArticleService = app.getService(ARTICLE_SCHEMA),
+            ArticleVersionService = app.getService(ARTICLE_VERSION_SCHEMA),
             PluginInstanceService = app.getService(PLUGIN_INSTANCE_SCHEMA),
             ArticleLocationService = app.getService(ARTICLE_LOCATION_SCHEMA);
 
         async.each(ids, function (id, n) {
+            ArticleService.Auth.remove({id: id}, req.session.roles, function (err, result) {
+                if (!err && result) {
+
+                }
+            });
 
 
         }, function (err, result) {
@@ -227,7 +214,7 @@ function removeArticleAction(req, res, next) {
                 that.setSuccessMessage(req, "Article(s) deleted successfully.");
             }
             next(err);
-        })
+        });
 
         var AsyncIterator = that.AsyncIterator;
         var asyncProcess = function () {

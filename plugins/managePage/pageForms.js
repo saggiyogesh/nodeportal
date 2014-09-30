@@ -2,8 +2,8 @@ function checkFriendlyURL(req, model, val, next) {
     if (val.indexOf("/") == -1) {
         val = "/" + val;
     }
-    var db = this.db, dbAction = require(utils.getLibPath() + "/DBActions").getInstanceFromDB(db, "Page");
-    dbAction.get("findByFriendlyURL", val, function (err, page) {
+    var PageService = req.app.getService("Page");
+    PageService.getByFriendlyURL(val, function (err, page) {
         if (err) {
             next(err);
             return;
@@ -111,13 +111,13 @@ var formObj = {
     fields: [ pageId, parentPageId, redirect, name, friendlyURL, theme, layout, isHidden ,
         description, keywords, update, cancel ]
 };
-exports.PageForm = function (req, DBActions, next) {
-    var dbActionTheme = DBActions.getInstance(req, "Theme"),
-        dbActionLayout = DBActions.getInstance(req, "Layout");
+exports.PageForm = function (req, next) {
+    var ThemeService = req.app.getService("Theme");
+    var LayoutService = req.app.getService("Layout");
 
     var cloneFormObj = utils.clone(formObj), fields = cloneFormObj.fields;
 
-    dbActionTheme.get("find", {}, function (err, themes) {
+    ThemeService.find({}, function (err, themes) {
         if (err) return next(err);
 
         var theme = fields[5];
@@ -126,7 +126,7 @@ exports.PageForm = function (req, DBActions, next) {
             theme.options.push([t.name, t.themeId]);
         });
 
-        dbActionLayout.get("find", {}, function (err, layouts) {
+        LayoutService.find({}, function (err, layouts) {
             if (err) return next(err);
 
             var layout = fields[6];
@@ -169,7 +169,7 @@ var pageOrderFormObj = {
 };
 
 exports.updatePageOrderForm = function () {
-    return utils.clone(pageOrderFormObj );
+    return utils.clone(pageOrderFormObj);
 };
 
 
