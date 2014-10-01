@@ -10,9 +10,11 @@ var ArticleServiceAuth = require("./ArticleServiceAuth");
 
 ArticleBaseService.Auth = ArticleServiceAuth;
 
-var DateUtil = require(utils.getLibPath() + "/Utils/DateUtil");
+var DateUtil = require(utils.getLibPath() + "/Utils/DateUtil"),
+    PermissionValidator = require(utils.getLibPath() + "/permissions/PermissionValidator");
 
-var ArticleVersionService = ArticleBaseService.getService("ArticleVersion");
+var ArticleVersionService = ArticleBaseService.getService("ArticleVersion"),
+    ArticleLocationService = ArticleBaseService.getService("ArticleLocation");
 
 
 ArticleBaseService.ArticleNotFoundError = ArticleNotFoundError;
@@ -28,23 +30,57 @@ util.inherits(ArticleNotFoundError, Error);
 //Custom methods
 
 /**
- * Override generated method and throw ArticleNotFoundError
  *
  * @param id
- * @param roles
+ * @param [version]
+ * @param req
  * @param next
  */
-ArticleServiceAuth.getById = function getByIdAuth(id, roles, next) {
-    ArticleServiceAuth.findOne({"where": {"id": id}}, roles, function (err, article) {
-        if (!article) {
-            err = new ArticleNotFoundError(id);
-        }
-        next(err, article);
-    });
+ArticleServiceAuth.getByIdAndVersion = function getByIdAndVersionAuth(id, version, req, next) {
+    if (isNaN(id)) {
+        // err invalid id
+        return next(new ArticleNotFoundError(id));
+    }
+
+    if (id && !version) {
+        ArticleServiceAuth.getById(id, req.session.roles, function (err, article) {
+            if (!article) {
+                err = new ArticleNotFoundError(id);
+            }
+            next(err, article);
+        });
+    }
+    else {
+        async.waterfall([
+            function (n) {
+                ArticleBaseService.getByIdAndVersion(id, version, n); //latest article
+            },
+            function (article, n) {
+                if (article) {
+                    //check article view permission
+                    var pv = new PermissionValidator(req, "model.articleSchema.Article", "Article");
+                    pv.hasPermission("VIEW", article.articleId, function (err, perm) {
+                        n(err, (perm && perm.isAuthorized && article));
+                    });
+                }
+                else {
+                    //check for version in Article Version
+                    ArticleVersionService.getByIdAndVersion(id, version, n);
+                }
+            } ,
+            function (article, n) {
+                var err;
+                if (!article) {
+                    err = new ArticleNotFoundError(id + ", version: " + version);
+                }
+                n(err, article);
+            }
+        ], next);
+    }
 };
 
 
-ArticleServiceAuth.getArticleVersions = function (id, roles, next) {
+ArticleServiceAuth.getArticleVersions = function getArticleVersionsAuth(id, roles, next) {
     var json = [];
     async.waterfall([
         function (n) {
@@ -65,6 +101,35 @@ ArticleServiceAuth.getArticleVersions = function (id, roles, next) {
         }
     ], next);
 
+};
+
+/**
+ * Deletes article, its versions & locations entries.
+ * @param id {Number} id of article
+ * @param roles {Array} user roles
+ * @param next {Function} callback. parameters are err & result
+ *              result exists if article is deleted
+ */
+ArticleServiceAuth.removeArticleById = function removeArticleByIdAuth(id, roles, next) {
+    async.waterfall([
+        function (n) {
+            ArticleServiceAuth.remove({id: id}, roles, n);
+        },
+        function (result, n) {
+            //remove all article versions, if article is deleted
+            result && ArticleVersionService.destroyAll({id: id}, function (err) {
+                n(err, !err && result);
+            });
+            n(result);
+        } ,
+        function (result, n) {
+            // remove all article locations
+            result && ArticleLocationService.removeArticleLocationsById(id, function (err) {
+                n(err, !err && result);
+            });
+            n(result);
+        }
+    ], next);
 };
 
 

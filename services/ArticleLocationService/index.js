@@ -6,12 +6,10 @@
 var ArticleLocationBaseService = require("./ArticleLocationBaseService");
 
 
-
-
-
-
-
-
+//custom methods
+ArticleLocationBaseService.removeArticleLocationsById = function removeArticleLocationsById(id, next) {
+    this.destroyAll({id: id}, next);
+};
 
 
 module.exports = ArticleLocationBaseService;

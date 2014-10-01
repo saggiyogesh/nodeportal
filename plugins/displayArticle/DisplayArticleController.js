@@ -21,49 +21,19 @@ function getArticle(req, that, next) {
             setExpiryMsg = function () {
                 that.setInfoMessage(req, "Article is expired.");
             };
+
+        var ArticleService = that.getService(ARTICLE_SCHEMA),
+            ArticleServiceAuth = ArticleService.Auth;
+
         if (id) {
-            if (isNaN(id)) {
-                // err invalid id
-                that.setErrorMessage(req, "Wrong article Id");
-                return next();
-            }
-
-            var ArticleService = that.getService(ARTICLE_SCHEMA),
-                ArticleAuthService = ArticleService.Auth;
-
-            ArticleAuthService.getById(id, req.session.roles, function (err, latestArticle) {
-
-                if (err) return next(err);
-
-                var html, DateUtil = that.DateUtil;
+            ArticleServiceAuth.getByIdAndVersion(id, null, req, function (err, latestArticle) {
                 if (latestArticle) {
-                    var expiryDate = latestArticle.expiryDate;
-                    if (latestArticle.isExpired) {
-                        setExpiryMsg();
-                        next();
-                        return;
-                    }
-                    else if (expiryDate && (DateUtil.datePassed(expiryDate) || DateUtil.equalToToday(expiryDate))) {
-                        ArticleAuthService.update({articleId: latestArticle.articleId, isExpired: true}, function (err, result) {
-                            if (!err) {
-                                setExpiryMsg();
-                            }
-                            next(err);
-                        });
-                        return;
-                    }
-
                     defaultView({article: latestArticle, req: req}, function (err, html) {
                         req.attrs.articleHTML = html;
-                        next();
                     });
-
                 }
-                else {
-                    setErrMsg("Wrong article Id");
-                    next();
-                }
-            })
+                next(err);
+            });
         }
         else {
             that.setInfoMessage(req, "Article not selected.");

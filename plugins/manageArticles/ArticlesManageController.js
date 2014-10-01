@@ -132,13 +132,13 @@ function incrementVersion(version) {
 function getArticleVersions(req, res, next) {
     var that = this, params = req.params,
         id = params.id, ns = that.getNamespace(req), redirect = "/" + params.page + "/" + ns;
-    var ArticleServiceAuth = app.getService(ARTICLE_SCHEMA).Auth;
+    var ArticleServiceAuth = req.app.getService(ARTICLE_SCHEMA).Auth;
 
     ArticleServiceAuth.getArticleVersions(id, req.session.roles, function (err, json) {
         if (err) {
             that.setRedirect(req, redirect);
         }
-        else{
+        else {
             that.setJSON(req, json);
             Debug._li("", json)
         }
@@ -150,107 +150,52 @@ function previewArticleAction(req, res, next) {
     var that = this, params = req.params,
         id = params.id, ns = that.getNamespace(req), version = params.version;
 
-    var redirect = "/" + params.page + "/" + ns,
-        setErrMsg = function () {
-            that.setErrorMessage(req, "Wrong article Id");
-            that.setRedirect(req, redirect);
-        };
-    if (id) {
-        //check number validity of id
-        if (isNaN(id)) {
-            setErrMsg();
-            return next(null);
-        }
-        if (version) {
-            that.setErrorMessage(req, "Wrong article version number.");
-            that.setRedirect(req, redirect);
-            return next(null);
-        }
-        var ArticleService = app.getService(ARTICLE_SCHEMA);
+    var ArticleService = that.getService(ARTICLE_SCHEMA);
 
-        ArticleService.Auth.getById(id, function (err, latestArticle) {
-            if (err) {
-                return next(err);
-            }
-            if (!latestArticle) {
-                return new that.PermissionError(null, req.session.user.userName, "VIEW");
-            }
-            defaultView({article: latestArticle, req: req}, function (err, html) {
-                params.action = "preview";
-                req.attrs.preview = html;
-                next(null);
-            });
-        });
-    }
-    else {
-        setErrMsg();
-        return next(null);
-    }
+    async.waterfall([
+        function (n) {
+            ArticleService.Auth.getByIdAndVersion(id, version, req, n);
+        } ,
+        function (article, n) {
+            defaultView({article: article, req: req}, n);
+        },
+        function (html, n) {
+            params.action = "preview";
+            req.attrs.preview = html;
+            n();
+        }
+    ], next);
 }
 
 function removeArticleAction(req, res, next) {
 
-    var that = this, app = req.app, params = req.params,
+    var that = this, params = req.params,
         idStr = params.id, ns = that.getNamespace(req);
     if (idStr) {
         var redirect = "/" + params.page + "/" + ns, ids = idStr.split("~");
 
-        var ArticleService = app.getService(ARTICLE_SCHEMA),
-            ArticleVersionService = app.getService(ARTICLE_VERSION_SCHEMA),
-            PluginInstanceService = app.getService(PLUGIN_INSTANCE_SCHEMA),
-            ArticleLocationService = app.getService(ARTICLE_LOCATION_SCHEMA);
+        var ArticleService = that.getService(ARTICLE_SCHEMA),
+            ArticleVersionService = that.getService(ARTICLE_VERSION_SCHEMA),
+            PluginInstanceService = that.getService(PLUGIN_INSTANCE_SCHEMA),
+            ArticleLocationService = that.getService(ARTICLE_LOCATION_SCHEMA);
+
+        var nonDeletedIds = [];
 
         async.each(ids, function (id, n) {
-            ArticleService.Auth.remove({id: id}, req.session.roles, function (err, result) {
-                if (!err && result) {
-
+            ArticleService.Auth.removeArticleById(id, function (err, result) {
+                if (!result) {
+                    nonDeletedIds.push(id);
                 }
+                n();
             });
-
 
         }, function (err, result) {
             if (!err && result) {
-                that.setRedirect(req, redirect);
+                //that.setRedirect(req, redirect);
                 that.setSuccessMessage(req, "Article(s) deleted successfully.");
             }
             next(err);
         });
-
-        var AsyncIterator = that.AsyncIterator;
-        var asyncProcess = function () {
-            var self = this, i = self.i, ids = self.vals;
-            var query = dbAction.getQuery();
-            query.where('id', ids[i]);
-            dbAction.authorizedRemoveByQuery(query, function (err, result) {
-                if (!err && result == 0) {
-                    err = new that.PermissionError();
-                }
-                if (err) {
-                    return asycI.next(err);
-                }
-                // remove versions
-                //no need to check permissions as latest article already removed
-                dbActionVersion.removeByQuery(dbActionVersion.getQuery().where('id', ids[i]), function (err, result) {
-                    if (err)
-                        Debug._l(err);
-                    //Debug._l("Versions removed: " + result);
-                });
-
-                //delete article locations
-                dbActionAL.get("findById", ids[i], function (err, models) {
-                    if (models) {
-                        var alIds = _.pluck(models, "articleLocationId");
-                        dbActionAL.multipleRemove(alIds, function (err, r) {
-                            if (err) {
-                                Debug._l(err);
-                            }
-                        });
-                    }
-                });
-                asycI.iterate();
-            });
-        };
-        asycI.setAsyncProcess(asyncProcess);
     }
 }
 
