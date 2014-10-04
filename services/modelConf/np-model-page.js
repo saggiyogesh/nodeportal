@@ -35,6 +35,24 @@ module.exports = {
         getByThemeId: {
             arguments: ["themeId"],
             query: {where: {themeId: "_themeId"} }
+        },
+        getChildren: {
+            arguments: ["parentPageId"],
+            query: {where: {parentPageId: "_parentPageId"} }
+        },
+        getAboveSiblings: {
+            arguments: ["parentPageId", "order"],
+            query: {
+                where: {
+                    parentPageId: "_parentPageId",
+                    order: {
+                        gt:"_order"
+                    }
+                },
+                order: "order ASC"
+            }
+        },
+        getAllPages: {
         }
     },
     auth: true

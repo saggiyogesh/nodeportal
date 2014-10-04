@@ -27,6 +27,24 @@ Page.getByThemeId = function getByThemeId(themeId, next) {   // arguments are de
 };
 
 
+Page.getChildren = function getChildren(parentPageId, next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.find({"where":{"parentPageId":parentPageId}}, next);
+};
+
+
+Page.getAboveSiblings = function getAboveSiblings(parentPageId,order, next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.find({"where":{"parentPageId":parentPageId,"order":{"gt":order}},"order":"order ASC"}, next);
+};
+
+
+Page.getAllPages = function getAllPages( next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.find({}, next);
+};
+
+
 
 
 

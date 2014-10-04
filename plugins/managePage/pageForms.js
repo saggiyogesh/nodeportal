@@ -111,9 +111,9 @@ var formObj = {
     fields: [ pageId, parentPageId, redirect, name, friendlyURL, theme, layout, isHidden ,
         description, keywords, update, cancel ]
 };
-exports.PageForm = function (req, next) {
-    var ThemeService = req.app.getService("Theme");
-    var LayoutService = req.app.getService("Layout");
+exports.PageForm = function (app, next) {
+    var ThemeService = app.getService("Theme");
+    var LayoutService = app.getService("Layout");
 
     var cloneFormObj = utils.clone(formObj), fields = cloneFormObj.fields;
 

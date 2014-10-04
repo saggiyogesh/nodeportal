@@ -174,10 +174,7 @@ function removeArticleAction(req, res, next) {
     if (idStr) {
         var redirect = "/" + params.page + "/" + ns, ids = idStr.split("~");
 
-        var ArticleService = that.getService(ARTICLE_SCHEMA),
-            ArticleVersionService = that.getService(ARTICLE_VERSION_SCHEMA),
-            PluginInstanceService = that.getService(PLUGIN_INSTANCE_SCHEMA),
-            ArticleLocationService = that.getService(ARTICLE_LOCATION_SCHEMA);
+        var ArticleService = that.getService(ARTICLE_SCHEMA);
 
         var nonDeletedIds = [];
 
@@ -193,6 +190,7 @@ function removeArticleAction(req, res, next) {
             if (!err && result) {
                 //that.setRedirect(req, redirect);
                 that.setSuccessMessage(req, "Article(s) deleted successfully.");
+                that.setInfoMessage(req, "Article with following ids are not deleted: " + nonDeletedIds.join());
             }
             next(err);
         });
@@ -200,35 +198,39 @@ function removeArticleAction(req, res, next) {
 }
 
 function getArticlesAction(req, res, next) {
-    var that = this, dbAction = that.getDBActionsLib().getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY),
+    var that = this,
         queryParams = req.query;
+    var ArticleServiceAuth = that.getService(ARTICLE_SCHEMA).Auth;
 //    Debug._li("req, que: ", req.query, true);
-    ArticleManager.getArticles(dbAction, queryParams, function (err, results) {
-        var articles = results.data, count = results.count;
-        if (!err && articles) {
-//            Debug._l("ar len : " + articles.length);
-//            Debug._l("ar cunrt : " + count);
-            var aaData = [], ret = {
-                "sEcho": queryParams["sEcho"],
-                "iTotalRecords": count,
-                "iTotalDisplayRecords": count,
-                "aaData": aaData
-            };
-
-            articles.forEach(function (article) {
-                var arr = [article.articleId, article.id, article.localizedTitle["en_US"],
-                    that.DateUtil.formatArticleDate(article.createDate), that.DateUtil.formatArticleDate(article.displayDate)];
-                aaData.push(arr);
-            });
-            that.setJSON(req, ret);
-        }
-        next(err);
-    });
+    //TODO implement after paging in services are there
+//    ArticleServiceAuth.getArticles(dbAction, queryParams, function (err, results) {
+//        var articles = results.data, count = results.count;
+//        if (!err && articles) {
+////            Debug._l("ar len : " + articles.length);
+////            Debug._l("ar cunrt : " + count);
+//            var aaData = [], ret = {
+//                "sEcho": queryParams["sEcho"],
+//                "iTotalRecords": count,
+//                "iTotalDisplayRecords": count,
+//                "aaData": aaData
+//            };
+//
+//            articles.forEach(function (article) {
+//                var arr = [article.articleId, article.id, article.localizedTitle["en_US"],
+//                    that.DateUtil.formatArticleDate(article.createDate), that.DateUtil.formatArticleDate(article.displayDate)];
+//                aaData.push(arr);
+//            });
+//            that.setJSON(req, ret);
+//        }
+//        next(err);
+//    });
+    that.setJSON(req, {});
+    next();
 }
 
 function updateArticleAction(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        ns = that.getNamespace(req), PluginHelper = that.getPluginHelper();
+    var that = this, ArticleServiceAuth = that.getService(ARTICLE_SCHEMA).Auth,
+        PluginHelper = that.getPluginHelper();
 //    params.action = "edit";
 
     that.ValidateForm(req, articleForms.getArticleEditForm(), function (err, result) {
@@ -236,63 +238,94 @@ function updateArticleAction(req, res, next) {
             return next(err);
         }
 
+        var post = PluginHelper.getPostParams(req),
+            permissionSchemaKey = ARTICLE_PERMISSION_SCHEMA_ENTRY,
+            afterSave = function (err) {
+                if (err) {
+                    return  next(err);
+                }
+                else {
+                    var redirect = PluginHelper.getPostParam(req, "redirect");
+                    that.setRedirect(req, redirect);
+                    var msg = "Article " + (post.id ? "updated" : "added" ) + " successfully.";
+                    that.setSuccessMessage(req, msg);
+                    next(err);
+                }
+            };
+
         if (!result.hasErrors) {
-            var post = PluginHelper.getPostParams(req),
-                afterSave = function (err, article) {
-                    if (err) {
-                        return  next(err);
-                    }
-                    else {
-                        var redirect = PluginHelper.getPostParam(req, "redirect");
-                        that.setRedirect(req, redirect);
-                        var msg = "Article " + (post.id ? "updated" : "added" ) + " successfully.";
-                        that.setSuccessMessage(req, msg);
-                        next(err);
-                    }
-                },
-                save = function (id, version, oldArticleId) {
-                    var permissionSchemaKey = ARTICLE_PERMISSION_SCHEMA_ENTRY;
-                    if (oldArticleId) {
-                        permissionSchemaKey = PermissionCache.generateKeyByModelId(permissionSchemaKey, oldArticleId);
-                    }
-
-                    DBActionsLib.authorizedPopulateModelAndSave(req, ARTICLE_SCHEMA, {
-                            id: id,
-                            localizedTitle: {en_US: PluginHelper.getPostParam(req, "title") },
-                            localizedContent: {en_US: PluginHelper.getPostParam(req, "content") },
-                            version: version,
-                            rolePermissions: permissionSchemaKey
-                        }, {},
-                        ARTICLE_PERMISSION_SCHEMA,
-                        afterSave);
-                };
-
             if (!post.id) { //save, new article initial version
-                DBActionsLib.DBActions.prototype.incrementCounter.call({db: db}, function (err, counter) {
-                    if (err) {
-                        return next(err);
-                    }
-                    save(counter.counter, DEFAULT_VERSION);
-                });
+                ArticleServiceAuth.saveArticle(req, {
+                    localizedTitle: {en_US: PluginHelper.getPostParam(req, "title") },
+                    localizedContent: {en_US: PluginHelper.getPostParam(req, "content") },
+                    rolePermissions: permissionSchemaKey
+                }, {}, afterSave);
             }
-            else { // create new version with same id, but different articleId, move old version to Article_Version
-                var id = PluginHelper.getPostParam(req, "id"),
-                    version = PluginHelper.getPostParam(req, "version"),
-                    articleId = PluginHelper.getPostParam(req, "articleId");
-                version = incrementVersion(version);
-                req.body[ns].version = version;
-                ArticleManager.moveArticleToArticleVersion(
-                    id,
-                    DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY),
-                    DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA), function (err, result) {
-                        if (err) {
-                            return next(err);
-                        }
-                        if (result) {
-                            save(id, version, articleId);
-                        }
-                    });
+            else {
+                permissionSchemaKey = PermissionCache.generateKeyByModelId(permissionSchemaKey, post.articleId);
+                ArticleServiceAuth.updateArticle(req, {
+                    localizedTitle: {en_US: PluginHelper.getPostParam(req, "title") },
+                    localizedContent: {en_US: PluginHelper.getPostParam(req, "content") },
+                    rolePermissions: permissionSchemaKey
+                }, {}, afterSave);
             }
+
+            /*var post = PluginHelper.getPostParams(req),
+             afterSave = function (err, article) {
+             if (err) {
+             return  next(err);
+             }
+             else {
+             var redirect = PluginHelper.getPostParam(req, "redirect");
+             that.setRedirect(req, redirect);
+             var msg = "Article " + (post.id ? "updated" : "added" ) + " successfully.";
+             that.setSuccessMessage(req, msg);
+             next(err);
+             }
+             },
+             save = function (id, version, oldArticleId) {
+             var permissionSchemaKey = ARTICLE_PERMISSION_SCHEMA_ENTRY;
+             if (oldArticleId) {
+             permissionSchemaKey = PermissionCache.generateKeyByModelId(permissionSchemaKey, oldArticleId);
+             }
+
+             DBActionsLib.authorizedPopulateModelAndSave(req, ARTICLE_SCHEMA, {
+             id: id,
+             localizedTitle: {en_US: PluginHelper.getPostParam(req, "title") },
+             localizedContent: {en_US: PluginHelper.getPostParam(req, "content") },
+             version: version,
+             rolePermissions: permissionSchemaKey
+             }, {},
+             ARTICLE_PERMISSION_SCHEMA,
+             afterSave);
+             };
+
+             if (!post.id) { //save, new article initial version
+             DBActionsLib.DBActions.prototype.incrementCounter.call({db: db}, function (err, counter) {
+             if (err) {
+             return next(err);
+             }
+             save(counter.counter, DEFAULT_VERSION);
+             });
+             }
+             else { // create new version with same id, but different articleId, move old version to Article_Version
+             var id = PluginHelper.getPostParam(req, "id"),
+             version = PluginHelper.getPostParam(req, "version"),
+             articleId = PluginHelper.getPostParam(req, "articleId");
+             version = incrementVersion(version);
+             req.body[ns].version = version;
+             ArticleManager.moveArticleToArticleVersion(
+             id,
+             DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY),
+             DBActionsLib.getInstance(req, ARTICLE_VERSION_SCHEMA), function (err, result) {
+             if (err) {
+             return next(err);
+             }
+             if (result) {
+             save(id, version, articleId);
+             }
+             });
+             }*/
         }
         else {
             that.setErrorMessage(req, "entered-invalid-data");
@@ -304,7 +337,7 @@ function updateArticleAction(req, res, next) {
 }
 
 function editArticleAction(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
+    var that = this, params = req.params, ArticleServiceAuth = that.getService(ARTICLE_SCHEMA).Auth,
         id = params.id, ns = that.getNamespace(req);
     params.action = "edit";
 
@@ -312,25 +345,17 @@ function editArticleAction(req, res, next) {
         //process edit
 
         var redirect = that.getRedirectPath(req);
-        //check number validity of id
-        if (parseInt(id).toString() == "NaN") {
-            that.setErrorMessage(req, "Wrong article Id");
-            that.setRedirect(req, redirect);
-            return next(null);
-        }
 
-        var dbAction = DBActionsLib.getAuthInstance(req, ARTICLE_SCHEMA, ARTICLE_PERMISSION_SCHEMA_ENTRY);
-        ArticleManager.getLatestArticleById(id, dbAction, function (err, latestArticle) {
-            if (err) {
-                return next(err);
+        ArticleServiceAuth.getByIdAndVersion(req, null, req, function (err, article) {
+            if(article){
+                req.query[ns] = utils.cloneExtend(article, {redirect: redirect,
+                    title: article.localizedTitle["en_US"],
+                    content: article.localizedContent["en_US"] });
+                params.action = "edit";
+                req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US", "add");
             }
-            req.query[ns] = utils.cloneExtend(latestArticle, {redirect: redirect,
-                title: latestArticle.localizedTitle["en_US"], content: latestArticle.localizedContent["en_US"] });
-            params.action = "edit";
-            req.attrs.articleForm = that.getFormBuilder().DynamicForm(req, articleForms.getArticleEditForm(), "en_US", "add");
             next(err);
         });
-
     }
     else {
         req.query[ns] = {redirect: that.getRedirectPath(req) };
