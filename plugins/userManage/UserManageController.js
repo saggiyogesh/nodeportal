@@ -374,12 +374,13 @@ function updateUserProfileAction(req, res, next) {
         }
         if (!result.hasErrors) {
             var redirect = that.getPluginHelper().getPostParam(req, "redirect"),
-                dbAction = that.getDBActionsLib().getInstance(req, USER_SCHEMA);
-            that.getDBActionsLib().populateModelAndUpdate(req, USER_SCHEMA, {}, {emailId: "email"}, function (err, result) {
+                UserService = that.getService(USER_SCHEMA);
+
+            UserService.populateModelAndUpdate(that.getPluginHelper().getPostParams(req), {}, {emailId: "email"}, function (err, result) {
                 if (err) {
                     return next(err);
                 }
-                dbAction.get("findByEmailId", req.session.user.emailId, function (err, user) {
+                UserService.getByEmailId(req.session.user.emailId, function (err, user) {
                     if (user) {
                         req.session.user = user;
                         that.setSuccessMessage(req, "User profile updated successfully");

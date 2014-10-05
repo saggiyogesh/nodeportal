@@ -16,13 +16,13 @@ module.exports = {
         rolePermissions: {}
     },
     finders: {
-        getById: {
-            arguments: ["id"],
-            query: {where: {id: "_id"} }
+        getByParentCommentId: {
+            arguments: ["parentCommentId"],
+            query: {where: {parentCommentId: "_parentCommentId"} }
         },
-        getByIdAndVersion: {
-            arguments: ["id", "version"],
-            query: {where: {id: "_id", version: "_version"} }
+        getByThreadId: {
+            arguments: ["threadId"],
+            query: {where: {threadId: "_threadId"}, sort: "createDate ASC" }
         }
     }
 };

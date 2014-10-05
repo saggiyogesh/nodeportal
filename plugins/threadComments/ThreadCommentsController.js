@@ -74,17 +74,16 @@ function editCommentAction(req, res, next) {
 }
 
 function removeCommentAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        post = req.body;
+    var that = this, post = req.body;
     var commentId = post.commentId;
     if (commentId) {
-        var commentDBAction = DBActions.getInstance(req, COMMENT_SCHEMA);
-        var threadDBAction = DBActions.getInstance(req, THREAD_SCHEMA);
+        var CommentService = that.getService(COMMENT_SCHEMA);
+        var ThreadService = that.getService(THREAD_SCHEMA);
         var thread;
         async.series([
             function (n) {
                 //get thread
-                threadDBAction.get("findByThreadId", post.threadId, function (err, t) {
+                ThreadService.findById(post.threadId, function (err, t) {
                     if (t) {
                         thread = t;
                     }
@@ -99,7 +98,7 @@ function removeCommentAction(req, res, next) {
             },
             function (n) {
                 // if deleted comment has child comments then throw err
-                commentDBAction.get("findByParentCommentId", commentId, function (err, c) {
+                CommentService.getByParentCommentId(commentId, function (err, c) {
                     if (c && c.length > 0) {
                         err = new Error("Nested comments exists")
                     }
@@ -107,7 +106,7 @@ function removeCommentAction(req, res, next) {
                 });
             },
             function (n) {
-                commentDBAction.remove(commentId, n);
+                CommentService.remove(commentId, n);
             }
 
         ], function (err, result) {
@@ -124,17 +123,16 @@ function removeCommentAction(req, res, next) {
 }
 
 function getCommentsAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(), db = that.getDB(), params = req.params,
+    var that = this, params = req.params,
         threadId = params.threadId;
     if (threadId) {
-        var commentDBAction = DBActions.getInstance(req, COMMENT_SCHEMA),
-            userDBAction = DBActions.getInstance(req, USER_SCHEMA),
-            q = commentDBAction.getQuery().where("threadId", threadId).sort("createDate"),
+        var CommentService = that.getService(COMMENT_SCHEMA),
+            UserService = that.getService(USER_SCHEMA),
             comments, json = [];
 
         async.series([
             function (n) {
-                commentDBAction.getByQuery(q, function (err, model) {
+                CommentService.getByThreadId(threadId, function (err, model) {
                     if (model) {
                         comments = model;
                     }
@@ -144,7 +142,7 @@ function getCommentsAction(req, res, next) {
             function (n) {
                 async.eachSeries(comments, function (c, cb) {
                     c = c.toJSON();
-                    userDBAction.getByDefaultFinderMethod(c.authorId, function (err, user) {
+                    UserService.findById(c.authorId, function (err, user) {
                         var profilePicURL = utils.getUserProfilePicURL(user);
                         c.userPicURL = profilePicURL;
                         json.push(c);
@@ -167,14 +165,13 @@ function getCommentsAction(req, res, next) {
 }
 
 function postCommentAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        post = req.body;
+    var that = this, post = req.body;
     var content = sanitize(post.content).xss(), threadId = post.threadId;
 
     if (threadId && content) {
         var userId = req.session.user.userId;
-        var commentDBAction = DBActions.getInstance(req, COMMENT_SCHEMA);
-        var threadDBAction = DBActions.getInstance(req, THREAD_SCHEMA),
+        var CommentService = that.getService(COMMENT_SCHEMA);
+        var ThreadService = that.getService(THREAD_SCHEMA),
             commentDate = Date.now();
         var comment = {
             content: content,
@@ -188,7 +185,7 @@ function postCommentAction(req, res, next) {
         async.series([
             function (n) {
                 //get thread
-                threadDBAction.get("findByThreadId", threadId, function (err, t) {
+                ThreadService.findById(threadId, function (err, t) {
                     if (t) {
                         thread = t;
                     }
@@ -202,19 +199,17 @@ function postCommentAction(req, res, next) {
                 pv.hasPermission(permissionAction, thread.linkedModelPK, n);
             },
             function (n) {
-                commentDBAction.save(comment, n);
+                CommentService.save(comment, n);
             },
             function (n) {
                 n(null, true);
 
                 utils.tick(function () {
                     //send email for comment notifications
-                    commentDBAction.get("findByThreadId", threadId, function (err, comments) {
+                    CommentService.getByThreadId(threadId, function (err, comments) {
                         if (comments && comments.length > 0) {
                             var authorIds = _.uniq(_.pluck(comments, "authorId"));
-                            var userDBAction = DBActions.getInstance(req, USER_SCHEMA),
-                                query = userDBAction.getQuery();
-
+                            var UserService = that.getService(USER_SCHEMA);
                             var arr = [];
                             authorIds.forEach(function (id) {
                                 if (userId != id) {
@@ -223,10 +218,10 @@ function postCommentAction(req, res, next) {
                                     arr.push(q);
                                 }
                             });
-                            query.or(arr);
 
-                            var emailUsers = [];
-                            userDBAction.getByQuery(query, function (err, users) {
+                            var emailUsers = [], query = {where: {or: arr}};
+
+                            UserService.find(query, function (err, users) {
                                 if (users) {
                                     users.forEach(function (user) {
                                         if (user.notifications.comments) {
@@ -267,10 +262,10 @@ function postCommentAction(req, res, next) {
                     });
                 });
             },
-            function(n){
+            function (n) {
                 var pv = new that.PermissionValidator(req, thread.linkedPermissionSchemaKey, thread.linkedModelName);
                 var actions = ["ADD_DISCUSSION", "EDIT_DISCUSSION", "DELETE_DISCUSSION"];
-                pv.checkPermissionForActions(actions, thread.linkedModelPK, function(err, perms){
+                pv.checkPermissionForActions(actions, thread.linkedModelPK, function (err, perms) {
                     !err && (req.attrs.actionsPermission = perms);
                     n(err, !err);
                 });
@@ -302,7 +297,7 @@ function postCommentAction(req, res, next) {
 }
 
 function initThreadAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(), db = that.getDB(), params = req.params,
+    var that = this, params = req.params,
         linkedModelFinderParam = params.linkedModelFinderParam, linkedModelName = params.linkedModelName,
 
     //this field is used to fetch the linked model, otherwise default modelId is used.
@@ -312,8 +307,8 @@ function initThreadAction(req, res, next) {
         linkedPermissionSchemaKey = params.linkedPermissionSchemaKey;
 
     if (linkedModelFinderParam && linkedModelName) {
-        var threadDBAction = DBActions.getInstance(req, THREAD_SCHEMA);
-        var linkedModelDBAction = DBActions.getInstance(req, linkedModelName);
+        var ThreadService = that.getService(THREAD_SCHEMA);
+        var LinkedModelService = that.getService(linkedModelName);
 
         var thread, model;
 
@@ -331,16 +326,17 @@ function initThreadAction(req, res, next) {
                 };
 
                 if (linkedModelFinderField) {
-                    var q = linkedModelDBAction.getQuery(true).where(linkedModelFinderField, linkedModelFinderParam);
-                    linkedModelDBAction.getByQuery(q, getModel);
+                    var where = {};
+                    where[linkedModelFinderField] = linkedModelFinderParam
+                    LinkedModelService.findOne({where: where}, getModel);
                 }
                 else {
-                    linkedModelDBAction.getByDefaultFinderMethod(linkedModelFinderParam, getModel);
+                    LinkedModelService.findById(linkedModelFinderParam, getModel);
                 }
             },
             function (n) {
                 //find thread
-                threadDBAction.get("findByLinkedModelIdAndLinkedModelName", [linkedModelFinderParam, linkedModelName], function (err, t) {
+                ThreadService.getByLinkedModelIdAndLinkedModelName(linkedModelFinderParam, linkedModelName, function (err, t) {
                     if (t) {
                         thread = t.toObject();
                     }
@@ -350,7 +346,7 @@ function initThreadAction(req, res, next) {
             function (n) {
                 if (!thread) {
                     //create thread
-                    var pk = model[DBActions.getModelIdKey(linkedModelName)];
+                    var pk = model[LinkedModelService.getIdName()];
 
                     thread = {
                         linkedModelId: linkedModelFinderParam,
@@ -359,7 +355,7 @@ function initThreadAction(req, res, next) {
                         linkedModelFinderField: linkedModelFinderField,
                         linkedModelPK: pk
                     };
-                    threadDBAction.save(thread, n);
+                    ThreadService.save(thread, n);
                 }
                 else {
                     n(null, true);
@@ -368,7 +364,7 @@ function initThreadAction(req, res, next) {
             function (n) {
                 var pv = new that.PermissionValidator(req, thread.linkedPermissionSchemaKey, thread.linkedModelName);
                 var actions = ["ADD_DISCUSSION", "EDIT_DISCUSSION", "DELETE_DISCUSSION", "VIEW"];
-                pv.checkPermissionForActions(actions, thread.linkedModelPK, function(err, perms){
+                pv.checkPermissionForActions(actions, thread.linkedModelPK, function (err, perms) {
                     !err && (req.attrs.actionsPermission = perms);
                     n(err, !err);
                 });

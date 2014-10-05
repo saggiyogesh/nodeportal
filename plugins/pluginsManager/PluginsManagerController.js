@@ -33,18 +33,17 @@ function removeFile(app, model){
 
 function removePluginAction(req, res, next) {
     var that = this, params = req.params, type = params.type, id = params.id, ns = that.getNamespace(req);
-    var DBActions = this.getDBActionsLib();
     var redirect = params.page + "/" + ns;
     if (id && type) {
-        var dbAction = DBActions.getInstance(req, type);
+        var Service = that.getService(type);
         async.series({
-            model: function (next) {
-                dbAction.getByDefaultFinderMethod(id, function(err, model){
-                    next(err, model);
+            model: function (n) {
+                Service.findById(id, function(err, model){
+                    n(err, model);
                 });
             },
-            remove: function (next) {
-                dbAction.remove(id, next);
+            remove: function (n) {
+                Service.remove(id, n);
             }
         }, function (err, result) {
             if (!err) {
@@ -70,16 +69,13 @@ function removePluginAction(req, res, next) {
 function getAllPluginsAction(req, res, next) {
     var that = this, queryParams = req.query;
 
-    var DBActions = this.getDBActionsLib();
 
     async.parallel({
-        layout: function (next) {
-            var dbAction = DBActions.getInstance(req, LAYOUT_SCHEMA);
-            dbAction.get("getAllExceptDefaults", null, next);
+        layout: function (n) {
+            that.getService(LAYOUT_SCHEMA).getAllExceptDefaults(n);
         },
-        theme: function (next) {
-            var dbAction = DBActions.getInstance(req, THEME_SCHEMA);
-            dbAction.get("getAllExceptDefault", null, next);
+        theme: function (n) {
+            that.getService(THEME_SCHEMA).getAllExceptDefault(n);
         }
     }, function (err, result) {
         if (!err) {

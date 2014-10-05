@@ -26,8 +26,7 @@ var ManagePluginController = module.exports = function (id, app) {
 util.inherits(ManagePluginController, BasePluginController);
 
 function updatePluginTitle(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        ns = params.pluginNS, pageId = params.pageId;
+    var that = this, params = req.params;
 
     var body = req.body;
 
@@ -48,14 +47,10 @@ function updatePluginTitle(req, res, next) {
 }
 
 function updatePluginSettings(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        body = req.body, ns = body.ns, pageId = body.pageId;
-    var dbAction = DBActionsLib.getInstance(req, PLUGIN_INSTANCE_SCHEMA),
-        plugin = plugins.get(ns.split("_")[0]),
-        pluginId = plugin.id,
-        exec = plugin.exec, settingsFn = exec.settings;
+    var that = this, body = req.body, ns = body.ns, pageId = body.pageId,
+        plugin = plugins.get(ns.split("_")[0]), exec = plugin.exec, settingsFn = exec.settings;
 
-    PluginInstanceHandler.getPluginInstance(dbAction, pageId, ns, function (err, instance) {
+    PluginInstanceHandler.getPluginInstance(that.getService(PLUGIN_INSTANCE_SCHEMA), pageId, ns, function (err, instance) {
         var json = {};
         that.setJSON(req, json);
         json.status = "failure";
@@ -102,7 +97,7 @@ function updatePluginSettings(req, res, next) {
 
 
 function editSettingsPlugin(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
+    var that = this, params = req.params,
         pluginId = params.pluginId, pageId = params.pageId;
     var permissionSchemaKey = utils.getSettingsPluginPermissionSchemaKey(pluginId);
 
@@ -126,20 +121,20 @@ function editSettingsPlugin(req, res, next) {
 }
 
 function editPlugin(req, res, next) {
-    var that = this, DBActionsLib = that.getDBActionsLib(), db = that.getDB(), params = req.params,
-        ns = params.pluginNS, pageId = params.pageId;
-    var dbAction = DBActionsLib.getAuthInstance(req, PLUGIN_INSTANCE_SCHEMA, PluginInstanceHandler.permissionSchemaKey),
+    var that = this, params = req.params,
+        ns = params.pluginNS, pageId = params.pageId,
         plugin = plugins.get(ns.split("_")[0]),
         pluginId = plugin.id,
         exec = plugin.exec, settingsFn = exec.settings;
-    PluginInstanceHandler.getPluginInstance(dbAction, pageId, ns, function (err, instance) {
+    var pv = new that.PermissionValidator(req, PluginInstanceHandler.permissionSchemaKey, PLUGIN_INSTANCE_SCHEMA);
+    PluginInstanceHandler.getPluginInstance(that.getService(PLUGIN_INSTANCE_SCHEMA).Auth, pageId, ns, function (err, instance) {
         if (err || !instance) {
             return next(err);
         }
         if (instance) {
             var instanceId = instance.pluginInstanceId.toString();
 
-            dbAction.hasPermission("PERMISSION", instanceId, function (err, perm) {
+            pv.hasPermission("PERMISSION", instanceId, function (err, perm) {
                 var managePlugin = {
                     title: instance.title,
                     ns: ns,

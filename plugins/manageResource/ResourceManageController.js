@@ -60,12 +60,14 @@ var ResourceManageController = module.exports = function (id, app) {
 util.inherits(ResourceManageController, BasePluginController);
 
 function remove(that, resourceId, isFile, req, res, next) {
-    var DBActions = that.getDBActionsLib(),
-        FileUtil = that.FileUtil,
+    var FileUtil = that.FileUtil,
         realPath = FileUtil.realPath,
         resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH);
 
-    DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY).authorizedRemove(resourceId, function (err, result) {
+    var ResourceServiceAuth = that.getService(RESOURCE_SCHEMA).Auth,
+        pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA_ENTRY, RESOURCE_SCHEMA);
+
+    ResourceServiceAuth.deleteById(resourceId, pv, function (err, result) {
         if (err) {
             that.setJSON(req, {error: err.message});
             next(null);
@@ -75,7 +77,7 @@ function remove(that, resourceId, isFile, req, res, next) {
         that.setJSON(req, {success: true, resourceId: resourceId});
         next(null);
         if (isFile) {
-            process.nextTick(function () {
+            utils.tick(function () {
                 var dirPath = realPath(resourceFolderPath, resourceId);
                 FileUtil.readDir(dirPath, function (err, files) {
                     async.eachSeries(files, function (file, next) {
@@ -99,13 +101,12 @@ function remove(that, resourceId, isFile, req, res, next) {
 }
 
 function deleteAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(),
+    var that = this,
         FileUtil = that.FileUtil,
-        realPath = FileUtil.realPath,
         resourceId = req.params.resourceId, type = req.params.type;
     if (resourceId) {
         if (type == "folder") {
-            DBActions.getInstance(req, RESOURCE_SCHEMA).get("findByFolderId", resourceId, function (err, models) {
+            that.getService(RESOURCE_SCHEMA).getByFolderId(resourceId, function (err, models) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
                     next(null);
@@ -127,25 +128,32 @@ function deleteAction(req, res, next) {
 }
 
 function renameAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(),
+    var that = this,
         FileUtil = that.FileUtil,
         realPath = FileUtil.realPath,
         newName = req.params.newName, resourceId = req.params.resourceId, parentFolderId = req.params.parentFolderId;
     if (newName && resourceId && parentFolderId) {
 
-        var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY);
+        var ResourceService = that.getService(RESOURCE_SCHEMA),
+            ResourceServiceAuth = ResourceService.Auth,
+            pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA_ENTRY, RESOURCE_SCHEMA);
 
-        dbAction.get("findByResourceId", resourceId, function (err, model) {
+        ResourceService.findById(resourceId, function (err, model) {
             if (err) {
                 that.setJSON(req, {error: err.message});
                 next(null);
                 return;
             }
 
-            var query = dbAction.getQuery()
-                .where('name', newName).where("folderId", parentFolderId).where('resourceId').ne(resourceId);
+            var query = {
+                where: {
+                    name: newName,
+                    folderId: parentFolderId,
+                    resourceId: { neq: resourceId}
+                }
+            };
 
-            dbAction.getByQuery(query, function (err, models) {
+            ResourceService.find(query, function (err, models) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
                     next(null);
@@ -153,12 +161,11 @@ function renameAction(req, res, next) {
                 }
 
                 if (models && models.length < 1) {
-                    var param = {
-                        resourceId: model.resourceId,
+                    var data = {
                         name: newName
                     };
 
-                    dbAction.authorizedUpdate(param, function (err, model) {
+                    ResourceServiceAuth.updateById(model.resourceId, data, pv, function (err, model) {
                         if (err) {
                             that.setJSON(req, {error: err.message});
                             next(null);
@@ -184,15 +191,14 @@ function renameAction(req, res, next) {
 }
 
 function addFolderAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(),
-        FileUtil = that.FileUtil,
-        realPath = FileUtil.realPath,
+    var that = this, FileUtil = that.FileUtil,
         name = req.params.name, parentFolderId = req.params.parentFolderId;
     if (name && parentFolderId) {
         //check existence of folder in parent folder
-        var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA);
+        var ResourceServiceAuth = that.getService(RESOURCE_SCHEMA).Auth,
+            pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA_ENTRY, RESOURCE_SCHEMA);
 
-        dbAction.get("findByNameAndFolderId", [name, parentFolderId], function (err, model) {
+        ResourceServiceAuth.getByNameAndFolderId(name, parentFolderId, function (err, model) {
             if (err) {
                 next(null);
                 return;
@@ -212,7 +218,7 @@ function addFolderAction(req, res, next) {
                 rolePermissions: RESOURCE_PERMISSION_SCHEMA_ENTRY
             };
 
-            dbAction.authorizedSave(model, function (err, model) {
+            ResourceServiceAuth.save(model, pv, function (err, model) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
                     next(null);
@@ -242,13 +248,15 @@ function validateInputDimensions(imageDimension, w, h) {
 }
 
 function viewResourcesAction(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(),
-        FileUtil = that.FileUtil,
+    var that = this, FileUtil = that.FileUtil,
         realPath = FileUtil.realPath,
         resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH),
         params = req.params, query = req.query, resourceId = params.id, name = params.name,
         folderId = params.folderId;
-    var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY);
+
+    var ResourceService = that.getService(RESOURCE_SCHEMA), ResourceServiceAuth = ResourceService.Auth,
+        pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA_ENTRY, RESOURCE_SCHEMA);
+
     //Debug._li("params: ", params, true);
     if (resourceId) {
         function sendFile(path, type, next) {
@@ -283,7 +291,7 @@ function viewResourcesAction(req, res, next) {
                         //Debug._li("resize: ", result, true);
                         //saving scaled image info to db
                         extras[fileName] = true;
-                        dbAction.update({resourceId: model.resourceId, extras: extras}, function (err, result) {
+                        ResourceServiceAuth.update(model.resourceId, { extras: extras}, function (err, result) {
                             if (err)
                                 Debug._l(err);
                             if (result) {
@@ -311,7 +319,7 @@ function viewResourcesAction(req, res, next) {
 
         var dirPath = realPath(resourceFolderPath, resourceId);
 
-        dbAction.authorizedGet("findByResourceId", resourceId, function (err, model) {
+        ResourceServiceAuth.findById(resourceId, function (err, model) {
             if (model) {
                 if (params.action === "thumb") {
                     var thumbName = that.getAppProperty("DEFAULT_THUMB_NAME");
@@ -321,7 +329,7 @@ function viewResourcesAction(req, res, next) {
                     else {
                         var path = realPath(process.cwd(), "public", "images", "fileicons", model.type.toLowerCase() + ".png");
                         sendFile(path, null, next);
-                        createThumb(dirPath, model, that.getAppProperty("THUMB_DIMENSION"), thumbName, dbAction, model.extras, FileUtil);
+                        createThumb(dirPath, model, that.getAppProperty("THUMB_DIMENSION"), thumbName, ResourceService,  model.extras, FileUtil);
                     }
                     return;
                 }
@@ -336,7 +344,7 @@ function viewResourcesAction(req, res, next) {
     }
     else {
         if (name && folderId) {
-            dbAction.authorizedGet("findByNameAndFolderId", [name, folderId], function (err, model) {
+            ResourceServiceAuth.getByNameAndFolderId(name, folderId, function (err, model) {
                 if (model) {
                     var path = realPath(resourceFolderPath, model.resourceId);
                     res.contentType(path + "." + model.type);
@@ -353,14 +361,11 @@ function viewResourcesAction(req, res, next) {
 
 
 function getResourcesByFolderId(req, res, next) {
-    var that = this, DBActions = that.getDBActionsLib(),
-        FileUtil = that.FileUtil,
+    var that = this, FileUtil = that.FileUtil,
         realPath = FileUtil.realPath,
-        folderId = req.params.folderId || 0,
-        dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA_ENTRY),
-        query = dbAction.getQuery().where("folderId", folderId);
+        folderId = req.params.folderId || 0;
 
-    dbAction.authorizedGetByQuery(query, function (err, models) {
+    that.getService(RESOURCE_SCHEMA).getByFolderId(folderId, function (err, models) {
         if (err) {
             return next(null);
         }
@@ -373,12 +378,13 @@ function getResourcesByFolderId(req, res, next) {
 function uploadResourceAction(req, res, next) {
     var that = this, file = req.files["ajaxUpload"],
         FileUtil = that.FileUtil,
-        realPath = FileUtil.realPath, DBActions = that.getDBActionsLib();
+        realPath = FileUtil.realPath;
 
-    var resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH),
-        db = that.getDB();
-    var dbAction = DBActions.getAuthInstance(req, RESOURCE_SCHEMA, RESOURCE_PERMISSION_SCHEMA),
-        file = req.attrs.file,
+    var resourceFolderPath = realPath(process.cwd(), that.getAppProperty("DATA_FOLDER_PATH"), RESOURCES_PATH);
+    var ResourceService = that.getService(RESOURCE_SCHEMA), ResourceServiceAuth = ResourceService.Auth,
+        pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA_ENTRY, RESOURCE_SCHEMA);
+
+    var file = req.attrs.file,
         postParams = that.getPluginHelper().getPostParams(req),
         folderId = postParams.folderId,
         fileName = file.originalname, tmpPath = file.path;
@@ -387,7 +393,7 @@ function uploadResourceAction(req, res, next) {
     async.waterfall([
         function (n) {
             //check existance of resource in folder
-            dbAction.get("findByNameAndFolderId", [fileName, folderId], n);
+            ResourceService.getByNameAndFolderId(fileName, folderId, n);
         },
         function (model, n) {
             if (model) {
@@ -413,11 +419,11 @@ function uploadResourceAction(req, res, next) {
                     }
                 }
 
-                dbAction.authorizedSave(model, n);
+                ResourceServiceAuth.save(model, n);
             }
         },
         function (done, n) {
-            dbAction.get("findByNameAndFolderId", [fileName, folderId], n);
+            ResourceService.getByNameAndFolderId(fileName, folderId, n);
         },
         function (model, n) {
             if (!model) {
@@ -434,7 +440,7 @@ function uploadResourceAction(req, res, next) {
         function (dirPath, model, n) {
             var destFilePath = realPath(dirPath, model.resourceId);
             FileUtil.copyFile(file.path, destFilePath, function (err) {
-                !err && updateDimension(destFilePath, model, dbAction);
+                !err && updateDimension(destFilePath, model, ResourceService);
                 n(err);
             });
         }
@@ -446,10 +452,10 @@ function uploadResourceAction(req, res, next) {
     });
 }
 
-function updateDimension(filePath, model, dbAction) {
+function updateDimension(filePath, model, Service) {
     if (ResourceManageUtil.isTypeImage(model.type)) {
         ImageUtil.imageInfo({path: filePath}, function (err, info) {
-            dbAction.update({resourceId: model.resourceId, dimensions: info.width + ":" + info.height}, function (err, result) {
+            Service.update({resourceId: model.resourceId, dimensions: info.width + ":" + info.height}, function (err, result) {
                 if (err)
                     Debug._l(err);
             });
@@ -457,7 +463,7 @@ function updateDimension(filePath, model, dbAction) {
     }
 }
 
-function createThumb(dirPath, model, dimesion, thumbName, dbAction, extras, FileUtil) {
+function createThumb(dirPath, model, dimesion, thumbName, Service, extras, FileUtil) {
     var realPath = FileUtil.realPath;
     if (ResourceManageUtil.isTypeImage(model.type)) {
         process.nextTick(function () {
@@ -473,7 +479,7 @@ function createThumb(dirPath, model, dimesion, thumbName, dbAction, extras, File
                 if (err)
                     Debug._l(err);
                 extras.thumb = true;
-                dbAction.update({resourceId: model.resourceId, extras: extras}, function (err, result) {
+                Service.update({resourceId: model.resourceId, extras: extras}, function (err, result) {
                     if (err)
                         Debug._l(err);
                 });

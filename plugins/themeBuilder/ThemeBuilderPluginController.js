@@ -46,8 +46,7 @@ function getDefaultThemePath(app) {
 }
 
 function uploadThemeFile(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params,
         themeHome = getViewsHome(req.app),
         fileUtil = that.FileUtil;
 
@@ -57,11 +56,13 @@ function uploadThemeFile(req, res, next) {
         folderName = postParams.folderName,
         fileName = file.originalname, tmpPath = file.path;
 
+    var ThemeService = that.getService(THEME_SCHEMA);
+
 //    Debug._li("", file, true);
 //    Debug._li("post", req.body, true);
     if (folderName === DEFAULT_DIRS[0] || folderName === DEFAULT_DIRS[1] || folderName === DEFAULT_DIRS[3]) {
         //for css and js files and images
-        dbAction.get("findByThemeId", themeId, function (err, theme) {
+        ThemeService.findById(themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -72,7 +73,6 @@ function uploadThemeFile(req, res, next) {
                     //err ? that.setError(req, err) : that.setSuccess(req, "");
                     next(null);
                 });
-
             }
         });
     }
@@ -82,13 +82,12 @@ function uploadThemeFile(req, res, next) {
     // next(null, req, res);
 }
 function newFile(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params, ThemeService = that.getService(THEME_SCHEMA),
         themeHome = getViewsHome(req.app), themeId = params.id,
         folderName = params.folderName, fileName = params.name,
         fileUtil = that.FileUtil;
     if (themeId && fileName && folderName) {
-        dbAction.get("findByThemeId", themeId, function (err, theme) {
+        ThemeService.findById(themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -111,13 +110,12 @@ function newFile(req, res, next) {
 }
 
 function deleteFile(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params, ThemeService = that.getService(THEME_SCHEMA),
         themeHome = getViewsHome(req.app), themeId = params.id,
         folderName = params.folderName, fileName = params.name,
         fileUtil = that.FileUtil;
     if (themeId && fileName && folderName) {
-        dbAction.get("findByThemeId", themeId, function (err, theme) {
+        ThemeService.findById(themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -141,13 +139,12 @@ function deleteFile(req, res, next) {
 }
 
 function updateFile(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params,
         themeHome = getViewsHome(req.app), themeId = params.id,
         folderName = params.folderName, fileName = params.name,
         content = decodeURI(req.query.content), fileUtil = that.FileUtil;
     if (themeId && fileName && folderName) {
-        dbAction.get("findByThemeId", themeId, function (err, theme) {
+        that.getService(THEME_SCHEMA).findById(themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -176,12 +173,11 @@ function updateFile(req, res, next) {
 }
 
 function getFile(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params,
         themeHome = getViewsHome(req.app), themeId = params.id,
         folderName = params.folderName, fileName = params.name, fileUtil = that.FileUtil;
     if (themeId && fileName && folderName) {
-        dbAction.get("findByThemeId", themeId, function (err, theme) {
+        that.getService(THEME_SCHEMA).findById(themeId, function (err, theme) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -210,12 +206,11 @@ function getFile(req, res, next) {
 }
 
 function openTheme(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params,
         themeHome = getViewsHome(req.app), themeId = params.id,
         fileUtil = that.FileUtil;
     if (themeId) {
-        dbAction.get("findByThemeId", themeId, function (err, theme) {
+        that.getService(THEME_SCHEMA).findById(themeId, function (err, theme) {
             if (!err && theme) {
                 try {
                     var themePath = themeHome + "/" + theme.path;
@@ -244,11 +239,10 @@ function openTheme(req, res, next) {
 /**
  * Setup watcher for newly created theme for changes
  * @param app
- * @param dbAction
  * @param name
  */
-function setupWatcher(app, dbAction, name) {
-    dbAction.get("findByName", name, function (err, theme) {
+function setupWatcher(app, name) {
+    app.getService(THEME_SCHEMA).getByName(name, function (err, theme) {
         if (!err && theme) {
             require(utils.getLibPath() + "/static/ThemesWatcher").cacheAndWatchTheme(app, theme);
         }
@@ -256,8 +250,7 @@ function setupWatcher(app, dbAction, name) {
 }
 
 function createTheme(req, res, next) {
-    var that = this, params = req.params, DBActions = that.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA),
+    var that = this, params = req.params, ThemeService = that.getService(THEME_SCHEMA),
         app = req.app,
         themeHome = getThemeHome(app),
         name = params.name;
@@ -266,7 +259,7 @@ function createTheme(req, res, next) {
         var folder = utils.normalize(name), path = "themes/" + folder,
             defaultThemePath = getDefaultThemePath(app),
             newThemePath = themeHome + "/" + folder;
-        dbAction.get("findByName", name, function (err, theme) {
+        ThemeService.getByName(name, function (err, theme) {
             if (err) {
                 that.setError(req, err);
                 return next(null);
@@ -282,9 +275,9 @@ function createTheme(req, res, next) {
                         that.setError(req, err);
                         return next(null);
                     }
-                    dbAction.save({name: name, path: path}, function (err, result) {
+                    ThemeService.save({name: name, path: path}, function (err, result) {
                         if (!err && result) {
-                            setupWatcher(app, dbAction, name);
+                            setupWatcher(app, name);
                             that.setSuccess(req, "Theme created successfully.");
                         }
                         if (err) {
@@ -309,9 +302,8 @@ function createTheme(req, res, next) {
 ThemeBuilderPluginController.prototype.render = function (req, res, next) {
     var view = req.params.action;
     view = view || "index";
-    var DBActions = this.getDBActionsLib(),
-        dbAction = DBActions.getInstance(req, THEME_SCHEMA);
-    dbAction.get("getAllExceptDefault", null, function (err, themes) {
+    var ThemeService = this.getService(THEME_SCHEMA);
+    ThemeService.getAllExceptDefault(function (err, themes) {
         var ret = {
             themes: [],
             isDisabled: true
