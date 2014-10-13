@@ -127,7 +127,7 @@ function editPlugin(req, res, next) {
         pluginId = plugin.id,
         exec = plugin.exec, settingsFn = exec.settings;
     var pv = new that.PermissionValidator(req, PluginInstanceHandler.permissionSchemaKey, PLUGIN_INSTANCE_SCHEMA);
-    PluginInstanceHandler.getPluginInstance(that.getService(PLUGIN_INSTANCE_SCHEMA).Auth, pageId, ns, function (err, instance) {
+    PluginInstanceHandler.getPluginInstance(that.getService(PLUGIN_INSTANCE_SCHEMA), pageId, ns, function (err, instance) {
         if (err || !instance) {
             return next(err);
         }

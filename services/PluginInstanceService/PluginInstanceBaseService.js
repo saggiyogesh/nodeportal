@@ -11,7 +11,7 @@ DAOExtras(PluginInstance);
 //create finders form finders property
 PluginInstance.getByPluginNamespaceAndPageId = function getByPluginNamespaceAndPageId(pluginNamespace,pageId, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"pluginNamespace":pluginNamespace,"pageId":pageId}}, next);
+    this.findOne({"where":{"pluginNamespace":pluginNamespace,"pageId":pageId}}, next);
 };
 
 

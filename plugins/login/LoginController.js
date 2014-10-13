@@ -58,7 +58,7 @@ function getGravatar(req, that) {
         var emailId = that.getPluginHelper().getPostParam(req, "email"),
             gravatar = require('gravatar'),
             sessionUser = req.session.user,
-            UserService = that.getService(USER_SCHEMA)
+            UserService = that.getService(USER_SCHEMA),
             userId, profilePic = sessionUser.profilePic || {}, hash;
         async.series([
                 function (n) {
@@ -90,9 +90,7 @@ function getGravatar(req, that) {
                 if (!err) {
                     sessionUser.profilePic = profilePic;
                 }
-
-            })
-
+            });
     });
 }
 
@@ -192,16 +190,16 @@ var doRegister = function (req, res, next) {
             return next(err);
         }
         if (!result.hasErrors) { // this means data is valid
-            var postParams = that.getPluginHelper().getPostParams(req);
-            PasswordUtil.encrypt(postParams.password, function (err, hash) {
+            var postData = that.getPluginHelper().getPostParams(req);
+            PasswordUtil.encrypt(postData.password, function (err, hash) {
                 if (err) {
                     return next(err);
                 }
                 var userRole = require(utils.getLibPath() + "/permissions/Roles").getUserRole();
-                that.getService(USER_SCHEMA).populateModelAndSave(postParams, {roles: [userRole.roleId ],
+                that.getService(USER_SCHEMA).populateModelAndSave(postData, {roles: [userRole.roleId ],
                         passwordEnc: hash}, {emailId: "email"},
                     function (err) {
-                        loginProcess(req, res, next, postParams)(err);
+                        loginProcess(req, res, next, postData)(err);
                         getGravatar(req, that);
                     }
                 );
@@ -239,8 +237,7 @@ var doLoginAction = function (req, res, next) {
         }
         if (!result.hasErrors) { // this means data is valid
             // POST Actions
-            var params = that.parseParams(req);
-            loginProcess(req, res, next, params.post)();
+            loginProcess(req, res, next, that.getPluginHelper().getPostParams(req))();
         }
         else {
             that.setErrorMessage(req, "entered-invalid-data");

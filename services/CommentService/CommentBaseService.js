@@ -9,15 +9,15 @@ var Comment = loopback.createModel(config);
 DAOExtras(Comment);
 
 //create finders form finders property
-Comment.getById = function getById(id, next) {   // arguments are defined in arguments property
+Comment.getByParentCommentId = function getByParentCommentId(parentCommentId, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"id":id}}, next);
+    this.find({"where":{"parentCommentId":parentCommentId}}, next);
 };
 
 
-Comment.getByIdAndVersion = function getByIdAndVersion(id,version, next) {   // arguments are defined in arguments property
+Comment.getByThreadId = function getByThreadId(threadId, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"id":id,"version":version}}, next);
+    this.find({"where":{"threadId":threadId},"sort":"createDate ASC"}, next);
 };
 
 

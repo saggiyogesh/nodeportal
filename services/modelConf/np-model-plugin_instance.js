@@ -16,7 +16,8 @@ module.exports = {
     finders: {
         getByPluginNamespaceAndPageId: {
             arguments: ["pluginNamespace", "pageId"],
-            query: {where: {pluginNamespace: "_pluginNamespace", pageId: "_pageId"} }
+            query: {where: {pluginNamespace: "_pluginNamespace", pageId: "_pageId"} },
+            method: "findOne"
         }
     }
 };
