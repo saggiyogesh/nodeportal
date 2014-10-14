@@ -35,7 +35,7 @@ Theme.getAll = function getAll( next) {   // arguments are defined in arguments 
 
 Theme.getDefaultSettingsTheme = function getDefaultSettingsTheme( next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"name":"Settings","type":"page"}}, next);
+    this.findOne({"where":{"name":"Settings","type":"settings"}}, next);
 };
 
 

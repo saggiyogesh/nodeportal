@@ -1,59 +1,29 @@
 include appMixins
 
-!= viewLib.Messages(req , namespace)
-- var roles = req.attrs.roles, actions = req.attrs.actions, actionsValue = req.attrs.actionsValue;
-- var permissions = req.attrs.permissions, formAction = {route: 'updatePermissions'}, guestRoleId = req.attrs.guestRoleId;
-- var isSettingsPlugin = !!req.attrs.isSettingsPlugin;
-- if(req.attrs.hasAuth)
+div(id="#{namespace}_permissions")
 
-    form.form-horizontal(method="POST", action="#{viewLib.createURL(req , formAction)}", id='#{namespace +"_fm"}')
-        input(name='#{namespace +"[redirect]"}', type="hidden", value="#{req.query.redirect}")
-        input(name='#{namespace +"[modelId]"}', type="hidden", value="#{req.params.modelId}")
-        input(name='#{namespace +"[modelName]"}', type="hidden", value="#{req.params.name}")
-        input(name='#{namespace +"[modelPermissionSchema]"}', type="hidden", value="#{req.params.modelPermissionSchema}")
-        input(name='#{namespace +"[values]"}', type="hidden")
-        if isSettingsPlugin
-            input(name='#{namespace +"[isSettingsPlugin]"}', type="hidden", value="#{isSettingsPlugin}")
 
-        table.table.table-bordered
-            thead
-                tr
-                    each role, i in roles
-                        th= role.name
-            tbody
-                each action, i in actions
-                    tr
-                        th=action
-                        each role, j in roles
-                            if role
-                                td
-                                    - var roleId = role.roleId
-                                    - var chkStr = permissions[roleId].indexOf(actionsValue[action]) > -1 ? 'checked' : '';
-                                    //-only VIEW action is enabled for Guest to give permission
-                                    - disableStr = (roleId == guestRoleId.toString() && action != "VIEW") ? "disabled" : "";
-                                    != '<input type="checkbox" name="'+ namespace+'[' + roleId + '___' + action +']"' + chkStr + ' ' + disableStr +'/>'
++BottomScript(locals)
+    script.
+        require(["pluginURL"], function () {
+            var container = $("##{namespace}_permissions")
+            var obj = {p : JSON.parse('!{JSON.stringify(req.attrs.p)}')};
+            Rocket.ajax({
+                    url: Rocket.PluginURL.createByNamespace("#{namespace}",
+                        "viewFile:permissionForm", obj, "exclusive", "appSettings"),
+                    success: function (response) {
+                        container.html(response);
+                    }
+            });
 
-        .form-actions
-            button.btn.btn-primary(type="submit") Save
+            $("##{namespace}_permissions").on("submit", "form", function(e){
+                    e.preventDefault();
+                    console.log(e)
+                    var fm = this;
+                    Rocket.Util.submitFormAsync(fm, function(r){
+                        container.html(r);
+                    },{mode:"exclusive"});
+                });
+        });
 
-            -if(req.query.redirect)
-                | &nbsp;
-                button.btn(id='#{namespace +"_cancel"}') Cancel
 
-                +BottomScript(locals)
-                    script.
-                        require(["util"], function () {
-                            sfsdfffs
-                            var ns = "#{namespace}";
-                            $("#managePermissions_fm").submit(function(e) {
-
-                                var v = _.map($('#managePermissions_fm :checked'), function(n){
-                                    return $(n).attr("name").split("[")[1].split("]")[0];
-                                });
-                                console.log(v)
-
-                                $("input[name='managePermissions[values]']").val(v.join());
-
-                            });
-                            Rocket.Util.onFormCancel("#{namespace + '_cancel'}");
-                        });

@@ -23,7 +23,8 @@ module.exports = {
         getAll: {
         },
         getDefaultSettingsTheme: {
-            query: {where: { name: "Settings", type: "page"}},
+            query: {where: { name: "Settings", type: "settings"}},
+            method: "findOne"
         },
         getAllPageType: {
             query: {where: { type: "page"}}

@@ -16,127 +16,17 @@ var PermissionController = module.exports = function (id, app) {
 
 util.inherits(PermissionController, BasePluginController);
 
-function updatePermissionsAction(req, res, next) {
-    var that = this, PluginHelper = that.getPluginHelper(),
-        postParams = PluginHelper.getPostParams(req),
-        redirect = postParams.redirect, modelId = postParams.modelId, modelName = postParams.modelName,
-        permissionSchemaKey = postParams.modelPermissionSchema,
-        isSettingsPlugin = postParams.isSettingsPlugin;
-    delete postParams.redirect;
-    delete postParams.modelId;
-    delete postParams.modelName;
-    delete postParams.modelPermissionSchema;
-    delete postParams.isSettingsPlugin;
+PermissionController.prototype.permissionFormAction = function (req, res, next) {
 
-    var PermissionsCache = require(utils.getLibPath() + "/permissions/Cache");
-    var Roles = require(utils.getLibPath() + "/permissions/Roles");
+    var that = this, p = req.query.p, type = p.type, modelId = p.modelId, name = p.name;
 
-    var Service = that.getService(modelName),
-        pv = new that.PermissionValidator(req, permissionSchemaKey, modelName);
-    var pm, roles;
-    if (isSettingsPlugin) {
-        pm = PermissionsCache.getCacheItem(permissionSchemaKey);
-        roles = [Roles.getUserRole().roleId];
-    } else {
-        pm = PermissionsCache.getCacheItem(permissionSchemaKey, modelId);
-        roles = [Roles.getUserRole().roleId, Roles.getGuestRole().roleId];
-    }
-
-    Debug._li(".. ", postParams, true);
-
-    var actionsValue = pm.getActionsValue(), getActionValue = pm.getActionValue;
-
-    var rolePermissions = _.clone(pm.getPermissions());
-    Debug._li("rolePermissions ", rolePermissions, true)
-    Debug._li("av:  ", pm.getActionsValue(), true)
-
-    roles.forEach(function (roleId) {
-        rolePermissions[roleId] = [];
-    });
-
-    _.each(postParams, function (val, key) {
-        if (val === "on") {
-            key = key.split("___");
-            var roleId = key[0], action = key[1], actionVal = getActionValue(action);
-            var arr = rolePermissions[roleId];
-            arr.push(actionVal);
-        }
-    });
-    Debug._li("rolePermissions1 ", rolePermissions, true)
-
-    var modelIdKey = Service.getIdName(),
-        action = "PERMISSION";
-
-    if (isSettingsPlugin) {
-
-        Service.getByPermissionSchemaKey(permissionSchemaKey, function (err, model) {
-            if (!err) {
-                model = model.toObject();
-                var permissionSchemaKey = model.permissionSchemaKey;
-                delete  model._id;
-                delete model.permissionSchemaKey
-                Debug._li(">> ", model, true);
-                model.rolePermissions = rolePermissions;
-                pv.hasPermissionWithoutModelId(action, function (err, perm) {
-                    if (perm && perm.isAuthorized) {
-                        Service.update(model, function (err, result) {
-                            if (result) {
-                                Debug._l(">> up " + result);
-                                PermissionsCache.updateCacheItem(permissionSchemaKey, null, model);
-                                that.setRedirect(req, redirect);
-                            }
-                            next(err);
-                        });
-                    }
-                    else {
-                        err = pv.getPermissionError(action);
-                        next(err);
-                    }
-                });
-            }
-            else
-                next(err);
-        });
-
-    }
-    else {
-        var modelObj = {
-            rolePermissions: rolePermissions
-        };
-
-        modelObj[ modelIdKey] = modelId;
-        async.series([
-            function (n) {
-                if (modelId) {
-                    pv.hasPermission(action, modelId, function (err, perm) {
-                        if (perm && perm.isAuthorized === true) {
-                            Service.update(modelObj, n);
-                        }
-                        else n(err);
-                    });
-                }
-                else {
-                    n(new Error(modelName + " id is not available in model update"));
-                }
-            }
-        ], function (err, result) {
-            if (result) {
-                redirect && that.setRedirect(req, redirect);
-//            var msg = "Permissions updated successfully.";
-//            that.setSuccessMessage(req, msg);
-                PermissionsCache.updateCacheItem(permissionSchemaKey, modelId, modelObj);
-            }
-            next(err);
-        });
-    }
-}
-
-
-function getPermissions(req, res, next) {
-    var that = this, params = req.params, type = params.type, modelId = params.modelId, name = params.name;
     if (type && modelId && name) {
         var PermissionsCache = require(utils.getLibPath() + "/permissions/Cache");
         var Roles = require(utils.getLibPath() + "/permissions/Roles");
+
+        req.attrs.type = type;
+        req.attrs.modelId = modelId;
+        req.attrs.name = name;
 
         try {
             var pv, permissionSchemaKey;
@@ -201,4 +91,132 @@ function getPermissions(req, res, next) {
         that.setErrorMessage(req, "Missing parameters");
         next(null);
     }
+};
+
+function updatePermissionsAction(req, res, next) {
+    var that = this, PluginHelper = that.getPluginHelper(),
+        postParams = PluginHelper.getPostParams(req),
+        redirect = postParams.redirect, modelId = postParams.modelId, modelName = postParams.modelName,
+        permissionSchemaKey = postParams.modelPermissionSchema,
+        isSettingsPlugin = postParams.isSettingsPlugin;
+    delete postParams.redirect;
+    delete postParams.modelId;
+    delete postParams.modelName;
+    delete postParams.modelPermissionSchema;
+    delete postParams.isSettingsPlugin;
+
+    var PermissionsCache = require(utils.getLibPath() + "/permissions/Cache");
+    var Roles = require(utils.getLibPath() + "/permissions/Roles");
+
+    var Service = that.getService(modelName),
+        pv = new that.PermissionValidator(req, permissionSchemaKey, modelName);
+    var pm, roles;
+    if (isSettingsPlugin) {
+        pm = PermissionsCache.getCacheItem(permissionSchemaKey);
+        roles = [Roles.getUserRole().roleId];
+    } else {
+        pm = PermissionsCache.getCacheItem(permissionSchemaKey, modelId);
+        roles = [Roles.getUserRole().roleId, Roles.getGuestRole().roleId];
+    }
+
+    Debug._li(".. ", postParams, true);
+
+    var actionsValue = pm.getActionsValue(), getActionValue = pm.getActionValue;
+
+    var rolePermissions = _.clone(pm.getPermissions());
+    Debug._li("rolePermissions ", rolePermissions, true)
+    Debug._li("av:  ", pm.getActionsValue(), true)
+
+    roles.forEach(function (roleId) {
+        rolePermissions[roleId] = [];
+    });
+
+    _.each(postParams.values.split(","), function (val) {
+        var key = val.split("___");
+        var roleId = key[0], action = key[1], actionVal = getActionValue(action);
+        var arr = rolePermissions[roleId];
+        arr.push(actionVal);
+    });
+    Debug._li("rolePermissions1 ", rolePermissions, true)
+
+    var modelIdKey = Service.getIdName(),
+        action = "PERMISSION";
+
+    function setSuccessMsg() {
+        var msg = "Permissions updated successfully.";
+        that.setSuccessMessage(req, msg);
+    }
+
+    if (isSettingsPlugin) {
+
+        Service.getByPermissionSchemaKey(permissionSchemaKey, function (err, model) {
+            if (!err) {
+                model = model.toObject();
+                var permissionSchemaKey = model.permissionSchemaKey;
+                delete  model._id;
+                delete model.permissionSchemaKey
+                Debug._li(">> ", model, true);
+                model.rolePermissions = rolePermissions;
+                pv.hasPermissionWithoutModelId(action, function (err, perm) {
+                    if (perm && perm.isAuthorized) {
+                        Service.update(model, function (err, result) {
+                            Debug._l(">> up " + result);
+                            if (result) {
+                                setSuccessMsg();
+                                PermissionsCache.updateCacheItem(permissionSchemaKey, null, model);
+                            }
+                            next(err);
+                        });
+                    }
+                    else {
+                        err = pv.getPermissionError(action);
+                        next(err);
+                    }
+                });
+            }
+            else
+                next(err);
+        });
+
+    }
+    else {
+        var modelObj = {
+            rolePermissions: rolePermissions
+        };
+
+        modelObj[ modelIdKey] = modelId;
+        async.series([
+            function (n) {
+                if (modelId) {
+                    pv.hasPermission(action, modelId, function (err, perm) {
+                        if (perm && perm.isAuthorized === true) {
+                            Service.update(modelObj, n);
+                        }
+                        else n(err);
+                    });
+                }
+                else {
+                    n(new Error(modelName + " id is not available in model update"));
+                }
+            }
+        ], function (err, result) {
+            if (result) {
+                setSuccessMsg();
+                PermissionsCache.updateCacheItem(permissionSchemaKey, modelId, modelObj);
+            }
+            next(err);
+        });
+    }
+}
+
+
+function getPermissions(req, res, next) {
+    var params = req.params;
+    req.attrs.p = {
+        type: params.type,
+        modelId: params.modelId,
+        name: params.name
+    };
+    next();
+
 }

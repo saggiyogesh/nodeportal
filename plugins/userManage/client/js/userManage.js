@@ -16,7 +16,7 @@ define(["uploader", "pluginURL", "events"], function () {
             url: Rocket.PluginURL.createByNamespace(ns, "uploadProfilePic", null),
             onSuccess: function (response) {
                 if (response.files[0].name) {
-                    setImage(Rocket.PluginURL.createByNamespace(ns, ["profilePic", Rocket.User.getUserId()], null, null, true))
+                    setImage(Rocket.PluginURL.createByNamespace(ns, ["profilePic", Rocket.User.getUserId()], null, null, "app"))
                 }
             }
         });

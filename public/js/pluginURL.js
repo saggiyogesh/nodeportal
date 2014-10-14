@@ -21,7 +21,7 @@ define(["util", "plugin"], function () {
         return url;
     };
 
-    Rocket.PluginURL.createByNamespace = function (namespace, paths, params, mode, isAppRoute) {
+    Rocket.PluginURL.createByNamespace = function (namespace, paths, queryParams, mode, baseUrlType) {
         var o = Rocket.Props.getPluginIdAndIId(namespace);
         var arr = [o.pluginId];
         if (o.iId) {
@@ -35,19 +35,31 @@ define(["util", "plugin"], function () {
         arr = _.union(arr, paths);
 
         if (mode) {
-            params = params || {};
-            params.mode = mode;
+            queryParams = queryParams || {};
+            queryParams.mode = mode;
         }
 
-        var query = params && $.param(params);
-        var url = Rocket.Util.getOrigin() + (isAppRoute ? Rocket.Props.getAppUrl() : Rocket.PageValues.getPageFriendlyURL()) + "/" + arr.join("/");
+        var baseUrl = "";
+
+        switch (baseUrlType) {
+            case "app":
+                baseUrl = Rocket.Props.getAppUrl();
+                break;
+            case "appSettings":
+                baseUrl = Rocket.Props.getAppSettingsUrl();
+                break;
+            case "page":
+                baseUrl = Rocket.PageValues.getPageFriendlyURL();
+                break;
+        }
+
+        var query = queryParams && $.param(queryParams);
+        var url = Rocket.Util.getOrigin() + baseUrl + "/" + arr.join("/");
         if (query) {
             url = url + "?" + query;
         }
 
         return url;
-
-
     };
 
     Rocket.PluginURL.async = function (params, callback) {
