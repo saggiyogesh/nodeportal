@@ -70,10 +70,10 @@ style(type="text/css").
     .hide.alert.alert-success(id=namespace+"_successFlash", data-autohide="true")
         button(class="close") x
         span.message
-
-.manage-resource-upload-button.row-fluid
-    .well
-        button.btn.btn-large.btn-block.btn-primary(id="manageResource_UploadButton") Upload
+if hasAdd
+    .manage-resource-upload-button.row-fluid
+        .well
+            button.btn.btn-large.btn-block.btn-primary(id="manageResource_UploadButton") Upload
 
 .manage-resource-container.row-fluid
     .resource-tree.span2

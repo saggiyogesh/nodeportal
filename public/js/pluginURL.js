@@ -51,6 +51,9 @@ define(["util", "plugin"], function () {
             case "page":
                 baseUrl = Rocket.PageValues.getPageFriendlyURL();
                 break;
+            default :
+                baseUrl = Rocket.PageValues.getPageFriendlyURL();
+                break;
         }
 
         var query = queryParams && $.param(queryParams);

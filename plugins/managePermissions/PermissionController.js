@@ -131,7 +131,7 @@ function updatePermissionsAction(req, res, next) {
         rolePermissions[roleId] = [];
     });
 
-    _.each(postParams.values.split(","), function (val) {
+    postParams.values && _.each(postParams.values.split(","), function (val) {
         var key = val.split("___");
         var roleId = key[0], action = key[1], actionVal = getActionValue(action);
         var arr = rolePermissions[roleId];
@@ -142,9 +142,19 @@ function updatePermissionsAction(req, res, next) {
     var modelIdKey = Service.getIdName(),
         action = "PERMISSION";
 
-    function setSuccessMsg() {
+    function setSuccess() {
         var msg = "Permissions updated successfully.";
         that.setSuccessMessage(req, msg);
+        req.params.action = "permissionForm";
+        req.query.p = {
+            type: postParams.type,
+            modelId: modelId,
+            name: postParams.name
+        };
+        utils.tick(function () {
+            that.permissionFormAction(req, res, next);
+        });
+
     }
 
     if (isSettingsPlugin) {
@@ -162,15 +172,15 @@ function updatePermissionsAction(req, res, next) {
                         Service.update(model, function (err, result) {
                             Debug._l(">> up " + result);
                             if (result) {
-                                setSuccessMsg();
+                                setSuccess();
                                 PermissionsCache.updateCacheItem(permissionSchemaKey, null, model);
                             }
-                            next(err);
+                            else
+                                next(err);
                         });
                     }
                     else {
-                        err = pv.getPermissionError(action);
-                        next(err);
+                        next(pv.getPermissionError(action));
                     }
                 });
             }
@@ -200,11 +210,12 @@ function updatePermissionsAction(req, res, next) {
                 }
             }
         ], function (err, result) {
-            if (result) {
-                setSuccessMsg();
+            if (result && result[0]) {
+                setSuccess();
                 PermissionsCache.updateCacheItem(permissionSchemaKey, modelId, modelObj);
             }
-            next(err);
+            else
+                next(err);
         });
     }
 }

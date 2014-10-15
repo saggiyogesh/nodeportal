@@ -329,7 +329,7 @@ function viewResourcesAction(req, res, next) {
                     else {
                         var path = realPath(process.cwd(), "public", "images", "fileicons", model.type.toLowerCase() + ".png");
                         sendFile(path, null, next);
-                        createThumb(dirPath, model, that.getAppProperty("THUMB_DIMENSION"), thumbName, ResourceService,  model.extras, FileUtil);
+                        createThumb(dirPath, model, that.getAppProperty("THUMB_DIMENSION"), thumbName, ResourceService, model.extras, FileUtil);
                     }
                     return;
                 }
@@ -507,9 +507,9 @@ ResourceManageController.prototype.render = function (req, res, next) {
     pv.hasPermissionWithoutModelId("ADD", function (err, perm) {
         if (!err) {
             ret.hasAdd = perm.isAuthorized;
-            req.pluginRender.setView(req.params.action).setLocals(ret);
         }
-        next(err);
+        req.pluginRender.setView(req.params.action).setLocals(ret);
+        next(err instanceof that.PermissionError ? null : err);
     });
 };
 
