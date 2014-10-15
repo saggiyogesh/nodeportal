@@ -1,7 +1,7 @@
 .nav-collapse
     ul.nav
         -each page in pages
-            li(class="#{"/"+req.params.page === page.friendlyURL ? 'active' : ''}"): a(href="#{page.friendlyURL}") #{page.localizedName.en_US}
+            li(class="#{'/' + req.params.page === page.friendlyURL ? 'active' : ''}"): a(href="#{page.friendlyURL}") #{page.localizedName.en_US}
         -if(!req.session.loggedIn)
             li: a(href="/app/login#{"?redirect=/" + req.params.page}") Login
     mixin dockbar(req)
