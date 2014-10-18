@@ -250,7 +250,7 @@ function getPageJSON(page) {
 
 function getPagesListJSON(req, res, next) {
     var that = this, PageServiceAuth = that.getService(PAGE_SCHEMA).Auth;
-    PageServiceAuth.getAllPages(function (err, pages) {
+    PageServiceAuth.getAllPages(req.session.roles, function (err, pages) {
         if (pages && pages.length > 0) {
             var siteRoot = {
                 title: "Site Root",
