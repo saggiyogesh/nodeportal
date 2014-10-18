@@ -55,5 +55,27 @@ module.exports = {
         getAllPages: {
         }
     },
-    auth: true
+    auth: true,
+    //before hooks
+    hooks: {
+        create : function (next) {
+            var url = this.friendlyURL;
+            if (url.charAt(0) != '/') {
+                this.friendlyURL = "/" + url;
+            }
+
+            if (!this.data) {
+                this.data = {};
+            }
+            next();
+        },
+        update: function (next) {
+            var url = this.friendlyURL;
+            if (url.charAt(0) != '/') {
+                this.friendlyURL = "/" + url;
+            }
+
+            next();
+        }
+    }
 };

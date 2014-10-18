@@ -8,6 +8,30 @@ var Page = loopback.createModel(config);
 
 DAOExtras(Page);
 
+//add before hooks
+
+Page.beforeCreate = function (next) {
+            var url = this.friendlyURL;
+            if (url.charAt(0) != '/') {
+                this.friendlyURL = "/" + url;
+            }
+
+            if (!this.data) {
+                this.data = {};
+            }
+            next();
+        };
+
+Page.beforeUpdate = function (next) {
+            var url = this.friendlyURL;
+            if (url.charAt(0) != '/') {
+                this.friendlyURL = "/" + url;
+            }
+
+            next();
+        };
+
+
 //create finders form finders property
 Page.getByFriendlyURL = function getByFriendlyURL(friendlyURL, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
