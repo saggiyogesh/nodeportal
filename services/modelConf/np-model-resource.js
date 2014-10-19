@@ -14,8 +14,8 @@ module.exports = {
         extras: Object,
 
         //compulsory fields for permissions
-        userId: Number,
-        userName: String,
+        userId: { type: Number, required: true },
+        userName: { type: String, required: true },
         rolePermissions: Object
     },
     finders: {
