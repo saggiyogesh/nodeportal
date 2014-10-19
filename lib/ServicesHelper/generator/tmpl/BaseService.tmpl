@@ -7,7 +7,12 @@ var loopback = require("loopback"),
 var <%= name %> = loopback.createModel(config);
 
 DAOExtras(<%= name %>);
-
+<% if (hooks && hooks.length > 0) { %>
+//add before hooks
+<% for(var i = 0; i < hooks.length ; i++) { var hook = hooks[i] %>
+<%= name %>.<%= hook %>
+<% } %>
+<% } %>
 //create finders form finders property
 <%=finders%>
 
