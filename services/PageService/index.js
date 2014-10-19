@@ -15,26 +15,36 @@ var PermissionValidator = require(utils.getLibPath() + "/permissions/PermissionV
 
 PageBaseService.Auth = PageServiceAuth;
 
-function PageNotFoundError(pageId) {
+function PageNotFoundError(arg) {
+    Error.call(this);
+    Error.captureStackTrace(this, this.constructor);
+
     this.name = "PageNotFoundError";
-    this.message = "Page not found in with pageId: " + pageId;
+    this.message = "Page not found: " + arg;
     this.localizedMessageKey = "page-not-found-error";
 }
 util.inherits(PageNotFoundError, Error);
 
 function IndexPageDeleteError() {
+    Error.call(this);
+    Error.captureStackTrace(this, this.constructor);
+
     this.name = "IndexPageDeleteError";
     this.message = "Cannot delete index page.";
     this.localizedMessageKey = "index-page-delete-error";
 }
 util.inherits(IndexPageDeleteError, Error);
 
-function HasChildPagesDeleteError(parentPageId) {
-    this.name = "HasChildPagesDeleteError";
+function ChildPagesDeleteError(parentPageId) {
+    Error.call(this);
+    Error.captureStackTrace(this, this.constructor);
+
+    this.name = "ChildPagesDeleteError";
     this.message = "Delete all child pages.";
     this.localizedMessageKey = "has-child-pages-delete-error";
+
 }
-util.inherits(HasChildPagesDeleteError, Error);
+util.inherits(ChildPagesDeleteError, Error);
 
 
 PageBaseService.PageNotFoundError = PageNotFoundError;
@@ -152,7 +162,7 @@ PageServiceAuth.deletePage = function deletePageAuth(id, pv, next) {
             if (p) {
                 // check for index page delete
                 (getAppProperty("DEFAULT_INDEX_PAGE") == p.friendlyURL) ?
-                    n(new IndexPageDeleteError()) : n(p);
+                    n(new IndexPageDeleteError()) : n(null, p);
             }
             else {
                 n(new PageNotFoundError(id));
@@ -160,16 +170,18 @@ PageServiceAuth.deletePage = function deletePageAuth(id, pv, next) {
         },
         function (p, n) {
             //check for child pages, if exists then throw err
-            PageBaseService.getChildren(p.parentPageId, function (err, pages) {
+            PageBaseService.getChildren(id, function (err, pages) {
                 if (pages && pages.length > 0) {
-                    err = new HasChildPagesDeleteError(p.parentPageId);
+                    err = new ChildPagesDeleteError(id);
                 }
                 n(err, p);
             });
         },
         function (p, n) {
             // delete page
-            PageServiceAuth.deleteById(p.pageId, pv, n);
+            PageServiceAuth.deleteById(p.pageId, pv, function (err) {
+                n(err, err ? null : p);
+            });
         },
         function (p, n) {
             // get above siblings and update page order
@@ -185,6 +197,9 @@ PageServiceAuth.deletePage = function deletePageAuth(id, pv, next) {
                     };
 
                     async.each(aboveSiblings, decrementPageOrder, n);
+                }
+                else{
+                    n();
                 }
             });
 

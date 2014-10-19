@@ -215,7 +215,7 @@ function addPageAction(req, res, next) {
             PageService.findById(ppId, n);
         },
         function (p, n) {
-            if (p) {
+            if (ppId == 0 || p) {
                 pageForm.PageForm(req.app, function (err, formObj) {
                     if (!err) {
                         req.query[that.getPluginId()] = {
@@ -291,7 +291,7 @@ function updatePageAction(req, res, next) {
     var that = this, PageServiceAuth = that.getService(PAGE_SCHEMA).Auth;
     var post = that.getPluginHelper().getPostParams(req),
         updateOrSave = function (err, page) {
-            if (page) {
+            if (!err && page) {
                 that.setRedirect(req, post.redirect);
                 var msg = "Page " + (post.pageId ? "updated" : "added" ) + " successfully.";
                 that.setSuccessMessage(req, msg);
@@ -328,7 +328,7 @@ function updatePageAction(req, res, next) {
                     req.attrs.pageForm = that.getFormBuilder().DynamicForm(req, formObj, "en_US");
                     req.params.action = "edit";
                 }
-                n(err);
+                next(err);
             });
         }
     });
