@@ -196,7 +196,7 @@ function updatePageOrderAction(req, res, next) {
         return next(null);
     }
     PageService.updatePageOrder(post["pageOrder"].split(","), function (err, result) {
-        if (result) {
+        if (!err) {
             that.setRedirect(req, post.redirect);
             that.setSuccessMessage(req, "Pages re-ordered successfully.");
         }
