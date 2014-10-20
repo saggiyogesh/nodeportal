@@ -195,7 +195,8 @@ function updatePageOrderAction(req, res, next) {
     if (!post) {
         return next(null);
     }
-    PageService.updatePageOrder(post["pageOrder"].split(","), function (err, result) {
+    var pv = new that.PermissionValidator(req, PAGE_PERMISSION_SCHEMA_ENTRY, PAGE_SCHEMA);
+    PageService.updatePageOrder(pv, post["pageOrder"].split(","), function (err, result) {
         if (!err) {
             that.setRedirect(req, post.redirect);
             that.setSuccessMessage(req, "Pages re-ordered successfully.");
@@ -404,6 +405,6 @@ PageManageController.prototype.render = function (req, res, next) {
         if (!err) {
             req.pluginRender.addLocal("hasAdd", perm.isAuthorized)
         }
-        next(err);
+        next(err instanceof that.PermissionError ? null : err);
     });
 };

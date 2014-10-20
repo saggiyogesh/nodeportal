@@ -69,14 +69,24 @@ PageBaseService.shufflePageData = function shufflePageData(page, layout) {
     return data;
 };
 
-PageBaseService.updatePageOrder = function updatePageOrder(pageIds, next) {
-    var i = 0;
+PageBaseService.updatePageOrder = function updatePageOrder(pv, pageIds, next) {
+    //check update permissions for each pageIds
     async.each(pageIds, function (pageId, cb) {
-        PageBaseService.update({
-            pageId: pageId,
-            order: i++
-        }, cb);
-    }, next);
+        pv.hasPermission("UPDATE", pageId, cb);
+    }, function(err){
+        if(!err){
+            var i = 0;
+            async.each(pageIds, function (pageId, cb) {
+                PageBaseService.update({
+                    pageId: pageId,
+                    order: i++
+                }, cb);
+            }, next);
+        }
+        else{
+            next(err);
+        }
+    });
 };
 
 PageServiceAuth.updatePage = function updatePageAuth(req, otherValues, keyMapObj, next) {
