@@ -10,7 +10,7 @@ module.exports = {
         passwordEnc: { type: String, required: true},
         emailId: { type: String, required: true, index: {unique: true}},
         phoneNo: { type: String},
-        dob: { type: Date},
+        dob: { type: Date, required: true},
         gender: {type: String, default: ""},
         roles: Array,
         active: Boolean,
