@@ -33,6 +33,12 @@ Layout.getAllExceptDefaults = function getAllExceptDefaults( next) {   // argume
 };
 
 
+Layout.getAll = function getAll( next) {   // arguments are defined in arguments property
+    //find or findOne will have argument from query
+    this.find({}, next);
+};
+
+
 
 
 

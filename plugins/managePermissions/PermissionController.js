@@ -31,7 +31,7 @@ PermissionController.prototype.permissionFormAction = function (req, res, next) 
         try {
             var pv, permissionSchemaKey;
             if (type == "model") {
-                permissionSchemaKey = params.modelPermissionSchema;
+                permissionSchemaKey = p.modelPermissionSchema;
                 pv = new that.PermissionValidator(req, permissionSchemaKey, name);
             }
             else if (type == "plugin") {
@@ -222,12 +222,7 @@ function updatePermissionsAction(req, res, next) {
 
 
 function getPermissions(req, res, next) {
-    var params = req.params;
-    req.attrs.p = {
-        type: params.type,
-        modelId: params.modelId,
-        name: params.name
-    };
+    req.attrs.p = {};
+    utils.copyObject(req.params, req.attrs.p);
     next();
-
 }

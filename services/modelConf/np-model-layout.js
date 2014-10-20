@@ -26,6 +26,8 @@ module.exports = {
                 { name: { neq: "2-col-70-30" } },
                 { name: { neq: "1-col" } }
             ]}}
+        },
+        getAll: {
         }
     }
 };

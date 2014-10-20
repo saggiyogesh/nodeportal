@@ -117,7 +117,7 @@ exports.PageForm = function (app, next) {
 
     var cloneFormObj = utils.clone(formObj), fields = cloneFormObj.fields;
 
-    ThemeService.find({}, function (err, themes) {
+    ThemeService.getAllPageType(function (err, themes) {
         if (err) return next(err);
 
         var theme = fields[5];
@@ -126,7 +126,7 @@ exports.PageForm = function (app, next) {
             theme.options.push([t.name, t.themeId]);
         });
 
-        LayoutService.find({}, function (err, layouts) {
+        LayoutService.getAll(function (err, layouts) {
             if (err) return next(err);
 
             var layout = fields[6];
