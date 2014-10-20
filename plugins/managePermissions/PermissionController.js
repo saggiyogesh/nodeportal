@@ -33,20 +33,21 @@ PermissionController.prototype.permissionFormAction = function (req, res, next) 
             if (type == "model") {
                 permissionSchemaKey = p.modelPermissionSchema;
                 pv = new that.PermissionValidator(req, permissionSchemaKey, name);
+                req.attrs.modelPermissionSchema = permissionSchemaKey;
             }
             else if (type == "plugin") {
                 var PLUGIN_INSTANCE_SCHEMA = "PluginInstance",
                     permissionSchemaKey = PLUGIN_PERMISSION_SCHEMA_KEY;
                 pv = new that.PermissionValidator(req, permissionSchemaKey, PLUGIN_INSTANCE_SCHEMA);
-                req.params.name = PLUGIN_INSTANCE_SCHEMA;
-                req.params.modelPermissionSchema = permissionSchemaKey;
+                req.attrs.name = PLUGIN_INSTANCE_SCHEMA;
+                req.attrs.modelPermissionSchema = permissionSchemaKey;
             }
             else if (type == "settings") {
                 var SETTINGS_INSTANCE_SCHEMA = "SchemaPermissions",
                     permissionSchemaKey = utils.getSettingsPluginPermissionSchemaKey(name);
                 pv = new that.PermissionValidator(req, permissionSchemaKey, SETTINGS_INSTANCE_SCHEMA);
-                req.params.name = SETTINGS_INSTANCE_SCHEMA;
-                req.params.modelPermissionSchema = permissionSchemaKey;
+                req.attrs.name = SETTINGS_INSTANCE_SCHEMA;
+                req.attrs.modelPermissionSchema = permissionSchemaKey;
                 pv.hasPermissionWithoutModelId("PERMISSION", function (err, perm) {
                     if (perm && perm.isAuthorized) {
                         var pm = PermissionsCache.getCacheItem(permissionSchemaKey),
@@ -96,20 +97,19 @@ PermissionController.prototype.permissionFormAction = function (req, res, next) 
 function updatePermissionsAction(req, res, next) {
     var that = this, PluginHelper = that.getPluginHelper(),
         postParams = PluginHelper.getPostParams(req),
-        redirect = postParams.redirect, modelId = postParams.modelId, modelName = postParams.modelName,
+        redirect = postParams.redirect, modelId = postParams.modelId, name = postParams.name,
         permissionSchemaKey = postParams.modelPermissionSchema,
         isSettingsPlugin = postParams.isSettingsPlugin;
     delete postParams.redirect;
     delete postParams.modelId;
-    delete postParams.modelName;
     delete postParams.modelPermissionSchema;
     delete postParams.isSettingsPlugin;
 
     var PermissionsCache = require(utils.getLibPath() + "/permissions/Cache");
     var Roles = require(utils.getLibPath() + "/permissions/Roles");
 
-    var Service = that.getService(modelName),
-        pv = new that.PermissionValidator(req, permissionSchemaKey, modelName);
+    var Service = that.getService(name),
+        pv = new that.PermissionValidator(req, permissionSchemaKey, name);
     var pm, roles;
     if (isSettingsPlugin) {
         pm = PermissionsCache.getCacheItem(permissionSchemaKey);
@@ -149,7 +149,8 @@ function updatePermissionsAction(req, res, next) {
         req.query.p = {
             type: postParams.type,
             modelId: modelId,
-            name: postParams.name
+            name: postParams.name,
+            modelPermissionSchema: permissionSchemaKey
         };
         utils.tick(function () {
             that.permissionFormAction(req, res, next);
@@ -206,7 +207,7 @@ function updatePermissionsAction(req, res, next) {
                     });
                 }
                 else {
-                    n(new Error(modelName + " id is not available in model update"));
+                    n(new Error(name + " id is not available in model update"));
                 }
             }
         ], function (err, result) {
