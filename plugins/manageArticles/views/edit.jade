@@ -1,7 +1,7 @@
 include appMixins
 
 <script type="text/javascript" src="/ckeditor/ckeditor.js"></script>
-!{viewLib.Messages(req , namespace)}
+!= viewLib.Messages(req , namespace)
 
 .manage-articles
     ul.nav.nav-tabs
@@ -11,7 +11,7 @@ include appMixins
 
     .tab-content
         .tab-pane.fade.in.active#article
-            !{req.attrs.articleForm}
+            != req.attrs.articleForm
         .tab-pane.fade#version
             .span8
                 #versionTableContentBox
@@ -21,9 +21,3 @@ include appMixins
                 require(["manageArticles"], function(){
                    Rocket.trigger({type:"manageArticle:edit:load", target:this, data:{id:'#{req.params.id}'}});
                 });
-
-
-
-
-
-

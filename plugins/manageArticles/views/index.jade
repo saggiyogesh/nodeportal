@@ -1,6 +1,6 @@
 include appMixins
 
-!{viewLib.Messages(req , namespace)}
+!= viewLib.Messages(req , namespace)
 
 style.
     .show-all-articles {
@@ -15,7 +15,7 @@ style.
         button(id='add', class='btn')
             i.icon-plus-sign
             | Add Article
-        &nbsp;
+        | &nbsp;
     button(id='delete', class='btn disabled', disabled="disabled")
         i.icon-trash
         | Delete
