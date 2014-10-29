@@ -195,10 +195,9 @@ function addFolderAction(req, res, next) {
         name = req.params.name, parentFolderId = req.params.parentFolderId;
     if (name && parentFolderId) {
         //check existence of folder in parent folder
-        var ResourceServiceAuth = that.getService(RESOURCE_SCHEMA).Auth,
-            pv = new that.PermissionValidator(req, RESOURCE_PERMISSION_SCHEMA_ENTRY, RESOURCE_SCHEMA);
+        var ResourceServiceAuth = that.getService(RESOURCE_SCHEMA).Auth;
 
-        ResourceServiceAuth.getByNameAndFolderId(name, parentFolderId, function (err, model) {
+        ResourceServiceAuth.getByNameAndFolderId(name, parentFolderId, req.session.roles, function (err, model) {
             if (err) {
                 next(null);
                 return;
@@ -218,7 +217,7 @@ function addFolderAction(req, res, next) {
                 rolePermissions: RESOURCE_PERMISSION_SCHEMA_ENTRY
             };
 
-            ResourceServiceAuth.save(model, pv, function (err, model) {
+            ResourceServiceAuth.saveByReq(req, RESOURCE_PERMISSION_SCHEMA, model, function (err, done) {
                 if (err) {
                     that.setJSON(req, {error: err.message});
                     next(null);
@@ -259,8 +258,12 @@ function viewResourcesAction(req, res, next) {
 
     //Debug._li("params: ", params, true);
     if (resourceId) {
-        function sendFile(path, type, next) {
+        function sendFile(path, type, name, next) {
             var contentType = utils.contains(path, ".") ? path : path + "." + type;
+            res.set({
+                'Content-Type': contentType,
+                'Content-disposition': 'attachment; filename=' + name
+            });
             res.contentType(contentType);
             FileUtil.readImage(path, function (err, data) {
                 if (!err) {
@@ -276,7 +279,7 @@ function viewResourcesAction(req, res, next) {
                 var fileName = w + ":" + h, extras = model.extras;
                 //if image already scaled
                 if (extras.hasOwnProperty(fileName) && extras[fileName] === true) {
-                    sendFile(realPath(dirPath, fileName), model.type, next);
+                    sendFile(realPath(dirPath, fileName), model.type, model.name, next);
                     return;
                 }
 
@@ -291,11 +294,11 @@ function viewResourcesAction(req, res, next) {
                         //Debug._li("resize: ", result, true);
                         //saving scaled image info to db
                         extras[fileName] = true;
-                        ResourceServiceAuth.update(model.resourceId, { extras: extras}, function (err, result) {
+                        ResourceServiceAuth.updateById(model.resourceId, { extras: extras}, pv, function (err, result) {
                             if (err)
                                 Debug._l(err);
                             if (result) {
-                                sendFile(destPath, model.type, next);
+                                sendFile(destPath, model.type, model.name, model.name, next);
                                 return;
                             }
                         });
@@ -304,7 +307,7 @@ function viewResourcesAction(req, res, next) {
                 }
                 else if (req.params.action === "detail") {
                     var path = realPath(resourceFolderPath, resourceId, resourceId);
-                    sendFile(path, model.type, next);
+                    sendFile(path, model.type, model.name, next);
                     return;
                 }
                 else {
@@ -312,19 +315,19 @@ function viewResourcesAction(req, res, next) {
                 }
             } else {
                 var path = realPath(resourceFolderPath, resourceId, resourceId);
-                sendFile(path, model.type, next);
+                sendFile(path, model.type, model.name, next);
                 return;
             }
         }
 
         var dirPath = realPath(resourceFolderPath, resourceId);
 
-        ResourceServiceAuth.findById(resourceId, function (err, model) {
+        ResourceServiceAuth.findById(resourceId, pv, function (err, model) {
             if (model) {
                 if (params.action === "thumb") {
                     var thumbName = that.getAppProperty("DEFAULT_THUMB_NAME");
                     if (model.extras && model.extras.thumb === true) {
-                        sendFile(realPath(dirPath, thumbName), model.type, next);
+                        sendFile(realPath(dirPath, thumbName), model.type, model.name, next);
                     }
                     else {
                         var path = realPath(process.cwd(), "public", "images", "fileicons", model.type.toLowerCase() + ".png");
@@ -392,7 +395,7 @@ function uploadResourceAction(req, res, next) {
 
     async.waterfall([
         function (n) {
-            //check existance of resource in folder
+            //check existence of resource in folder
             ResourceService.getByNameAndFolderId(fileName, folderId, n);
         },
         function (model, n) {
@@ -419,7 +422,7 @@ function uploadResourceAction(req, res, next) {
                     }
                 }
 
-                ResourceServiceAuth.save(model, n);
+                ResourceServiceAuth.saveByReq(req, RESOURCE_PERMISSION_SCHEMA, model, n);
             }
         },
         function (done, n) {
