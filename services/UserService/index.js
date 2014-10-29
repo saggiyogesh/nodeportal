@@ -6,12 +6,15 @@
 var UserBaseService = require("./UserBaseService");
 
 
-
-
-
-
-
-
+/**
+ * Property to get user's full name
+ * @returns {string}
+ */
+Object.defineProperty(UserBaseService.prototype, "fullName", {
+    get: function () {
+        return this.firstName + ' ' + this.lastName;
+    }
+});
 
 
 module.exports = UserBaseService;
