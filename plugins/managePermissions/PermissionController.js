@@ -36,15 +36,15 @@ PermissionController.prototype.permissionFormAction = function (req, res, next) 
                 req.attrs.modelPermissionSchema = permissionSchemaKey;
             }
             else if (type == "plugin") {
-                var PLUGIN_INSTANCE_SCHEMA = "PluginInstance",
-                    permissionSchemaKey = PLUGIN_PERMISSION_SCHEMA_KEY;
+                var PLUGIN_INSTANCE_SCHEMA = "PluginInstance";
+                permissionSchemaKey = PLUGIN_PERMISSION_SCHEMA_KEY;
                 pv = new that.PermissionValidator(req, permissionSchemaKey, PLUGIN_INSTANCE_SCHEMA);
                 req.attrs.name = PLUGIN_INSTANCE_SCHEMA;
                 req.attrs.modelPermissionSchema = permissionSchemaKey;
             }
             else if (type == "settings") {
-                var SETTINGS_INSTANCE_SCHEMA = "SchemaPermissions",
-                    permissionSchemaKey = utils.getSettingsPluginPermissionSchemaKey(name);
+                var SETTINGS_INSTANCE_SCHEMA = "SchemaPermissions";
+                permissionSchemaKey = utils.getSettingsPluginPermissionSchemaKey(modelId);
                 pv = new that.PermissionValidator(req, permissionSchemaKey, SETTINGS_INSTANCE_SCHEMA);
                 req.attrs.name = SETTINGS_INSTANCE_SCHEMA;
                 req.attrs.modelPermissionSchema = permissionSchemaKey;
