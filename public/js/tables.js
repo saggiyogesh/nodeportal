@@ -86,8 +86,7 @@ define(["_", "util", "bootstrap", "typing", "dataTable", "datatables-bootstrap",
                         }
                     }
                 });
-
-            }
+            };
         }
 
         this.getContentBox().html(TMPL.replace("{tableId}", tableId));

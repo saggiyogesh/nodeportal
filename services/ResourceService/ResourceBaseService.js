@@ -11,13 +11,13 @@ DAOExtras(Resource);
 //create finders form finders property
 Resource.getByNameAndFolderId = function getByNameAndFolderId(name,folderId, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"name":name,"folderId":folderId}}, next);
+    this.findOne({"where":{"name":name,"folderId":folderId}}, next);
 };
 
 
 Resource.getByFolderId = function getByFolderId(folderId, next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"folderId":"folderId"}}, next);
+    this.find({"where":{"folderId":folderId}}, next);
 };
 
 

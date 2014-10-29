@@ -8,7 +8,20 @@ var ArticleLocationBaseService = require("./ArticleLocationBaseService");
 
 //custom methods
 ArticleLocationBaseService.removeArticleLocationsById = function removeArticleLocationsById(id, next) {
-    this.destroyAll({id: id}, next);
+    async.waterfall([
+        function (n) {
+            ArticleLocationBaseService.getById(id, n);
+        },
+        function (articleLocations, n) {
+            if(articleLocations){
+                articleLocations.forEach(function(location){
+                    ArticleLocationBaseService.remove(location.articleLocationId);
+                });
+            }
+            n();
+        }
+    ], next);
+    this.remove({id: id}, next);
 };
 
 

@@ -21,11 +21,12 @@ module.exports = {
     finders: {
         getByNameAndFolderId: {
             arguments: ["name", "folderId"],
-            query: {where: { name: "_name", folderId: "_folderId"} }
+            query: {where: { name: "_name", folderId: "_folderId"} },
+            method: "findOne"
         },
         getByFolderId: {
             arguments: ["folderId"],
-            query: {where: {folderId: "folderId"} }
+            query: {where: {folderId: "_folderId"} }
         }
     },
     auth: true

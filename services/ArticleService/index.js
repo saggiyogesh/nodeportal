@@ -15,7 +15,6 @@ var DateUtil = require(utils.getLibPath() + "/Utils/DateUtil"),
     PluginHelper = require(utils.getLibPath() + "/PluginHelper");
 
 
-
 ArticleBaseService.ArticleNotFoundError = ArticleNotFoundError;
 
 function ArticleNotFoundError(id, idName) {
@@ -104,7 +103,7 @@ ArticleServiceAuth.getArticleVersions = function getArticleVersionsAuth(id, role
                     json.push([version.version, DateUtil.formatArticleDate(version.createDate)])
                 });
             }
-            n({"values": json});
+            n(null, {"values": json});
         }
     ], next);
 
@@ -113,48 +112,58 @@ ArticleServiceAuth.getArticleVersions = function getArticleVersionsAuth(id, role
 /**
  * Deletes article, its versions & locations entries.
  * @param id {Number} id of article
- * @param roles {Array} user roles
+ * @param req {Object} req
  * @param next {Function} callback. parameters are err & result
  *              result exists if article is deleted
  */
-ArticleServiceAuth.removeArticleById = function removeArticleByIdAuth(id, roles, next) {
+ArticleServiceAuth.removeArticleById = function removeArticleByIdAuth(id, req, next) {
     var ArticleVersionService = ArticleBaseService.getService("ArticleVersion"),
         ArticleLocationService = ArticleBaseService.getService("ArticleLocation");
 
+    var pv = new PermissionValidator(req, "model.articleSchema.Article", "Article");
+
     async.waterfall([
         function (n) {
-            ArticleServiceAuth.remove({id: id}, roles, n);
+            ArticleBaseService.getById(id, n);
+        },
+        function (article, n) {
+            article ? ArticleServiceAuth.deleteById(article.articleId, pv, n)
+                : n(new ArticleNotFoundError(id));
         },
         function (result, n) {
             //remove all article versions, if article is deleted
-            result && ArticleVersionService.destroyAll({id: id}, function (err) {
+            result && ArticleVersionService.destroyAll({id: id}, function (err) { //not fire delete model event
                 n(err, !err && result);
             });
-            n(result);
-        } ,
+            !result && n(new Error("Error occurred while deleting article id: " + id));
+        },
         function (result, n) {
             // remove all article locations
-            result && ArticleLocationService.removeArticleLocationsById(id, function (err) {
+            result && ArticleLocationService.destroyAll({id: id}, function (err) { //not fire delete model event
                 n(err, !err && result);
             });
-            n(result);
+            !result && n(new Error("Error occurred while deleting article version id: " + id));
         }
     ], next);
 };
 
-ArticleServiceAuth.saveArticle = function saveArticleAuth(req, otherValues, keyMapObj,  next) {
+ArticleServiceAuth.saveArticle = function saveArticleAuth(req, otherValues, keyMapObj, next) {
     var post = PluginHelper.getPostParams(req);
     var pv = new PermissionValidator(req, "model.articleSchema", "Article");
     delete post[ArticleBaseService.getIdName()]; //delete primary key
+
+    !post.displayDate && delete post.displayDate;
+    !post.expiryDate && delete post.expiryDate;
+
     async.waterfall([
         function (n) {
             ArticleBaseService.incrementCounter(n);
         },
         function (c, n) {
-            post.id = c;
+            post.id = post.id || c; //when updateArticle call saveArticle, it already has id
             n();
         } ,
-        function (result, n) {
+        function (n) {
             ArticleServiceAuth.populateModelAndSave(post,
                 otherValues, keyMapObj, pv, n);
 
@@ -177,7 +186,9 @@ ArticleServiceAuth.updateArticle = function updateArticleAuth(req, otherValues, 
         function (article, n) {
             if (article) {
                 //current version copied to  article version
-                ArticleVersionService.save(article, n);
+                delete article.articleId;
+                Debug._li(">>", article, true)
+                ArticleVersionService.save(article.toObject(), n);
             }
             else {
                 n(new ArticleNotFoundError(id));
