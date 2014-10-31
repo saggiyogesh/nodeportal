@@ -188,7 +188,7 @@ ArticleServiceAuth.updateArticle = function updateArticleAuth(req, otherValues, 
                 //current version copied to  article version
                 delete article.articleId;
                 Debug._li(">>", article, true)
-                ArticleVersionService.save(article.toObject(), n);
+                ArticleVersionService.save(article, n);
             }
             else {
                 n(new ArticleNotFoundError(id));

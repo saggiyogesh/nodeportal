@@ -18,7 +18,7 @@ module.exports = {
             method: "findOne"
         },
         getAllExceptDefault: {
-            query: {where: { name: { neq: "2-col-70-30" }, type: "page"}}
+            query: {where: { name: { neq: "Default" }, type: "page"}}
         },
         getAll: {
         },

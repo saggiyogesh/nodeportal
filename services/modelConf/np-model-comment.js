@@ -2,7 +2,7 @@ module.exports = {
     name: "Comment",
     base: "PersistedModel",
     properties: {
-        commentId: { type: Number, unique: true},
+        commentId: { type: Number, id: true},
         threadId: Number,
         parentCommentId: { type: Number, "default": 0 },
         authorId: Number,

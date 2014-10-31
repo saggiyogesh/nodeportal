@@ -23,7 +23,7 @@ Theme.getByName = function getByName(name, next) {   // arguments are defined in
 
 Theme.getAllExceptDefault = function getAllExceptDefault( next) {   // arguments are defined in arguments property
     //find or findOne will have argument from query
-    this.find({"where":{"name":{"neq":"2-col-70-30"},"type":"page"}}, next);
+    this.find({"where":{"name":{"neq":"Default"},"type":"page"}}, next);
 };
 
 

@@ -243,7 +243,7 @@ function postCommentAction(req, res, next) {
                                     var tmpl = that.realPath() + "/tmpl/commentsMail.jade";
                                     m.setBcc(emailUsers);
                                     m.renderBodyFromJadeTemplate(tmpl, {
-                                        userFullName: req.session.user.fullName.trim() + " wrote:",
+                                        userFullName: req.session.user.firstName + " " + req.session.user.lastName + " wrote:",
                                         commentContent: content,
                                         commentDate: that.DateUtil.formatArticleDate(commentDate),
                                         commentURL: post.url
@@ -306,6 +306,9 @@ function initThreadAction(req, res, next) {
     //permission schema key used to validate permissions
         linkedPermissionSchemaKey = params.linkedPermissionSchemaKey;
 
+    Debug._l(req.session.user)
+    Debug._l(">>>>>>>>>> --------- " + req.session.user.fullName)
+
     if (linkedModelFinderParam && linkedModelName) {
         var ThreadService = that.getService(THREAD_SCHEMA);
         var LinkedModelService = that.getService(linkedModelName);
@@ -338,7 +341,7 @@ function initThreadAction(req, res, next) {
                 //find thread
                 ThreadService.getByLinkedModelIdAndLinkedModelName(linkedModelFinderParam, linkedModelName, function (err, t) {
                     if (t) {
-                        thread = t.toObject();
+                        thread = t;
                     }
                     n(err, t);
                 });
