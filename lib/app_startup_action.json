@@ -11,5 +11,5 @@
     "lib/StartUpActions/InitMultipleLogin",
     "lib/StartUpActions/TestEmail",
     "lib/StartUpActions/TestData",
-    "lib/StartUpActions/BindPort"
+    "lib/StartUpActions/StartServer"
 ]
