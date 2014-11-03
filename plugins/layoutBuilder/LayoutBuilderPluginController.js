@@ -163,7 +163,7 @@ function updateLayoutAction(req, res, next) {
 }
 
 LayoutBuilderPluginController.prototype.render = function (req, res, next) {
-    var view = req.params.action;
+    var that = this, view = req.params.action;
     view = view || "index";
     var LayoutService = that.getService(LAYOUT_SCHEMA);
 
