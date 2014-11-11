@@ -137,7 +137,7 @@ function handleLayoutUpdate(event) {
                 return;
             }
             if (pages) {
-                that.getService(LAYOUT_SCHEMA).getByLayoutId(modelId, function (err, layout) {
+                that.getService(LAYOUT_SCHEMA).findById(modelId, function (err, layout) {
                     if (err) {
                         return Debug._l(err);
                     }

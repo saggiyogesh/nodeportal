@@ -119,7 +119,7 @@ function openLayout(req, res, next) {
 }
 
 function updateLayoutAction(req, res, next) {
-    var that = this, db = that.getDB(),
+    var that = this,
         LayoutService = that.getService(LAYOUT_SCHEMA),
         fileUtil = that.FileUtil, formObj = utils.clone(Forms.EditForm);
 
